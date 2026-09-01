@@ -20,7 +20,18 @@ interface LocalApiOptions {
   storageKey?: string;
 }
 
-export const LOCAL_STORAGE_KEY = "colmeia.db.v1";
+export const LOCAL_STORAGE_KEY = "colmeia.db.v2";
+const LEGACY_STORAGE_KEY = "colmeia.db.v1";
+
+interface LegacyState extends Omit<LocalState, "goals"> {
+  goal: Omit<Goal, "memberId"> | null;
+}
+
+/** v1 kept a single household goal; v2 keeps a list with optional owners. */
+function migrateLegacy(raw: string): LocalState {
+  const { goal, ...rest } = JSON.parse(raw) as LegacyState;
+  return { ...rest, goals: goal ? [{ ...goal, memberId: null }] : [] };
+}
 
 function invalid(...details: string[]): never {
   throw new ApiError(422, details);
@@ -34,6 +45,11 @@ function findOrFail<T extends { id: number }>(items: T[], id: number, label: str
   const found = items.find((item) => item.id === id);
   if (!found) throw new ApiError(404, [`${label} não encontrado`]);
   return found;
+}
+
+function validateGoal(input: Partial<GoalInput>): void {
+  if (input.title !== undefined && input.title.trim() === "") invalid("Diga qual é a recompensa");
+  if (input.targetPoints !== undefined && (!Number.isInteger(input.targetPoints) || input.targetPoints <= 0)) invalid("A meta precisa ser maior que zero");
 }
 
 function validateTask(input: Partial<TaskInput>): void {
@@ -63,8 +79,10 @@ export class LocalApi implements ColmeiaApi {
   private load(): LocalState {
     const raw = this.store.getItem(this.storageKey);
     if (raw) return JSON.parse(raw) as LocalState;
-    const fresh = this.seed();
+    const legacy = this.storageKey === LOCAL_STORAGE_KEY ? this.store.getItem(LEGACY_STORAGE_KEY) : null;
+    const fresh = legacy ? migrateLegacy(legacy) : this.seed();
     this.persist(fresh);
+    if (legacy) this.store.removeItem(LEGACY_STORAGE_KEY);
     return fresh;
   }
 
@@ -130,6 +148,7 @@ export class LocalApi implements ColmeiaApi {
         state.tasks.forEach((task) => { task.assigneeId = nullify(task.assigneeId); task.createdById = nullify(task.createdById); });
         state.completions.forEach((completion) => { completion.memberId = nullify(completion.memberId); completion.reviewerId = nullify(completion.reviewerId); });
         state.shoppingItems.forEach((item) => { item.addedById = nullify(item.addedById); item.purchasedById = nullify(item.purchasedById); });
+        state.goals = state.goals.filter((goal) => goal.memberId !== id);
       }),
   };
 
@@ -235,14 +254,27 @@ export class LocalApi implements ColmeiaApi {
       }),
   };
 
-  goal = {
-    get: (): Promise<Goal | null> => this.read((state) => state.goal),
-    update: (input: GoalInput): Promise<Goal> =>
+  goals = {
+    list: (): Promise<Goal[]> => this.read((state) => state.goals),
+    create: (input: GoalInput): Promise<Goal> =>
       this.mutate((state) => {
-        if (input.title.trim() === "") invalid("Diga qual é a recompensa");
-        if (!Number.isInteger(input.targetPoints) || input.targetPoints <= 0) invalid("A meta precisa ser maior que zero");
-        state.goal = { id: state.goal?.id ?? this.nextId(state), ...input, title: input.title.trim() };
-        return state.goal;
+        validateGoal(input);
+        if (input.memberId !== null) findOrFail(state.members, input.memberId, "Membro");
+        const goal: Goal = { ...input, title: input.title.trim(), id: this.nextId(state) };
+        state.goals.push(goal);
+        return goal;
+      }),
+    update: (id: number, input: Partial<GoalInput>): Promise<Goal> =>
+      this.mutate((state) => {
+        const goal = findOrFail(state.goals, id, "Meta");
+        validateGoal(input);
+        Object.assign(goal, input);
+        return goal;
+      }),
+    remove: (id: number): Promise<void> =>
+      this.mutate((state) => {
+        findOrFail(state.goals, id, "Meta");
+        state.goals = state.goals.filter((goal) => goal.id !== id);
       }),
   };
 }

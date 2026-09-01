@@ -69,7 +69,11 @@ export function buildDemoState(now: Date = new Date()): LocalState {
     tasks,
     completions,
     shoppingItems,
-    goal: { id: 50, title: "Pizza e filme no sábado", targetPoints: 300, period: "week" },
+    goals: [
+      { id: 50, title: "Pizza e filme no sábado", targetPoints: 300, period: "week", memberId: null },
+      { id: 51, title: "Sorvete na sexta", targetPoints: 30, period: "week", memberId: 4 },
+      { id: 52, title: "Escolher o filme do sábado", targetPoints: 60, period: "week", memberId: 2 },
+    ],
     nextId: 100,
   };
 }

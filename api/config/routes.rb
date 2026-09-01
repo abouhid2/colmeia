@@ -14,7 +14,7 @@ Rails.application.routes.draw do
       resources :shopping_items, only: %i[ index create update destroy ] do
         delete :purchased, on: :collection, action: :clear_purchased
       end
-      resource :goal, only: %i[ show update ]
+      resources :goals, only: %i[ index create update destroy ]
     end
   end
 end

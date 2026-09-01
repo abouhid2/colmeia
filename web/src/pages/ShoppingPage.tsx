@@ -1,8 +1,10 @@
 import { ShoppingBasket, Trash2 } from "lucide-react";
 import type { ShoppingItem } from "../domain/types";
+import { useMemberFilter } from "../hooks/useMemberFilter";
 import { useMemberLookup } from "../hooks/useMembers";
 import { useSession } from "../hooks/useSession";
 import { useShoppingItems, useShoppingMutations } from "../hooks/useShopping";
+import { MemberFilter } from "../components/members/MemberFilter";
 import { AddItemForm } from "../components/shopping/AddItemForm";
 import { ShoppingRow } from "../components/shopping/ShoppingRow";
 import { Button } from "../components/ui/Button";
@@ -11,10 +13,14 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { SectionHeading } from "../components/ui/SectionHeading";
 
 export function ShoppingPage() {
-  const { toBuy, purchased } = useShoppingItems();
+  const items = useShoppingItems();
   const { add, update, remove, clearPurchased } = useShoppingMutations();
   const { currentMember } = useSession();
+  const { memberId, member: filtered } = useMemberFilter();
   const lookup = useMemberLookup();
+  const mine = (item: ShoppingItem) => memberId === null || item.addedById === memberId;
+  const toBuy = items.toBuy.filter(mine);
+  const purchased = items.purchased.filter(mine);
 
   const toggle = (item: ShoppingItem) => {
     update.mutate({ id: item.id, input: { purchased: !item.purchased, purchasedById: item.purchased ? null : (currentMember?.id ?? null) } });
@@ -31,11 +37,12 @@ export function ShoppingPage() {
         <p className="text-sm text-ink-soft">Uma lista só, todo mundo acrescenta.</p>
       </div>
       <AddItemForm submitting={add.isPending} onAdd={(name, quantity) => add.mutate({ name, quantity, addedById: currentMember?.id ?? null })} />
+      <MemberFilter />
 
       <section>
         <SectionHeading title="Falta comprar" hint={toBuy.length === 0 ? undefined : `${toBuy.length} ${toBuy.length === 1 ? "item" : "itens"}`} />
         {toBuy.length === 0 ? (
-          <EmptyState icon={<ShoppingBasket className="size-6" />} title="Lista vazia" hint="Acabou algo? Escreva acima e a casa inteira vê." />
+          <EmptyState icon={<ShoppingBasket className="size-6" />} title={filtered ? `${filtered.name} não pediu nada` : "Lista vazia"} hint="Acabou algo? Escreva acima e a casa inteira vê." />
         ) : (
           <Card><ul className="divide-y divide-line">{toBuy.map(renderRow)}</ul></Card>
         )}

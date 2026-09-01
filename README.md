@@ -12,7 +12,8 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 - **Responsável**: qualquer tarefa pode ser atribuída a alguém ou deixada para "quem pegar primeiro".
 - **Prioridade**: baixa, normal, alta ou urgente. As vencidas e urgentes aparecem primeiro.
 - **Lista de compras** compartilhada, com quem pediu e quem comprou.
-- **Meta coletiva** por semana ou mês, com o favo de progresso e o ranking de quem mais contribuiu.
+- **Metas** por semana ou mês: uma coletiva, com o favo de progresso e o ranking de quem mais contribuiu, e quantas individuais quiserem (só os pontos daquela pessoa contam).
+- **Filtro por integrante** presente em todas as telas: escolha uma pessoa e o app mostra só as tarefas, compras, metas e conquistas dela.
 
 ## Estrutura
 

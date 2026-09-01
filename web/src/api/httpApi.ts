@@ -77,8 +77,10 @@ export class HttpApi implements ColmeiaApi {
     clearPurchased: (): Promise<void> => this.request("DELETE", "/shopping_items/purchased"),
   };
 
-  goal = {
-    get: (): Promise<Goal | null> => this.request("GET", "/goal"),
-    update: (input: GoalInput): Promise<Goal> => this.request("PUT", "/goal", { goal: input }),
+  goals = {
+    list: (): Promise<Goal[]> => this.request("GET", "/goals"),
+    create: (input: GoalInput): Promise<Goal> => this.request("POST", "/goals", { goal: input }),
+    update: (id: number, input: Partial<GoalInput>): Promise<Goal> => this.request("PATCH", `/goals/${id}`, { goal: input }),
+    remove: (id: number): Promise<void> => this.request("DELETE", `/goals/${id}`),
   };
 }

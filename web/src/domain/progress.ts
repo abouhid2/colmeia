@@ -35,9 +35,13 @@ export function approvedInPeriod(completions: Completion[], bounds: PeriodBounds
   return completions.filter((completion) => completion.status === "approved" && isWithin(completion.completedAt, bounds));
 }
 
+/** Household goals count everyone; personal goals count only their member. */
 export function goalProgress(goal: Goal, completions: Completion[], now: Date): GoalProgress {
   const bounds = periodBounds(goal.period, now);
-  const earned = approvedInPeriod(completions, bounds).reduce((sum, completion) => sum + completion.pointsAwarded, 0);
+  const counted = approvedInPeriod(completions, bounds).filter(
+    (completion) => goal.memberId === null || completion.memberId === goal.memberId,
+  );
+  const earned = counted.reduce((sum, completion) => sum + completion.pointsAwarded, 0);
   const ratio = Math.min(earned / goal.targetPoints, 1);
   return {
     earned,

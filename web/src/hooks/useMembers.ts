@@ -6,7 +6,7 @@ import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
 
 const EMPTY: Member[] = [];
-const EVERYTHING = [queryKeys.members, queryKeys.tasks, queryKeys.completions, queryKeys.shopping] as const;
+const EVERYTHING = [queryKeys.members, queryKeys.tasks, queryKeys.completions, queryKeys.shopping, queryKeys.goals] as const;
 
 export function useMembers() {
   const api = useApi();

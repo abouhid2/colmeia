@@ -48,9 +48,11 @@ export interface ColmeiaApi {
     remove(id: number): Promise<void>;
     clearPurchased(): Promise<void>;
   };
-  goal: {
-    get(): Promise<Goal | null>;
-    update(input: GoalInput): Promise<Goal>;
+  goals: {
+    list(): Promise<Goal[]>;
+    create(input: GoalInput): Promise<Goal>;
+    update(id: number, input: Partial<GoalInput>): Promise<Goal>;
+    remove(id: number): Promise<void>;
   };
   /** Only meaningful for the in-browser store. */
   reset?(): Promise<void>;

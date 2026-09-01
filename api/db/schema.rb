@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_000006) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_000007) do
   create_table "completions", force: :cascade do |t|
     t.datetime "completed_at", null: false
     t.datetime "created_at", null: false
@@ -33,10 +33,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000006) do
 
   create_table "goals", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "member_id"
     t.string "period", default: "week", null: false
     t.integer "target_points", default: 300, null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
+    t.index ["member_id"], name: "index_goals_on_member_id"
   end
 
   create_table "households", force: :cascade do |t|
@@ -91,6 +93,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000006) do
   add_foreign_key "completions", "members"
   add_foreign_key "completions", "members", column: "reviewer_id"
   add_foreign_key "completions", "tasks"
+  add_foreign_key "goals", "members"
   add_foreign_key "shopping_items", "members", column: "added_by_id"
   add_foreign_key "shopping_items", "members", column: "purchased_by_id"
   add_foreign_key "tasks", "members", column: "assignee_id"

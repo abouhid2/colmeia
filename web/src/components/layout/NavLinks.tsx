@@ -1,4 +1,4 @@
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 import { cn } from "../../lib/cn";
 import { NAV_ITEMS } from "./navItems";
 
@@ -8,12 +8,13 @@ interface NavLinksProps {
 
 export function NavLinks({ layout }: NavLinksProps) {
   const rail = layout === "rail";
+  const { search } = useLocation();
   return (
     <ul className={cn(rail ? "flex flex-col gap-1" : "grid grid-cols-4")}>
       {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
         <li key={to}>
           <NavLink
-            to={to}
+            to={{ pathname: to, search }}
             end={end}
             className={({ isActive }) =>
               cn(

@@ -65,6 +65,8 @@ export interface Goal {
   title: string;
   targetPoints: number;
   period: GoalPeriod;
+  /** null means the whole household works towards it. */
+  memberId: number | null;
 }
 
 export type MemberInput = Pick<Member, "name" | "avatar" | "color">;
@@ -95,7 +97,7 @@ export interface ShoppingItemUpdate {
   purchasedById?: number | null;
 }
 
-export type GoalInput = Pick<Goal, "title" | "targetPoints" | "period">;
+export type GoalInput = Pick<Goal, "title" | "targetPoints" | "period" | "memberId">;
 
 export interface ReviewInput {
   reviewerId: number;

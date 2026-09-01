@@ -22,7 +22,7 @@ describe("periodBounds", () => {
 });
 
 describe("goalProgress", () => {
-  const goal: Goal = { id: 1, title: "Pizza", targetPoints: 100, period: "week" };
+  const goal: Goal = { id: 1, title: "Pizza", targetPoints: 100, period: "week", memberId: null };
   const now = new Date(2026, 2, 11, 15);
 
   it("adds approved points inside the period only", () => {
@@ -35,6 +35,15 @@ describe("goalProgress", () => {
     expect(progress.remaining).toBe(70);
     expect(progress.ratio).toBeCloseTo(0.3);
     expect(progress.reached).toBe(false);
+  });
+
+  it("counts only the owner's points on a personal goal", () => {
+    const personal: Goal = { ...goal, memberId: 2 };
+    const progress = goalProgress(personal, [
+      completion({ pointsAwarded: 30, memberId: 1 }),
+      completion({ id: 2, pointsAwarded: 25, memberId: 2 }),
+    ], now);
+    expect(progress.earned).toBe(25);
   });
 
   it("caps the ratio when the goal is beaten", () => {

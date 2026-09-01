@@ -52,6 +52,8 @@ Completion.create!(task: bathroom, member: bruno, status: "pending", points_awar
   task_title: bathroom.title, task_points: 20, completed_at: now - 1.hour)
 
 Goal.create!(title: "Pizza e filme no sábado", target_points: 300, period: "week")
+Goal.create!(title: "Sorvete na sexta", target_points: 30, period: "week", member: duda)
+Goal.create!(title: "Escolher o filme do sábado", target_points: 60, period: "week", member: bruno)
 
 ShoppingItem.create!(name: "Leite", quantity: "2 caixas", added_by: ana)
 ShoppingItem.create!(name: "Ovos", quantity: "1 dúzia", added_by: bruno)

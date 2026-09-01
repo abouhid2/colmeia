@@ -6,7 +6,7 @@ export interface LocalState {
   tasks: Task[];
   completions: Completion[];
   shoppingItems: ShoppingItem[];
-  goal: Goal | null;
+  goals: Goal[];
   nextId: number;
 }
 
@@ -17,7 +17,7 @@ export function emptyState(): LocalState {
     tasks: [],
     completions: [],
     shoppingItems: [],
-    goal: null,
+    goals: [],
     nextId: 2,
   };
 }

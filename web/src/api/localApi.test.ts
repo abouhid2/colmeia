@@ -52,6 +52,29 @@ describe("LocalApi", () => {
     expect((await api.members.list()).map((member) => member.id)).toEqual([2, 3, 4]);
   });
 
+  it("drops personal goals with their owner but keeps household ones", async () => {
+    await api.members.remove(4);
+    expect((await api.goals.list()).map((goal) => goal.title)).toEqual(["Pizza e filme no sábado", "Escolher o filme do sábado"]);
+  });
+
+  it("creates, edits and removes goals", async () => {
+    const goal = await api.goals.create({ title: "Passeio", targetPoints: 100, period: "month", memberId: 1 });
+    expect(goal.memberId).toBe(1);
+    const edited = await api.goals.update(goal.id, { targetPoints: 120 });
+    expect(edited.targetPoints).toBe(120);
+    await api.goals.remove(goal.id);
+    expect((await api.goals.list()).some((item) => item.id === goal.id)).toBe(false);
+    await expect(api.goals.create({ title: "", targetPoints: 10, period: "week", memberId: null })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("migrates a v1 store into the goal list", async () => {
+    const store = new MemoryStore();
+    store.setItem("colmeia.db.v1", JSON.stringify({ ...buildDemoState(now), goals: undefined, goal: { id: 9, title: "Antiga", targetPoints: 50, period: "week" } }));
+    const migrated = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
+    expect(await migrated.goals.list()).toEqual([{ id: 9, title: "Antiga", targetPoints: 50, period: "week", memberId: null }]);
+    expect(store.getItem("colmeia.db.v1")).toBeNull();
+  });
+
   it("stamps purchases and clears bought items", async () => {
     const bought = await api.shopping.update(40, { purchased: true, purchasedById: 2 });
     expect(bought.purchasedAt).toBe(now.toISOString());
