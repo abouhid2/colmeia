@@ -1,6 +1,8 @@
 class Member < ApplicationRecord
   COLORS = %w[ honey pollen leaf berry sky plum ].freeze
+  AVATARS = %w[ 🐝 🦊 🐻 🐼 🦉 🐸 🐙 🦁 🐨 🦄 🐧 🐢 ].freeze
 
+  belongs_to :household
   has_many :assigned_tasks, class_name: "Task", foreign_key: :assignee_id,
     dependent: :nullify, inverse_of: :assignee
   has_many :created_tasks, class_name: "Task", foreign_key: :created_by_id,
@@ -16,4 +18,17 @@ class Member < ApplicationRecord
   validates :name, presence: true, length: { maximum: 40 }
   validates :avatar, presence: true, length: { maximum: 8 }
   validates :color, inclusion: { in: COLORS }
+
+  scope :unclaimed, -> { where(claimed_at: nil) }
+
+  # A member starts as a placeholder ("espantalho"): a name on the list nobody
+  # sits behind yet. Claiming through the invite link is what turns it into a
+  # person using the app.
+  def claimed?
+    claimed_at.present?
+  end
+
+  def claim!(now = Time.current)
+    update!(claimed_at: now)
+  end
 end
