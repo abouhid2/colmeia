@@ -3,7 +3,16 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resource :household, only: %i[ show update ]
+      # Public: everything reachable with nothing but the invite code.
+      resources :households, only: %i[ create show ], param: :invite_code do
+        member do
+          post :claim
+          post :join
+        end
+      end
+
+      # Scoped to the X-Household-Code header.
+      resource :household, only: %i[ show update ], controller: "current_household"
       resources :members, only: %i[ index create update destroy ]
       resources :tasks, only: %i[ index create update destroy ] do
         post :complete, on: :member

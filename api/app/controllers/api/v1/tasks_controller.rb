@@ -2,30 +2,30 @@ module Api
   module V1
     class TasksController < BaseController
       def index
-        tasks = Task.order(:created_at)
-        tasks = tasks.where(status: params[:status]) if params[:status].present?
-        render json: tasks.map { |task| TaskSerializer.call(task) }
+        scope = tasks.order(:created_at)
+        scope = scope.where(status: params[:status]) if params[:status].present?
+        render json: scope.map { |task| TaskSerializer.call(task) }
       end
 
       def create
-        task = Task.create!(task_params)
+        task = tasks.create!(task_params)
         render json: TaskSerializer.call(task), status: :created
       end
 
       def update
-        task = Task.find(params[:id])
+        task = tasks.find(params[:id])
         task.update!(task_params)
         render json: TaskSerializer.call(task)
       end
 
       def destroy
-        Task.find(params[:id]).destroy!
+        tasks.find(params[:id]).destroy!
         head :no_content
       end
 
       def complete
-        task = Task.find(params[:id])
-        member = Member.find(params.require(:member_id))
+        task = tasks.find(params[:id])
+        member = current_household.members.find(params.require(:member_id))
         result = Tasks::Complete.new(task: task, member: member).call
         render json: { task: TaskSerializer.call(result.task), completion: CompletionSerializer.call(result.completion) }
       rescue Tasks::Complete::AlreadyDone => e
@@ -33,6 +33,10 @@ module Api
       end
 
       private
+
+      def tasks
+        current_household.tasks
+      end
 
       def task_params
         params.require(:task).permit(
