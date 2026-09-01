@@ -13,6 +13,23 @@ interface ErrorBody {
   details?: string[];
 }
 
+const ERROR_LABELS: Record<string, string> = {
+  not_found: "Isso não existe mais. Atualize a página.",
+  unauthorized: "Sem acesso a esta colmeia.",
+  conflict: "Alguém mexeu nisso antes de você.",
+  invalid: "Dados inválidos.",
+  bad_request: "Pedido inválido.",
+};
+
+function parseJson(text: string): unknown {
+  if (text.trim() === "") return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 /** Talks to the Rails API in api/. Keys travel as snake_case and come back camelCase. */
 export class HttpApi implements ColmeiaApi {
   readonly mode = "http" as const;
@@ -34,10 +51,11 @@ export class HttpApi implements ColmeiaApi {
       throw new ApiError(0, ["Não deu para falar com o servidor. Confira a conexão."]);
     }
     if (response.status === 204) return undefined as T;
-    const json: unknown = await response.json();
+    const json = parseJson(await response.text());
     if (!response.ok) {
       const { details, error } = (json ?? {}) as ErrorBody;
-      throw new ApiError(response.status, details ?? [error ?? "Algo deu errado"]);
+      const fallback = error ? (ERROR_LABELS[error] ?? error) : `O servidor respondeu com erro ${response.status}`;
+      throw new ApiError(response.status, details ?? [fallback]);
     }
     return toCamelKeys<T>(json);
   }

@@ -1,4 +1,5 @@
 import { isRecurring, nextDueOn } from "../domain/recurrence";
+import { LIMITS } from "../domain/limits";
 import { MAX_RATING, pointsForRating } from "../domain/points";
 import type {
   Completion, Goal, GoalInput, Household, Member, MemberInput, ReviewInput,
@@ -47,14 +48,22 @@ function findOrFail<T extends { id: number }>(items: T[], id: number, label: str
   return found;
 }
 
+function validateName(value: string | undefined, max: number, blankMessage: string): void {
+  if (value === undefined) return;
+  if (value.trim() === "") invalid(blankMessage);
+  if (value.trim().length > max) invalid(`Use no máximo ${max} caracteres`);
+}
+
 function validateGoal(input: Partial<GoalInput>): void {
-  if (input.title !== undefined && input.title.trim() === "") invalid("Diga qual é a recompensa");
+  validateName(input.title, LIMITS.goalTitle, "Diga qual é a recompensa");
   if (input.targetPoints !== undefined && (!Number.isInteger(input.targetPoints) || input.targetPoints <= 0)) invalid("A meta precisa ser maior que zero");
+  if (input.targetPoints !== undefined && input.targetPoints > LIMITS.goalTarget) invalid(`A meta vai até ${LIMITS.goalTarget} pontos`);
 }
 
 function validateTask(input: Partial<TaskInput>): void {
-  if (input.title !== undefined && input.title.trim() === "") invalid("Dê um nome à tarefa");
+  validateName(input.title, LIMITS.taskTitle, "Dê um nome à tarefa");
   if (input.points !== undefined && (!Number.isInteger(input.points) || input.points <= 0)) invalid("Os pontos precisam ser um número maior que zero");
+  if (input.points !== undefined && input.points > LIMITS.taskPoints) invalid(`Uma tarefa vale no máximo ${LIMITS.taskPoints} pontos`);
   if (input.recurrence === "custom" && !(input.intervalDays && input.intervalDays > 0)) invalid("Informe a cada quantos dias a tarefa se repete");
 }
 
@@ -118,7 +127,7 @@ export class LocalApi implements ColmeiaApi {
     get: (): Promise<Household> => this.read((state) => state.household),
     update: (input: Pick<Household, "name">): Promise<Household> =>
       this.mutate((state) => {
-        if (input.name.trim() === "") invalid("Dê um nome à casa");
+        validateName(input.name, LIMITS.householdName, "Dê um nome à casa");
         state.household = { ...state.household, name: input.name.trim() };
         return state.household;
       }),
@@ -128,7 +137,7 @@ export class LocalApi implements ColmeiaApi {
     list: (): Promise<Member[]> => this.read((state) => state.members),
     create: (input: MemberInput): Promise<Member> =>
       this.mutate((state, now) => {
-        if (input.name.trim() === "") invalid("Dê um nome à pessoa");
+        validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
         const member: Member = { ...input, name: input.name.trim(), id: this.nextId(state), createdAt: now.toISOString() };
         state.members.push(member);
         return member;
@@ -136,7 +145,7 @@ export class LocalApi implements ColmeiaApi {
     update: (id: number, input: Partial<MemberInput>): Promise<Member> =>
       this.mutate((state) => {
         const member = findOrFail(state.members, id, "Membro");
-        if (input.name !== undefined && input.name.trim() === "") invalid("Dê um nome à pessoa");
+        validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
         Object.assign(member, input);
         return member;
       }),
@@ -228,7 +237,8 @@ export class LocalApi implements ColmeiaApi {
     list: (): Promise<ShoppingItem[]> => this.read((state) => state.shoppingItems),
     create: (input: ShoppingItemInput): Promise<ShoppingItem> =>
       this.mutate((state, now) => {
-        if (input.name.trim() === "") invalid("Escreva o que está faltando");
+        validateName(input.name, LIMITS.shoppingItemName, "Escreva o que está faltando");
+        if (input.quantity && input.quantity.length > LIMITS.shoppingQuantity) invalid(`A quantidade cabe em ${LIMITS.shoppingQuantity} caracteres`);
         const item: ShoppingItem = {
           ...input, name: input.name.trim(), id: this.nextId(state), purchased: false, purchasedById: null, purchasedAt: null, createdAt: now.toISOString(),
         };

@@ -10,7 +10,7 @@ interface DialogProps {
   children: ReactNode;
 }
 
-/** Native <dialog>: focus trapping, Escape and the backdrop come for free. */
+/** Native <dialog>: focus trapping, Escape and the backdrop come for free. Children unmount on close so forms start clean. */
 export function Dialog({ open, onClose, title, description, children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
 
@@ -41,7 +41,7 @@ export function Dialog({ open, onClose, title, description, children }: DialogPr
           </div>
           <IconButton label="Fechar" icon={<X className="size-5" />} onClick={onClose} className="-mr-2 -mt-1" />
         </header>
-        {children}
+        {open && children}
       </div>
     </dialog>
   );

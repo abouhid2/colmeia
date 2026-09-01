@@ -1,6 +1,7 @@
 import { Plus, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { MemberColor, MemberInput } from "../domain/types";
+import { LIMITS } from "../domain/limits";
 import { MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { useRenameHousehold } from "../hooks/useHousehold";
 import { useMemberMutations } from "../hooks/useMembers";
@@ -51,7 +52,7 @@ export function OnboardingPage() {
 
       <Card className="space-y-5 p-6">
         <Field label="Nome da casa" htmlFor="household-name">
-          <Input id="household-name" value={householdName} onChange={(event) => setHouseholdName(event.target.value)} placeholder="Ex.: Família Silva, Apê 42" />
+          <Input id="household-name" value={householdName} onChange={(event) => setHouseholdName(event.target.value)} placeholder="Ex.: Família Silva, Apê 42" maxLength={LIMITS.householdName} />
         </Field>
 
         {drafts.length > 0 && (
@@ -67,7 +68,7 @@ export function OnboardingPage() {
 
         <form onSubmit={addDraft} className="space-y-3">
           <div className="flex gap-2">
-            <Input aria-label="Nome da pessoa" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome" />
+            <Input aria-label="Nome da pessoa" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome" maxLength={LIMITS.memberName} />
             <Button type="submit" variant="secondary" icon={<Plus className="size-4" />} disabled={name.trim() === ""}>Adicionar</Button>
           </div>
           <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LIMITS } from "../../domain/limits";
 import type { Priority, Recurrence, Task, TaskInput } from "../../domain/types";
 
 export interface TaskFormValues {
@@ -33,6 +34,7 @@ function validate(values: TaskFormValues): TaskFormErrors {
   const errors: TaskFormErrors = {};
   if (values.title.trim() === "") errors.title = "Dê um nome à tarefa";
   if (!Number.isInteger(values.points) || values.points <= 0) errors.points = "Vale pelo menos 1 ponto";
+  if (values.points > LIMITS.taskPoints) errors.points = `No máximo ${LIMITS.taskPoints} pontos`;
   if (values.recurrence === "custom" && !(Number(values.intervalDays) > 0)) errors.intervalDays = "A cada quantos dias?";
   return errors;
 }

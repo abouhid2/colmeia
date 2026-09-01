@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { LIMITS } from "../../domain/limits";
 import { useHousehold, useRenameHousehold } from "../../hooks/useHousehold";
 import { useToast } from "../../hooks/useToast";
 import { Button } from "../ui/Button";
@@ -21,7 +22,7 @@ export function HouseholdNameForm() {
 
   return (
     <form onSubmit={submit} className="flex gap-2">
-      <Input aria-label="Nome da casa" value={name} onChange={(event) => setDraft(event.target.value)} className="max-w-xs" />
+      <Input aria-label="Nome da casa" maxLength={LIMITS.householdName} value={name} onChange={(event) => setDraft(event.target.value)} className="max-w-xs" />
       <Button type="submit" variant="secondary" disabled={!dirty} loading={rename.isPending}>Salvar</Button>
     </form>
   );

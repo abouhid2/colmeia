@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { LIMITS } from "../../domain/limits";
 import type { Goal, GoalPeriod } from "../../domain/types";
 import { useGoalMutations } from "../../hooks/useGoals";
 import { useSession } from "../../hooks/useSession";
@@ -36,7 +37,7 @@ function GoalForm({ goal, defaultMemberId, onDone }: GoalFormProps) {
   const [title, setTitle] = useState(goal?.title ?? "");
   const [target, setTarget] = useState(goal?.targetPoints ?? 300);
   const [period, setPeriod] = useState<GoalPeriod>(goal?.period ?? "week");
-  const [owner, setOwner] = useState(String(goal?.memberId ?? defaultMemberId ?? ""));
+  const [owner, setOwner] = useState(goal ? String(goal.memberId ?? "") : String(defaultMemberId ?? ""));
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const { create, update, remove } = useGoalMutations();
   const { notify } = useToast();
@@ -65,10 +66,10 @@ function GoalForm({ goal, defaultMemberId, onDone }: GoalFormProps) {
         </Select>
       </Field>
       <Field label="Recompensa" htmlFor="goal-title" hint="Ex.: pizza e filme no sábado, escolher o passeio.">
-        <Input id="goal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="O que se ganha" required autoFocus />
+        <Input id="goal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="O que se ganha" maxLength={LIMITS.goalTitle} required autoFocus />
       </Field>
       <Field label="Pontos para bater a meta" htmlFor="goal-target">
-        <Input id="goal-target" type="number" min={1} step={1} value={target} onChange={(event) => setTarget(Number(event.target.value))} required />
+        <Input id="goal-target" type="number" min={1} max={LIMITS.goalTarget} step={1} value={target} onChange={(event) => setTarget(Number(event.target.value))} required />
       </Field>
       <Field label="Período">
         <Segmented label="Período" options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
