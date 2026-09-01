@@ -1,0 +1,23 @@
+module Api
+  module V1
+    class CompletionsController < BaseController
+      def index
+        completions = Completion.recent_first
+        completions = completions.where(status: params[:status]) if params[:status].present?
+        render json: completions.map { |completion| CompletionSerializer.call(completion) }
+      end
+
+      def review
+        completion = Completion.find(params[:id])
+        reviewer = Member.find(params.require(:reviewer_id))
+        rating = Integer(params.require(:rating))
+        reviewed = Completions::Review.new(completion: completion, reviewer: reviewer, rating: rating).call
+        render json: CompletionSerializer.call(reviewed)
+      rescue Completions::Review::AlreadyReviewed, Completions::Review::SelfReview => e
+        render_conflict(e.message)
+      rescue ArgumentError
+        render json: { error: "bad_request", details: [ "rating must be an integer" ] }, status: :bad_request
+      end
+    end
+  end
+end
