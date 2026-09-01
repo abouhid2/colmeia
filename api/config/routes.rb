@@ -7,6 +7,7 @@ Rails.application.routes.draw do
       resources :members, only: %i[ index create update destroy ]
       resources :tasks, only: %i[ index create update destroy ] do
         post :complete, on: :member
+        post :reopen, on: :member
       end
       resources :completions, only: %i[ index ] do
         post :review, on: :member

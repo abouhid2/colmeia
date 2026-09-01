@@ -40,6 +40,25 @@ RSpec.describe "Tasks API", type: :request do
     end
   end
 
+  describe "POST /api/v1/tasks/:id/reopen" do
+    it "reopens a done task and clears completed_at" do
+      task = Task.create!(title: "Feita", points: 5, status: "done", completed_at: Time.current)
+
+      post "/api/v1/tasks/#{task.id}/reopen"
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body).to include("status" => "open", "completed_at" => nil)
+    end
+
+    it "ignores status through mass assignment" do
+      task = Task.create!(title: "Aberta", points: 5)
+
+      patch "/api/v1/tasks/#{task.id}", params: { task: { status: "done" } }
+
+      expect(task.reload.status).to eq("open")
+    end
+  end
+
   describe "POST /api/v1/tasks/:id/complete" do
     it "returns the updated task and the new completion" do
       task = Task.create!(title: "Louça", points: 5, recurrence: "daily", due_on: Date.current)

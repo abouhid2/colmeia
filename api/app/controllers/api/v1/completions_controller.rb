@@ -10,7 +10,7 @@ module Api
       def review
         completion = Completion.find(params[:id])
         reviewer = Member.find(params.require(:reviewer_id))
-        rating = Integer(params.require(:rating))
+        rating = Integer(params.require(:rating).to_s, 10)
         reviewed = Completions::Review.new(completion: completion, reviewer: reviewer, rating: rating).call
         render json: CompletionSerializer.call(reviewed)
       rescue Completions::Review::AlreadyReviewed, Completions::Review::SelfReview => e
