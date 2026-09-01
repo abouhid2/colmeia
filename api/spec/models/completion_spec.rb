@@ -17,7 +17,11 @@ RSpec.describe Completion do
   end
 
   it "rejects ratings outside 1..5" do
-    completion = described_class.new(task_title: "x", task_points: 1, completed_at: Time.current, rating: 6)
+    household = Household.create!(name: "Casa")
+    completion = household.completions.build(task_title: "x", task_points: 1, completed_at: Time.current, rating: 5)
+    expect(completion).to be_valid
+
+    completion.rating = 6
     expect(completion).not_to be_valid
   end
 end

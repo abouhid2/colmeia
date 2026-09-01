@@ -27,18 +27,38 @@ RSpec.describe Task do
   end
 
   describe "validations" do
+    let(:household) { Household.create!(name: "Casa") }
+
+    it "is valid inside a colmeia" do
+      expect(household.tasks.build(title: "Louça", points: 5)).to be_valid
+    end
+
+    it "requires a colmeia" do
+      task = described_class.new(title: "Louça", points: 5)
+      expect(task).not_to be_valid
+      expect(task.errors[:household]).to be_present
+    end
+
     it "requires interval_days for custom recurrence" do
-      task = described_class.new(title: "Regar", recurrence: "custom")
+      task = household.tasks.build(title: "Regar", recurrence: "custom")
       expect(task).not_to be_valid
       expect(task.errors[:interval_days]).to be_present
     end
 
     it "rejects zero points" do
-      expect(described_class.new(title: "x", points: 0)).not_to be_valid
+      expect(household.tasks.build(title: "x", points: 0)).not_to be_valid
     end
 
     it "rejects unknown priorities" do
-      expect(described_class.new(title: "x", priority: "meh")).not_to be_valid
+      expect(household.tasks.build(title: "x", priority: "meh")).not_to be_valid
+    end
+
+    it "rejects an assignee from another colmeia" do
+      stranger = Household.create!(name: "Outra").members.create!(name: "Estranho")
+      task = household.tasks.build(title: "Louça", points: 5, assignee: stranger)
+
+      expect(task).not_to be_valid
+      expect(task.errors[:assignee]).to include("is from another colmeia")
     end
   end
 end
