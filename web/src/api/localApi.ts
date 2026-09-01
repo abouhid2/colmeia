@@ -210,6 +210,14 @@ export class LocalApi implements ColmeiaApi {
         }
         return { task, completion };
       }),
+    reopen: (id: number): Promise<Task> =>
+      this.mutate((state) => {
+        const task = findOrFail(state.tasks, id, "Tarefa");
+        if (task.status !== "done") conflict("Essa tarefa já está aberta");
+        task.status = "open";
+        task.completedAt = null;
+        return task;
+      }),
   };
 
   completions = {

@@ -19,7 +19,7 @@ type Status = "open" | "done";
 export function TasksPage() {
   const now = useNow();
   const { tasks } = useTasks();
-  const { update } = useTaskMutations();
+  const { reopen } = useTaskMutations();
   const { memberId, member: filtered } = useMemberFilter();
   const lookup = useMemberLookup();
   const dialogs = useTaskDialogs();
@@ -49,7 +49,7 @@ export function TasksPage() {
         ) : (
           <ul className="space-y-2">
             {done.map((task) => (
-              <DoneTaskRow key={task.id} task={task} onReopen={(reopened) => update.mutate({ id: reopened.id, input: { status: "open" } })} />
+              <DoneTaskRow key={task.id} task={task} onReopen={(reopened) => reopen.mutate(reopened.id)} />
             ))}
           </ul>
         )

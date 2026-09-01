@@ -36,6 +36,7 @@ export interface ColmeiaApi {
     update(id: number, input: Partial<TaskInput>): Promise<Task>;
     remove(id: number): Promise<void>;
     complete(id: number, memberId: number): Promise<CompleteTaskResult>;
+    reopen(id: number): Promise<Task>;
   };
   completions: {
     list(): Promise<Completion[]>;

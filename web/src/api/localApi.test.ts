@@ -45,6 +45,12 @@ describe("LocalApi", () => {
     await expect(api.tasks.complete(19, 1)).rejects.toMatchObject({ status: 409 });
   });
 
+  it("reopens a finished task and clears its completion date", async () => {
+    const reopened = await api.tasks.reopen(19);
+    expect(reopened).toMatchObject({ status: "open", completedAt: null });
+    await expect(api.tasks.reopen(19)).rejects.toMatchObject({ status: 409 });
+  });
+
   it("keeps completions when a member leaves", async () => {
     await api.members.remove(1);
     const completions = await api.completions.list();

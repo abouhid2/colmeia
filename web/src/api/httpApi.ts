@@ -79,6 +79,7 @@ export class HttpApi implements ColmeiaApi {
     remove: (id: number): Promise<void> => this.request("DELETE", `/tasks/${id}`),
     complete: (id: number, memberId: number): Promise<CompleteTaskResult> =>
       this.request("POST", `/tasks/${id}/complete`, { memberId }),
+    reopen: (id: number): Promise<Task> => this.request("POST", `/tasks/${id}/reopen`),
   };
 
   completions = {

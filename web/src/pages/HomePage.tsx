@@ -56,7 +56,7 @@ export function HomePage() {
         <GoalEmptyCard onCreate={() => goalDialog.openCreate(null)} />
       ) : (
         household.map((item) => (
-          <GoalCard key={item.goal.id} goal={item.goal} progress={item.progress} standings={standings} onEdit={() => goalDialog.openEdit(item.goal)} />
+          <GoalCard key={item.goal.id} goal={item.goal} progress={item.progress} standings={item.standings} onEdit={() => goalDialog.openEdit(item.goal)} />
         ))
       )}
 

@@ -11,11 +11,13 @@ export function HouseholdNameForm() {
   const { notify } = useToast();
   const [draft, setDraft] = useState<string | null>(null);
   const name = draft ?? household?.name ?? "";
-  const dirty = household !== undefined && name.trim() !== household.name;
+  const trimmed = name.trim();
+  const dirty = household !== undefined && trimmed !== "" && trimmed !== household.name;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    rename.mutate({ name }, {
+    if (!dirty) return;
+    rename.mutate({ name: trimmed }, {
       onSuccess: () => { setDraft(null); notify({ tone: "success", message: "Nome da casa salvo" }); },
     });
   };
