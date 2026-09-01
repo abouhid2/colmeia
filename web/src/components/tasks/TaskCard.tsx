@@ -2,6 +2,7 @@ import { Check, Pencil } from "lucide-react";
 import type { Member, Task } from "../../domain/types";
 import { IconButton } from "../ui/IconButton";
 import { PointsBadge } from "../ui/PointsBadge";
+import { TaskDescription } from "./TaskDescription";
 import { TaskMeta } from "./TaskMeta";
 
 interface TaskCardProps {
@@ -28,7 +29,7 @@ export function TaskCard({ task, assignee, today, onComplete, onEdit }: TaskCard
           <h3 className="font-semibold leading-snug">{task.title}</h3>
           <PointsBadge points={task.points} size="sm" />
         </div>
-        {task.description && <p className="text-sm text-ink-soft">{task.description}</p>}
+        {task.description && <TaskDescription text={task.description} />}
         <TaskMeta task={task} assignee={assignee} today={today} />
       </div>
       <IconButton label={`Editar: ${task.title}`} icon={<Pencil className="size-4" />} onClick={() => onEdit(task)} className="-mr-2 -mt-1" />

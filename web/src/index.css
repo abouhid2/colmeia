@@ -73,6 +73,7 @@
   }
   body {
     @apply bg-paper font-sans text-ink antialiased;
+    overflow-wrap: anywhere;
   }
   h1, h2, h3 {
     @apply font-display;
