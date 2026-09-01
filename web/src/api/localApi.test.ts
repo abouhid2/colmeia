@@ -1,0 +1,68 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import { ApiError } from "./errors";
+import { LocalApi, type KeyValueStore } from "./localApi";
+import { buildDemoState } from "./seed";
+
+class MemoryStore implements KeyValueStore {
+  private data = new Map<string, string>();
+  getItem(key: string) { return this.data.get(key) ?? null; }
+  setItem(key: string, value: string) { this.data.set(key, value); }
+  removeItem(key: string) { this.data.delete(key); }
+}
+
+const now = new Date(2026, 2, 11, 15);
+
+describe("LocalApi", () => {
+  let api: LocalApi;
+
+  beforeEach(() => {
+    api = new LocalApi(new MemoryStore(), { seed: () => buildDemoState(now), clock: () => now });
+  });
+
+  it("closes one-off tasks and pays out right away", async () => {
+    const { task, completion } = await api.tasks.complete(13, 2);
+    expect(task.status).toBe("done");
+    expect(completion).toMatchObject({ status: "approved", pointsAwarded: 15, memberId: 2 });
+  });
+
+  it("rolls recurring tasks forward from today", async () => {
+    const { task } = await api.tasks.complete(16, 1);
+    expect(task.status).toBe("open");
+    expect(task.dueOn).toBe("2026-03-18");
+  });
+
+  it("holds points until someone else rates a reviewed task", async () => {
+    const { completion } = await api.tasks.complete(10, 3);
+    expect(completion).toMatchObject({ status: "pending", pointsAwarded: 0 });
+
+    await expect(api.completions.review(completion.id, { reviewerId: 3, rating: 5 })).rejects.toBeInstanceOf(ApiError);
+
+    const reviewed = await api.completions.review(completion.id, { reviewerId: 1, rating: 3 });
+    expect(reviewed).toMatchObject({ status: "approved", rating: 3, pointsAwarded: 30, reviewerId: 1 });
+  });
+
+  it("refuses to complete a finished task", async () => {
+    await expect(api.tasks.complete(19, 1)).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("keeps completions when a member leaves", async () => {
+    await api.members.remove(1);
+    const completions = await api.completions.list();
+    expect(completions.find((completion) => completion.id === 30)?.memberId).toBeNull();
+    expect((await api.members.list()).map((member) => member.id)).toEqual([2, 3, 4]);
+  });
+
+  it("stamps purchases and clears bought items", async () => {
+    const bought = await api.shopping.update(40, { purchased: true, purchasedById: 2 });
+    expect(bought.purchasedAt).toBe(now.toISOString());
+    await api.shopping.clearPurchased();
+    expect((await api.shopping.list()).every((item) => !item.purchased)).toBe(true);
+  });
+
+  it("validates task input", async () => {
+    await expect(api.tasks.create({
+      title: "Regar", description: null, points: 5, priority: "low", recurrence: "custom", intervalDays: null,
+      dueOn: null, requiresReview: false, assigneeId: null, createdById: null,
+    })).rejects.toMatchObject({ status: 422 });
+  });
+});

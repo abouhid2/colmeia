@@ -1,0 +1,70 @@
+import { Trash2 } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { PRIORITIES, PRIORITY_OPTIONS } from "../../domain/priorities";
+import type { Member, Task, TaskInput } from "../../domain/types";
+import { Button } from "../ui/Button";
+import { Field } from "../ui/Field";
+import { Input, Textarea } from "../ui/Input";
+import { Segmented } from "../ui/Segmented";
+import { Toggle } from "../ui/Toggle";
+import { PointsPicker } from "./PointsPicker";
+import { TaskScheduleFields } from "./TaskScheduleFields";
+import { toTaskInput, useTaskForm } from "./useTaskForm";
+
+interface TaskFormProps {
+  task: Task | null;
+  members: Member[];
+  currentMemberId: number | null;
+  submitting: boolean;
+  onSubmit(input: TaskInput): void;
+  onDelete?(): void;
+  onCancel(): void;
+}
+
+const PRIORITY_SEGMENTS = PRIORITY_OPTIONS.map((priority) => ({ value: priority, label: PRIORITIES[priority].label }));
+
+export function TaskForm({ task, members, currentMemberId, submitting, onSubmit, onDelete, onCancel }: TaskFormProps) {
+  const form = useTaskForm(task);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    form.touch();
+    if (form.isValid) onSubmit(toTaskInput(form.values, task?.createdById ?? currentMemberId));
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <Field label="Tarefa" htmlFor="task-title" error={form.errors.title}>
+        <Input id="task-title" value={form.values.title} onChange={(event) => form.set("title", event.target.value)} placeholder="Ex.: trocar a resistência do chuveiro" autoFocus />
+      </Field>
+      <Field label="Vale quantos pontos" htmlFor="task-points" error={form.errors.points}>
+        <PointsPicker value={form.values.points} onChange={(points) => form.set("points", points)} />
+      </Field>
+      <Field label="Prioridade">
+        <Segmented label="Prioridade" options={PRIORITY_SEGMENTS} value={form.values.priority} onChange={(priority) => form.set("priority", priority)} />
+      </Field>
+      <TaskScheduleFields values={form.values} errors={form.errors} members={members} set={form.set} />
+      <Toggle
+        checked={form.values.requiresReview}
+        onChange={(checked) => form.set("requiresReview", checked)}
+        label="Precisa de avaliação"
+        hint="Outra pessoa dá uma nota de 1 a 5 e os pontos saem proporcionais."
+      />
+      <Field label="Detalhes" htmlFor="task-description">
+        <Textarea id="task-description" value={form.values.description} onChange={(event) => form.set("description", event.target.value)} placeholder="Opcional: onde está o material, o que observar…" />
+      </Field>
+      <div className="flex items-center justify-between gap-2 pt-2">
+        {onDelete ? (
+          <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? onDelete() : setConfirmingDelete(true))}>
+            {confirmingDelete ? "Confirmar exclusão" : "Excluir"}
+          </Button>
+        ) : <span />}
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
+          <Button type="submit" loading={submitting}>{task ? "Salvar" : "Criar tarefa"}</Button>
+        </div>
+      </div>
+    </form>
+  );
+}

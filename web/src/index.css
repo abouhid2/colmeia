@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/figtree";
+
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Surfaces and text */
+  --color-paper: #fcfaf5;
+  --color-surface: #ffffff;
+  --color-line: #ebe5d9;
+  --color-line-strong: #d9d1c2;
+  --color-ink: #1f1710;
+  --color-ink-soft: #6f6459;
+  --color-ink-faint: #a69c90;
+
+  /* Honey: the brand and the currency */
+  --color-honey-100: #fff5d9;
+  --color-honey-200: #ffe7a8;
+  --color-honey-300: #ffd76b;
+  --color-honey-400: #f8c23a;
+  --color-honey-500: #f0ad14;
+  --color-honey-600: #c98c00;
+  --color-honey-700: #9a6a00;
+  --color-honey-900: #3d2a00;
+
+  /* Semantic accents */
+  --color-pollen-100: #ffe9db;
+  --color-pollen-500: #e8672b;
+  --color-pollen-700: #b04412;
+  --color-berry-100: #fde3e2;
+  --color-berry-500: #d23f3a;
+  --color-berry-700: #a12723;
+  --color-leaf-100: #e2f3e7;
+  --color-leaf-500: #3d8f5c;
+  --color-leaf-700: #2a6a43;
+  --color-lake-100: #e1eefa;
+  --color-lake-500: #3b82c4;
+  --color-lake-700: #245c92;
+  --color-plum-100: #efe4f7;
+  --color-plum-500: #8b4fb8;
+  --color-plum-700: #62348a;
+  --color-dune-100: #f0ece5;
+  --color-dune-500: #8c8478;
+  --color-dune-700: #5d564d;
+
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+  --shadow-card: 0 1px 2px rgb(31 23 16 / 0.04), 0 10px 30px -14px rgb(31 23 16 / 0.14);
+  --shadow-pop: 0 24px 60px -24px rgb(31 23 16 / 0.4);
+
+  --animate-cell-pop: cell-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  --animate-rise: rise 0.35s ease-out both;
+
+  @keyframes cell-pop {
+    from { transform: scale(0.3); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  @keyframes rise {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-display;
+  }
+  dialog::backdrop {
+    background: color-mix(in srgb, var(--color-ink) 45%, transparent);
+    backdrop-filter: blur(2px);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-honey-600);
+    outline-offset: 2px;
+  }
+  .hex-cell {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}

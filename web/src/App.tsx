@@ -1,0 +1,27 @@
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { AppShell } from "./components/layout/AppShell";
+import { AppProviders } from "./components/providers/AppProviders";
+import { FamilyPage } from "./pages/FamilyPage";
+import { HomePage } from "./pages/HomePage";
+import { ShoppingPage } from "./pages/ShoppingPage";
+import { TasksPage } from "./pages/TasksPage";
+
+const basename = import.meta.env.BASE_URL.replace(/\/$/, "") || "/";
+
+export default function App() {
+  return (
+    <AppProviders>
+      <BrowserRouter basename={basename}>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route index element={<HomePage />} />
+            <Route path="tarefas" element={<TasksPage />} />
+            <Route path="compras" element={<ShoppingPage />} />
+            <Route path="familia" element={<FamilyPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AppProviders>
+  );
+}
