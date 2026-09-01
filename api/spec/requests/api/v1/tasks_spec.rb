@@ -27,7 +27,16 @@ RSpec.describe "Tasks API", type: :request do
       post "/api/v1/tasks", params: { task: { title: "", points: 0 } }
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(json_body["details"]).to include("Title can't be blank")
+      expect(json_body["details"]).to include("Título não pode ficar em branco")
+    end
+  end
+
+  describe "POST /api/v1/tasks with a member that no longer exists" do
+    it "answers 422 in Portuguese instead of crashing" do
+      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999 } }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json_body["details"].first).to include("não existe mais")
     end
   end
 

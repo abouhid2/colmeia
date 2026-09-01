@@ -34,6 +34,8 @@ module Api
     # in config/environments, which are processed later.
     #
     config.time_zone = ENV.fetch("APP_TIME_ZONE", "America/Sao_Paulo")
+    config.i18n.default_locale = :"pt-BR"
+    config.i18n.available_locales = %i[ pt-BR en ]
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Only loads a smaller set of middleware suitable for API only apps.

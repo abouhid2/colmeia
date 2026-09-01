@@ -35,3 +35,5 @@ group :development, :test do
   # Testing
   gem "rspec-rails", "~> 8.0"
 end
+
+gem "rails-i18n", "~> 8.0"
