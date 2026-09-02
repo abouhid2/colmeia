@@ -9,10 +9,10 @@ export function GoalEmptyCard({ onCreate }: { onCreate(): void }) {
         <span className="grid size-12 shrink-0 place-items-center rounded-full bg-honey-100 text-honey-700"><Trophy className="size-6" /></span>
         <div>
           <h2 className="text-xl font-bold tracking-tight">Combinem uma recompensa</h2>
-          <p className="mt-1 text-sm text-ink-soft">Uma meta de pontos para a casa inteira: quando a colmeia enche, todo mundo ganha.</p>
+          <p className="mt-1 text-sm text-ink-soft">Uma meta de pontos para a colmeia inteira: quando o favo enche, todo mundo ganha.</p>
         </div>
       </div>
-      <Button onClick={onCreate}>Definir meta</Button>
+      <Button onClick={onCreate}>Criar a meta</Button>
     </Card>
   );
 }
