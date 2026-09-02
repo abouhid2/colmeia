@@ -16,19 +16,50 @@ interface ToasterProps {
   onDismiss(id: number): void;
 }
 
+/** The one toaster on screen, so a dialog opening later can climb back under it. */
+let mounted: HTMLDivElement | null = null;
+
+/**
+ * The top layer stacks in the order things were shown, so a <dialog> opened
+ * after the toasts would cover them. Showing the toaster again puts it back on
+ * top, and it is a no-op while there is nothing to show.
+ */
+export function bringToastsToFront(): void {
+  const element = mounted;
+  if (!element || typeof element.showPopover !== "function") return;
+  try {
+    if (!element.matches(":popover-open")) return;
+    element.hidePopover();
+    element.showPopover();
+  } catch {
+    // Older browsers: the element simply stays a fixed layer.
+  }
+}
+
 /**
  * A manual popover, so toasts join the browser's top layer and stay visible over
- * an open <dialog>. Re-shown on every change to stay above dialogs opened later.
+ * an open <dialog>.
  */
 export function Toaster({ toasts, onDismiss }: ToasterProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const shown = useRef(false);
 
+  useEffect(() => {
+    mounted = ref.current;
+    return () => { mounted = null; };
+  }, []);
+
+  // Only the empty-to-full edges touch the popover: hiding and showing it again
+  // on every change would read the whole stack out loud to a screen reader.
   useEffect(() => {
     const element = ref.current;
     if (!element || typeof element.showPopover !== "function") return;
+    const hasToasts = toasts.length > 0;
+    if (hasToasts === shown.current) return;
+    shown.current = hasToasts;
     try {
-      if (element.matches(":popover-open")) element.hidePopover();
-      if (toasts.length > 0) element.showPopover();
+      if (hasToasts) element.showPopover();
+      else if (element.matches(":popover-open")) element.hidePopover();
     } catch {
       // Older browsers: the element simply stays a fixed layer.
     }
