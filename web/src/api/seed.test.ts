@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { memberAchievements } from "../domain/achievements";
 import { crownHolder } from "../domain/crown";
 import { awardedPoints } from "../domain/points";
 import { goalProgress } from "../domain/progress";
@@ -33,6 +34,19 @@ describe("buildDemoState", () => {
     hers.forEach((completion) => {
       expect(completion.multiplier).toBe(duda.pointsMultiplier);
       expect(completion.pointsAwarded).toBe(awardedPoints(completion.taskPoints, completion.rating, completion.multiplier));
+    });
+  });
+
+  it("pins on the profile only badges the person actually earned", () => {
+    const state = buildDemoState(now);
+    const pinned = state.members.filter((member) => member.favoriteAchievements.length > 0);
+
+    expect(pinned.map((member) => [ member.name, member.favoriteAchievements.length ])).toEqual([ [ "Ana", 2 ], [ "Bruno", 1 ] ]);
+    pinned.forEach((member) => {
+      const achievements = memberAchievements({ memberId: member.id, completions: state.completions, tasks: state.tasks });
+      member.favoriteAchievements.forEach((key) => {
+        expect(achievements.find((achievement) => achievement.id === key)?.unlocked).toBe(true);
+      });
     });
   });
 

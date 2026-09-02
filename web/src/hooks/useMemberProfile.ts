@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import { memberAchievements, type Achievement } from "../domain/achievements";
 import { completionsForMember } from "../domain/history";
 import { memberStats, type MemberStats } from "../domain/memberStats";
 import { sortOpenTasks } from "../domain/taskSort";
 import type { Completion, GoalPeriod, Member, Task } from "../domain/types";
 import { useCompletions } from "./useCompletions";
 import { useGoalOverview, type GoalWithProgress } from "./useGoalOverview";
+import { useMemberAchievements, type MemberAchievements } from "./useMemberAchievements";
 import { useMembers } from "./useMembers";
 import { useNow } from "./useNow";
 import { useTasks } from "./useTasks";
@@ -21,7 +21,7 @@ export interface MemberProfile {
   /** 1-based place in the period ranking, out of everyone in the house. */
   rank: number | null;
   houseSize: number;
-  achievements: Achievement[];
+  badges: MemberAchievements;
   history: Completion[];
   openTasks: Task[];
   goals: GoalWithProgress[];
@@ -38,13 +38,14 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
   const { personal, period, standings, allTimeStandings, isLoading: loadingGoals } = useGoalOverview();
 
   const isLoading = loadingMembers || loadingCompletions || loadingTasks || loadingGoals;
+  const member = memberId === null ? null : (members.find((candidate) => candidate.id === memberId) ?? null);
+  const badges = useMemberAchievements(member);
 
   return useMemo(() => {
-    const member = memberId === null ? null : (members.find((candidate) => candidate.id === memberId) ?? null);
     if (member === null) {
       return {
         member: null, isLoading, stats: NO_STATS, period, periodPoints: 0, allTimePoints: 0,
-        rank: null, houseSize: members.length, achievements: [], history: [], openTasks: [], goals: [],
+        rank: null, houseSize: members.length, badges, history: [], openTasks: [], goals: [],
       };
     }
 
@@ -59,10 +60,10 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
       allTimePoints: allTimeStandings.find((standing) => standing.member.id === member.id)?.points ?? 0,
       rank: place === -1 ? null : place + 1,
       houseSize: standings.length,
-      achievements: memberAchievements({ memberId: member.id, completions, tasks }),
+      badges,
       history: completionsForMember(completions, member.id),
       openTasks: sortOpenTasks(tasks.filter((task) => task.status === "open" && task.assigneeId === member.id), now),
       goals: personal.filter((item) => item.goal.memberId === member.id),
     };
-  }, [memberId, members, completions, tasks, personal, period, standings, allTimeStandings, now, isLoading]);
+  }, [member, members, completions, tasks, personal, period, standings, allTimeStandings, now, isLoading, badges]);
 }

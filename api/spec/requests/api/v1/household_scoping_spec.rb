@@ -7,7 +7,8 @@ RSpec.describe "Household scoping", type: :request do
 
   describe "the X-Household-Code header" do
     it "is required by every scoped endpoint" do
-      %w[ /api/v1/household /api/v1/members /api/v1/tasks /api/v1/completions /api/v1/shopping_items /api/v1/goals ].each do |path|
+      %w[ /api/v1/household /api/v1/members /api/v1/tasks /api/v1/completions /api/v1/shopping_items /api/v1/goals
+         /api/v1/achievement_awards ].each do |path|
         get path
 
         expect(response).to have_http_status(:unauthorized), "expected 401 from #{path}"
@@ -100,16 +101,18 @@ RSpec.describe "Household scoping", type: :request do
 
   describe "reading" do
     before do
-      other.members.create!(name: "Estranho")
+      stranger = other.members.create!(name: "Estranho")
       other.tasks.create!(title: "Tarefa alheia", points: 5)
       other.goals.create!(title: "Meta alheia", target_points: 50)
       other.shopping_items.create!(name: "Item alheio")
       other.completions.create!(task_title: "Feito alheio", task_points: 5, points_awarded: 5, completed_at: Time.current)
+      other.achievement_awards.create!(member: stranger, key: "firstTask", awarded_at: Time.current)
     end
 
     it "never leaks another colmeia's records" do
       { "/api/v1/members" => "name", "/api/v1/tasks" => "title", "/api/v1/goals" => "title",
-        "/api/v1/shopping_items" => "name", "/api/v1/completions" => "task_title" }.each do |path, _field|
+        "/api/v1/shopping_items" => "name", "/api/v1/completions" => "task_title",
+        "/api/v1/achievement_awards" => "key" }.each do |path, _field|
         get path, headers: headers
 
         expect(response).to have_http_status(:ok), "expected 200 from #{path}"

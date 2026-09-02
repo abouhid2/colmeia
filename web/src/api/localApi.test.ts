@@ -187,6 +187,73 @@ describe("LocalApi", () => {
     ).rejects.toMatchObject({ status: 422 });
   });
 
+  it("writes badges down once, however many times they are sent", async () => {
+    const rows = [
+      { key: "firstTask" as const, completionId: 34, awardedAt: "2026-03-01T10:00:00.000Z" },
+      { key: "bigTask" as const, completionId: 62, awardedAt: "2026-03-02T10:00:00.000Z" },
+    ];
+
+    await api.achievementAwards.record(1, rows);
+    await api.achievementAwards.record(1, [ ...rows, { key: "bigTask" as const, completionId: 63, awardedAt: "2026-03-03T10:00:00.000Z" } ]);
+
+    const stored = await api.achievementAwards.list(1);
+    expect(stored.map((award) => [ award.key, award.completionId ])).toEqual([
+      [ "firstTask", 34 ], [ "bigTask", 62 ], [ "bigTask", 63 ],
+    ]);
+    expect(stored.every((award) => award.memberId === 1)).toBe(true);
+  });
+
+  it("keeps a badge after the completion that earned it is deleted", async () => {
+    await api.achievementAwards.record(1, [ { key: "bigTask", completionId: 62, awardedAt: "2026-03-02T10:00:00.000Z" } ]);
+
+    await api.tasks.remove(19);
+
+    expect((await api.achievementAwards.list(1)).map((award) => award.completionId)).toEqual([ 62 ]);
+  });
+
+  it("refuses a badge nobody has heard of, and someone who is not here", async () => {
+    await expect(
+      api.achievementAwards.record(1, [ { key: "melhorDaCasa" as never, completionId: null, awardedAt: "2026-03-01T10:00:00.000Z" } ]),
+    ).rejects.toMatchObject({ status: 422 });
+    await expect(
+      api.achievementAwards.record(999, [ { key: "firstTask", completionId: null, awardedAt: "2026-03-01T10:00:00.000Z" } ]),
+    ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("takes the badges of whoever leaves the colmeia", async () => {
+    await api.achievementAwards.record(1, [ { key: "firstTask", completionId: 34, awardedAt: "2026-03-01T10:00:00.000Z" } ]);
+    await api.achievementAwards.record(2, [ { key: "flawless", completionId: 60, awardedAt: "2026-03-01T10:00:00.000Z" } ]);
+
+    await api.members.remove(1);
+
+    expect((await api.achievementAwards.list(null)).map((award) => award.memberId)).toEqual([ 2 ]);
+  });
+
+  it("pins up to three badges, and only ones that exist", async () => {
+    const pinned = await api.members.update(3, { favoriteAchievements: [ "firstTask", "sevenDays" ] });
+    expect(pinned.favoriteAchievements).toEqual([ "firstTask", "sevenDays" ]);
+
+    await expect(api.members.update(3, { favoriteAchievements: [ "firstTask", "firstTask" ] })).rejects.toMatchObject({ status: 422 });
+    await expect(api.members.update(3, { favoriteAchievements: [ "melhorDaCasa" as never ] })).rejects.toMatchObject({ status: 422 });
+    await expect(
+      api.members.update(3, { favoriteAchievements: [ "firstTask", "sevenDays", "bigTask", "flawless" ] }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect((await api.members.list()).find((member) => member.id === 3)?.favoriteAchievements).toEqual([ "firstTask", "sevenDays" ]);
+  });
+
+  it("reads a store written before badges were kept as an empty shelf", async () => {
+    const store = new MemoryStore();
+    const stored = buildDemoState(now);
+    const bare = stored.members.map(({ favoriteAchievements: _favorites, ...member }) => member);
+    store.setItem("colmeia.db.v2", JSON.stringify({ ...stored, members: bare, awards: undefined }));
+
+    const upgraded = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
+    upgraded.setInviteCode(DEMO_INVITE_CODE);
+
+    expect(await upgraded.achievementAwards.list(null)).toEqual([]);
+    expect((await upgraded.members.list()).every((member) => member.favoriteAchievements.length === 0)).toBe(true);
+  });
+
   it("stamps purchases and clears bought items", async () => {
     const bought = await api.shopping.update(40, { purchased: true, purchasedById: 2 });
     expect(bought.purchasedAt).toBe(now.toISOString());

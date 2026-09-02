@@ -6,6 +6,7 @@ class Household < ApplicationRecord
   has_many :completions, dependent: :destroy
   has_many :shopping_items, dependent: :destroy
   has_many :goals, dependent: :destroy
+  has_many :achievement_awards, dependent: :destroy
 
   before_validation :normalize_invite_code
 

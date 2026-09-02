@@ -1,4 +1,5 @@
 import { addDays, addHours, startOfWeek, subHours, subWeeks } from "date-fns";
+import type { AchievementId } from "../domain/achievements";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { toIsoDate } from "../lib/dates";
 import type { Completion, Member, ShoppingItem, Task } from "../domain/types";
@@ -20,15 +21,16 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   // Nobody has claimed a place yet: the invite link is what lets a browser in.
   const member = (
     id: number, name: string, avatar: string, color: Member["color"],
-    crownTitle = DEFAULT_CROWN_TITLE, kind: Member["kind"] = "bee",
+    crownTitle = DEFAULT_CROWN_TITLE, kind: Member["kind"] = "bee", favoriteAchievements: AchievementId[] = [],
   ): Member => ({
-    id, name, avatar, color, crownTitle, kind,
+    id, name, avatar, color, crownTitle, kind, favoriteAchievements,
     pointsMultiplier: kind === "lagartinha" ? 1.5 : 1, claimedAt: null, createdAt: iso(240),
   });
-  // Duda is the child of the house: everything she does is worth 1,5x.
+  // Duda is the child of the house: everything she does is worth 1,5x. Ana and
+  // Bruno already pinned badges they earned, which is what the profile shows.
   const members = [
-    member(1, EXAMPLE_ENTRY_MEMBER, "🦊", "pollen"),
-    member(2, "Bruno", "🐻", "sky", "Abelhão"),
+    member(1, EXAMPLE_ENTRY_MEMBER, "🦊", "pollen", DEFAULT_CROWN_TITLE, "bee", [ "firstTask", "bigTask" ]),
+    member(2, "Bruno", "🐻", "sky", "Abelhão", "bee", [ "flawless" ]),
     member(3, "Clara", "🐼", "plum", "Rainha da Louça"),
     member(4, "Duda", "🦉", "leaf", DEFAULT_CROWN_TITLE, "lagartinha"),
   ];
@@ -95,6 +97,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
     tasks,
     completions,
     shoppingItems,
+    awards: [],
     goals: [
       { id: 50, title: "Pizza e filme no sábado", targetPoints: 300, period: "week", memberId: null },
       { id: 51, title: "Sorvete na sexta", targetPoints: 30, period: "week", memberId: 4 },

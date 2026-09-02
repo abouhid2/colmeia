@@ -1,8 +1,10 @@
+import type { AchievementRecord } from "../../domain/achievementHistory";
 import { crownedTitle, WORKER_BEE_LABEL } from "../../domain/crownTitles";
 import type { GoalPeriod, Member } from "../../domain/types";
 import { periodScopeLabel } from "../goal/goalCopy";
 import { Card } from "../ui/Card";
 import { BeeAvatar } from "./BeeAvatar";
+import { FavoriteBadges } from "./FavoriteBadges";
 import { LagartinhaMark } from "./LagartinhaMark";
 
 interface MemberHeroProps {
@@ -13,9 +15,14 @@ interface MemberHeroProps {
   allTimePoints: number;
   rank: number | null;
   houseSize: number;
+  /** The badges this person pinned, shown as medals next to the bee. */
+  favorites: AchievementRecord[];
+  /** Whoever is using the app can fill their own empty slots. */
+  isSelf: boolean;
+  search: string;
 }
 
-export function MemberHero({ member, crowned, period, periodPoints, allTimePoints, rank, houseSize }: MemberHeroProps) {
+export function MemberHero({ member, crowned, period, periodPoints, allTimePoints, rank, houseSize, favorites, isSelf, search }: MemberHeroProps) {
   const title = crowned ? crownedTitle(member.crownTitle, period) : WORKER_BEE_LABEL;
 
   return (
@@ -41,6 +48,7 @@ export function MemberHero({ member, crowned, period, periodPoints, allTimePoint
           )}
         </p>
       </div>
+      <FavoriteBadges favorites={favorites} isSelf={isSelf} search={search} />
     </Card>
   );
 }
