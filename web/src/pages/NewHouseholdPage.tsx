@@ -40,7 +40,7 @@ export function NewHouseholdPage() {
       <div className="text-center">
         <BrandMark className="justify-center" />
         <h1 className="mt-4 text-3xl font-bold tracking-tight">Uma colmeia nova</h1>
-        <p className="mt-2 text-ink-soft">Escreva quem mora aí. Depois você manda o link e cada pessoa diz qual é ela.</p>
+        <p className="mt-2 text-ink-soft">Escreva quem mora aí. Depois é só mandar o link: cada um entra e diz quem é.</p>
       </div>
 
       <Card className="space-y-5 p-6">
