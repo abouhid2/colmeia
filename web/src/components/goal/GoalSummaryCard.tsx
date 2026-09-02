@@ -18,10 +18,12 @@ interface GoalSummaryCardProps {
 export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryCardProps) {
   const { goal, progress, season, member, standings } = item;
   const progressLabel = member ? `Meta de ${member.name}` : "Meta da colmeia";
-  const contributors = standings.filter((standing) => standing.points > 0);
-  // One person carrying the whole goal gets their own texture in the bar. A
-  // goal already batida stays green: that is what the colour is saying.
-  const soloist = contributors.length === 1 && !progress.reached ? contributors[0].member : null;
+  // A personal goal has one participant by definition; a household one has
+  // whoever has scored in it. Either way, a goal carried by a single person
+  // gets that person's texture in the bar. A goal already batida stays green:
+  // that is what the colour is there to say.
+  const participants = member === null ? standings.filter((standing) => standing.points > 0).map(({ member: who }) => who) : [ member ];
+  const soloist = participants.length === 1 && !progress.reached ? participants[0] : null;
   return (
     <li className="flex items-start gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
       {member ? (
