@@ -77,7 +77,7 @@ export function LandingPage() {
 
       {stored !== undefined && stored.length > 0 && (
         <section>
-          <SectionHeading title="Colmeias neste navegador" />
+          <SectionHeading title="Colmeias que você já abriu aqui" />
           <ul className="space-y-2">
             {stored.map((item) => (
               <li key={item.inviteCode}>

@@ -32,7 +32,7 @@ module Api
 
       def claim
         member = invited_household.members.find(params.require(:member_id))
-        return render_conflict("essa pessoa já entrou na colmeia") if member.claimed?
+        return render_conflict("Essa pessoa já entrou na colmeia") if member.claimed?
 
         member.claim!
         render json: MemberSerializer.call(member)

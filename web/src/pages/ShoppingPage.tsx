@@ -34,7 +34,7 @@ export function ShoppingPage() {
     <div className="space-y-6 animate-rise">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Compras</h1>
-        <p className="text-sm text-ink-soft">Uma lista só, todo mundo acrescenta.</p>
+        <p className="text-sm text-ink-soft">Uma lista só, e todo mundo escreve nela.</p>
       </div>
       <AddItemForm submitting={add.isPending} onAdd={(name, quantity) => add.mutate({ name, quantity, addedById: currentMember?.id ?? null })} />
       <MemberFilter />
@@ -42,7 +42,7 @@ export function ShoppingPage() {
       <section>
         <SectionHeading title="Falta comprar" hint={toBuy.length === 0 ? undefined : `${toBuy.length} ${toBuy.length === 1 ? "item" : "itens"}`} />
         {toBuy.length === 0 ? (
-          <EmptyState icon={<ShoppingBasket className="size-6" />} title={filtered ? `${filtered.name} não pediu nada` : "Lista vazia"} hint="Acabou algo? Escreva acima e a casa inteira vê." />
+          <EmptyState icon={<ShoppingBasket className="size-6" />} title={filtered ? `${filtered.name} não pediu nada` : "Lista vazia"} hint="Acabou alguma coisa? Escreva aí em cima que todo mundo vê." />
         ) : (
           <Card><ul className="divide-y divide-line">{toBuy.map(renderRow)}</ul></Card>
         )}
@@ -50,7 +50,7 @@ export function ShoppingPage() {
 
       {purchased.length > 0 && (
         <section>
-          <SectionHeading title="Já comprado" action={<Button variant="ghost" size="sm" icon={<Trash2 className="size-4" />} onClick={() => clearPurchased.mutate(undefined)} loading={clearPurchased.isPending}>Limpar</Button>} />
+          <SectionHeading title="Já comprado" action={<Button variant="ghost" size="sm" icon={<Trash2 className="size-4" />} onClick={() => clearPurchased.mutate(undefined)} loading={clearPurchased.isPending}>Tirar da lista</Button>} />
           <Card className="opacity-80"><ul className="divide-y divide-line">{purchased.map(renderRow)}</ul></Card>
         </section>
       )}

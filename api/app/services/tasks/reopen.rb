@@ -10,7 +10,7 @@ module Tasks
     end
 
     def call
-      raise AlreadyOpen, "task is already open" unless task.done?
+      raise AlreadyOpen, "Essa tarefa já está aberta" unless task.done?
 
       task.transaction do
         closing_completion&.destroy!

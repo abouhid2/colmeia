@@ -10,7 +10,7 @@ function buildTiles(stats: MemberStats): Tile[] {
   return [
     { label: "Tarefas feitas", value: String(stats.tasksCount) },
     { label: "Pontos no total", value: String(stats.points) },
-    { label: "Nota média", value: stats.averageRating === null ? "—" : stats.averageRating.toFixed(1), hint: "recebida" },
+    { label: "Nota média", value: stats.averageRating === null ? "–" : stats.averageRating.toFixed(1), hint: "recebida" },
     { label: "Avaliações feitas", value: String(stats.reviewsGiven) },
   ];
 }

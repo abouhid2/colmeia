@@ -41,7 +41,7 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
           </Field>
         </div>
         <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />
-        <Field label="Tipo" hint={MEMBER_KINDS[kind].hint}>
+        <Field label="É abelha ou lagartinha?" hint={MEMBER_KINDS[kind].hint}>
           <Segmented label="Tipo de pessoa" options={KIND_SEGMENTS} value={kind} onChange={setKind} />
         </Field>
         <div className="flex justify-end gap-2 pt-1">

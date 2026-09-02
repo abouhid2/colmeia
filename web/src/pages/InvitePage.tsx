@@ -28,7 +28,7 @@ export function InvitePage() {
         <EmptyState
           icon={<Link2Off className="size-6" />}
           title="Esse convite não existe"
-          hint="Confira o link com quem te chamou, ou crie a sua própria colmeia."
+          hint="Confira o link com quem te chamou. Ou crie a sua própria colmeia."
           action={<Button onClick={() => void navigate("/")}>Voltar ao início</Button>}
         />
       </PlainPage>
