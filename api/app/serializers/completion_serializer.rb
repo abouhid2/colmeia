@@ -2,6 +2,7 @@ module CompletionSerializer
   def self.call(completion)
     {
       id: completion.id,
+      season_id: completion.season_id,
       task_id: completion.task_id,
       member_id: completion.member_id,
       reviewer_id: completion.reviewer_id,

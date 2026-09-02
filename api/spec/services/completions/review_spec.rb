@@ -2,10 +2,11 @@ require "rails_helper"
 
 RSpec.describe Completions::Review do
   let(:household) { Household.create!(name: "Casa") }
+  let(:season) { household.seasons.create!(name: "Estação atual", starts_on: Date.current) }
   let(:worker) { household.members.create!(name: "Bruno") }
   let(:reviewer) { household.members.create!(name: "Ana") }
   let(:completion) do
-    household.completions.create!(member: worker, status: "pending", task_title: "Banheiro", task_points: 20, completed_at: Time.current)
+    household.completions.create!(season: season, member: worker, status: "pending", task_title: "Banheiro", task_points: 20, completed_at: Time.current)
   end
 
   it "approves the completion and awards points by rating" do

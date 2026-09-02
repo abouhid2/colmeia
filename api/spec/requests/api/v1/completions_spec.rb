@@ -3,10 +3,11 @@ require "rails_helper"
 RSpec.describe "Completions API", type: :request do
   let(:household) { create_household }
   let(:headers) { headers_for(household) }
+  let(:season) { season_of(household) }
   let!(:worker) { household.members.create!(name: "Bruno") }
   let!(:reviewer) { household.members.create!(name: "Ana") }
   let!(:completion) do
-    household.completions.create!(member: worker, status: "pending", task_title: "Banheiro", task_points: 20, completed_at: Time.current)
+    household.completions.create!(season: season, member: worker, status: "pending", task_title: "Banheiro", task_points: 20, completed_at: Time.current)
   end
 
   it "lists pending completions" do

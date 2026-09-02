@@ -2,6 +2,7 @@ module TaskSerializer
   def self.call(task)
     {
       id: task.id,
+      season_id: task.season_id,
       title: task.title,
       description: task.description,
       points: task.points,

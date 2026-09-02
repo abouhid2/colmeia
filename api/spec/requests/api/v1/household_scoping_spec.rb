@@ -4,10 +4,12 @@ RSpec.describe "Household scoping", type: :request do
   let(:house) { create_household(name: "Nossa casa") }
   let(:other) { create_household(name: "Casa alheia") }
   let(:headers) { headers_for(house) }
+  let(:season) { season_of(house) }
+  let(:other_season) { season_of(other) }
 
   describe "the X-Household-Code header" do
     it "is required by every scoped endpoint" do
-      %w[ /api/v1/household /api/v1/members /api/v1/tasks /api/v1/completions /api/v1/shopping_items /api/v1/goals ].each do |path|
+      %w[ /api/v1/household /api/v1/members /api/v1/tasks /api/v1/completions /api/v1/shopping_items /api/v1/goals /api/v1/seasons ].each do |path|
         get path
 
         expect(response).to have_http_status(:unauthorized), "expected 401 from #{path}"
@@ -53,10 +55,10 @@ RSpec.describe "Household scoping", type: :request do
   describe "reading" do
     before do
       other.members.create!(name: "Estranho")
-      other.tasks.create!(title: "Tarefa alheia", points: 5)
-      other.goals.create!(title: "Meta alheia", target_points: 50)
+      other.tasks.create!(season: other_season, title: "Tarefa alheia", points: 5)
+      other.goals.create!(season: other_season, title: "Meta alheia", target_points: 50)
       other.shopping_items.create!(name: "Item alheio")
-      other.completions.create!(task_title: "Feito alheio", task_points: 5, points_awarded: 5, completed_at: Time.current)
+      other.completions.create!(season: other_season, task_title: "Feito alheio", task_points: 5, points_awarded: 5, completed_at: Time.current)
     end
 
     it "never leaks another colmeia's records" do
@@ -72,7 +74,7 @@ RSpec.describe "Household scoping", type: :request do
 
   describe "writing" do
     it "cannot read, edit or delete another colmeia's task" do
-      task = other.tasks.create!(title: "Tarefa alheia", points: 5)
+      task = other.tasks.create!(season: other_season, title: "Tarefa alheia", points: 5)
 
       patch "/api/v1/tasks/#{task.id}", params: { task: { title: "Sequestrada" } }, headers: headers
       expect(response).to have_http_status(:not_found)
@@ -94,7 +96,7 @@ RSpec.describe "Household scoping", type: :request do
     end
 
     it "cannot delete another colmeia's goal" do
-      goal = other.goals.create!(title: "Meta alheia", target_points: 50)
+      goal = other.goals.create!(season: other_season, title: "Meta alheia", target_points: 50)
 
       delete "/api/v1/goals/#{goal.id}", headers: headers
 
@@ -114,14 +116,14 @@ RSpec.describe "Household scoping", type: :request do
     it "cannot assign a task to someone from another colmeia" do
       stranger = other.members.create!(name: "Estranho")
 
-      post "/api/v1/tasks", params: { task: { title: "Louça", points: 5, assignee_id: stranger.id } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Louça", points: 5, assignee_id: stranger.id, season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json_body["details"]).to include(a_string_matching(/another colmeia/))
     end
 
     it "cannot let an outsider complete a task" do
-      task = house.tasks.create!(title: "Louça", points: 5)
+      task = house.tasks.create!(season: season, title: "Louça", points: 5)
       stranger = other.members.create!(name: "Estranho")
 
       post "/api/v1/tasks/#{task.id}/complete", params: { member_id: stranger.id }, headers: headers
@@ -132,7 +134,7 @@ RSpec.describe "Household scoping", type: :request do
 
     it "cannot let an outsider review a completion" do
       worker = house.members.create!(name: "Ana")
-      completion = house.completions.create!(member: worker, status: "pending", task_title: "Banheiro", task_points: 20, completed_at: Time.current)
+      completion = house.completions.create!(season: season, member: worker, status: "pending", task_title: "Banheiro", task_points: 20, completed_at: Time.current)
       stranger = other.members.create!(name: "Estranho")
 
       post "/api/v1/completions/#{completion.id}/review", params: { reviewer_id: stranger.id, rating: 5 }, headers: headers

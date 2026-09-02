@@ -4,6 +4,7 @@ class Completion < ApplicationRecord
 
   include HouseholdScoped
 
+  belongs_to_in_household :season
   belongs_to_in_household :task, optional: true
   belongs_to_in_household :member, optional: true
   belongs_to_in_household :reviewer, class_name: "Member", optional: true

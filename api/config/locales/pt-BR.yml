@@ -2,6 +2,10 @@ pt-BR:
   api:
     errors:
       missing_reference: "Alguém ou algo referenciado aqui não existe mais. Atualize a página."
+      season_closed: "Essa estação já foi encerrada"
+      season_already_closed: "Essa estação já estava encerrada"
+      season_already_open: "Essa estação não está encerrada"
+      season_has_completions: "Essa estação já tem tarefas concluídas, então não dá para apagá-la"
   activerecord:
     models:
       task: Tarefa
@@ -10,6 +14,13 @@ pt-BR:
       shopping_item: Item
       goal: Meta
       household: Casa
+      season: Estação
+    errors:
+      models:
+        season:
+          attributes:
+            ends_on:
+              on_or_after_start: "não pode ser antes do começo"
     attributes:
       task:
         title: Título
@@ -38,6 +49,10 @@ pt-BR:
       goal:
         title: Recompensa
         target_points: Pontos da meta
-        period: Período
+      season:
+        name: Nome
+        starts_on: Começo
+        ends_on: Fim
+        closed_at: Encerrada em
       household:
         name: Nome da casa

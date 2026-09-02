@@ -20,12 +20,13 @@ RSpec.describe Household do
 
   it "takes its records down with it" do
     household = described_class.create!(name: "Casa")
-    household.tasks.create!(title: "Louça", points: 5)
-    household.goals.create!(title: "Pizza", target_points: 100)
+    season = household.seasons.create!(name: "Estação", starts_on: Date.current)
+    household.tasks.create!(season: season, title: "Louça", points: 5)
+    household.goals.create!(season: season, title: "Pizza", target_points: 100)
     household.shopping_items.create!(name: "Leite")
 
     household.destroy!
 
-    expect([ Task.count, Goal.count, ShoppingItem.count ]).to eq([ 0, 0, 0 ])
+    expect([ Season.count, Task.count, Goal.count, ShoppingItem.count ]).to eq([ 0, 0, 0, 0 ])
   end
 end

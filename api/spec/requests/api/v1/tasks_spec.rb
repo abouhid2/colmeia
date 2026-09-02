@@ -3,12 +3,13 @@ require "rails_helper"
 RSpec.describe "Tasks API", type: :request do
   let(:household) { create_household }
   let(:headers) { headers_for(household) }
+  let(:season) { season_of(household) }
   let!(:member) { household.members.create!(name: "Ana") }
 
   describe "GET /api/v1/tasks" do
     it "lists tasks, optionally filtered by status" do
-      household.tasks.create!(title: "Aberta", points: 5)
-      household.tasks.create!(title: "Feita", points: 5, status: "done")
+      household.tasks.create!(season: season, title: "Aberta", points: 5)
+      household.tasks.create!(season: season, title: "Feita", points: 5, status: "done")
 
       get "/api/v1/tasks", params: { status: "open" }, headers: headers
 
@@ -19,14 +20,14 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks" do
     it "creates a task" do
-      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, recurrence: "custom", interval_days: 3, assignee_id: member.id } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, recurrence: "custom", interval_days: 3, assignee_id: member.id, season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:created)
       expect(json_body).to include("title" => "Regar", "recurrence" => "custom", "interval_days" => 3, "assignee_id" => member.id)
     end
 
     it "returns validation errors" do
-      post "/api/v1/tasks", params: { task: { title: "", points: 0 } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "", points: 0, season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json_body["details"]).to include("Título não pode ficar em branco")
@@ -35,7 +36,7 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks with a member that no longer exists" do
     it "answers 422 in Portuguese instead of crashing" do
-      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999 } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999, season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json_body["details"].first).to include("não existe mais")
@@ -44,7 +45,7 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks/:id/reopen" do
     it "reopens a done task and clears completed_at" do
-      task = household.tasks.create!(title: "Feita", points: 5, status: "done", completed_at: Time.current)
+      task = household.tasks.create!(season: season, title: "Feita", points: 5, status: "done", completed_at: Time.current)
 
       post "/api/v1/tasks/#{task.id}/reopen", headers: headers
 
@@ -53,7 +54,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "ignores status through mass assignment" do
-      task = household.tasks.create!(title: "Aberta", points: 5)
+      task = household.tasks.create!(season: season, title: "Aberta", points: 5)
 
       patch "/api/v1/tasks/#{task.id}", params: { task: { status: "done" } }, headers: headers
 
@@ -63,7 +64,7 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks/:id/complete" do
     it "returns the updated task and the new completion" do
-      task = household.tasks.create!(title: "Louça", points: 5, recurrence: "daily", due_on: Date.current)
+      task = household.tasks.create!(season: season, title: "Louça", points: 5, recurrence: "daily", due_on: Date.current)
 
       post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
 
@@ -73,7 +74,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "responds with 409 when the task is already done" do
-      task = household.tasks.create!(title: "Feita", points: 5, status: "done")
+      task = household.tasks.create!(season: season, title: "Feita", points: 5, status: "done")
 
       post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
 
