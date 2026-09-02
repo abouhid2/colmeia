@@ -30,6 +30,7 @@ class Member < ApplicationRecord
 
   normalizes :crown_title, with: ->(title) { title.to_s.strip }, apply_to_nil: true
   normalizes :favorite_achievements, with: ->(keys) { Array(keys).map(&:to_s) }, apply_to_nil: true
+  normalizes :nav_preferences, with: ->(value) { NavPreferences.normalize(value) }, apply_to_nil: true
 
   validates :name, presence: true, length: { maximum: 40 }
   validates :avatar, presence: true, length: { maximum: 8 }

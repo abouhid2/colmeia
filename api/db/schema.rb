@@ -81,6 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
     t.integer "household_id", null: false
     t.string "kind", default: "bee", null: false
     t.string "name", null: false
+    t.json "nav_preferences", default: {}, null: false
     t.decimal "points_multiplier", precision: 3, scale: 2, default: "1.0", null: false
     t.datetime "updated_at", null: false
     t.index ["household_id"], name: "index_members_on_household_id"
