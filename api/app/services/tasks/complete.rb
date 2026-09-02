@@ -16,7 +16,7 @@ module Tasks
 
     def call
       raise ActiveRecord::RecordNotFound if task.household_id != member.household_id
-      raise AlreadyDone, "task is already done" if task.done?
+      raise AlreadyDone, "Essa tarefa já foi concluída" if task.done?
 
       ActiveRecord::Base.transaction do
         completion = task.completions.create!(completion_attributes)

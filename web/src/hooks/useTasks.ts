@@ -42,6 +42,8 @@ export function useTaskMutations() {
     ({ id, memberId }: { id: number; memberId: number }) => api.tasks.complete(id, memberId),
     { invalidates: [queryKeys.tasks, queryKeys.completions, queryKeys.seasons] },
   );
-  const reopen = useAppMutation((id: number) => api.tasks.reopen(id), { invalidates: [queryKeys.tasks] });
+  const reopen = useAppMutation((id: number) => api.tasks.reopen(id), {
+    invalidates: [queryKeys.tasks, queryKeys.completions],
+  });
   return { create, update, remove, complete, reopen };
 }

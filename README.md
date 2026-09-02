@@ -9,13 +9,13 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 - **Uma colmeia por casa**: cada colmeia tem o seu link de convite, e ninguém vê os dados da outra.
 - **Estações**: campeonatos que a família cria e nomeia. Cada estação tem as suas tarefas, as suas metas, os seus pontos e o seu ranking.
 - **Tarefas com pontos**: cada tarefa vale o que a família decidir (uma resistência de chuveiro queimada pode valer 50 pontos).
-- **Avaliação opcional**: tarefas marcadas "com avaliação" só liberam os pontos depois que outra pessoa dá uma nota de 1 a 5. Os pontos saem proporcionais à nota. Ninguém avalia o próprio trabalho.
+- **Avaliação opcional**: tarefas marcadas "com avaliação" só liberam os pontos depois que outra pessoa dá uma nota de 1 a 5. Os pontos saem conforme a nota. Ninguém avalia o próprio trabalho.
 - **Recorrência**: diária, semanal, mensal ou a cada N dias. A próxima data conta a partir do dia em que a tarefa foi feita. Tarefas pontuais fecham ao concluir.
 - **Responsável**: qualquer tarefa pode ser atribuída a alguém ou deixada para "quem pegar primeiro".
 - **Prioridade**: baixa, normal, alta ou urgente. As vencidas e urgentes aparecem primeiro.
 - **Lista de compras** compartilhada, com quem pediu e quem comprou.
-- **Metas da estação**: uma coletiva, com o favo de progresso e o ranking de quem mais contribuiu, e quantas individuais quiserem (só os pontos daquela pessoa contam).
-- **Lagartinhas**: crianças na colmeia. Cada pessoa é abelha ou lagartinha, e a lagartinha ganha os pontos multiplicados (1,5× por padrão, ajustável de 0,5× a 3×) para conseguir acompanhar os adultos. O multiplicador aparece na cara, ao lado do nome. Há um ranking só das lagartinhas, e as tarefas podem ser marcadas "boa para lagartinhas", com filtro na lista. O raciocínio está em [docs/lagartinhas.md](docs/lagartinhas.md).
+- **Metas da estação**: uma da colmeia inteira, com o favo enchendo e o ranking de quem mais ajudou, e quantas individuais quiserem (só os pontos daquela pessoa contam).
+- **Lagartinhas**: crianças na colmeia. Cada pessoa é abelha ou lagartinha, e a lagartinha ganha os pontos multiplicados (1,5× por padrão, ajustável de 0,5× a 3×) para conseguir acompanhar os adultos. O multiplicador fica à vista, ao lado do nome. Há um ranking só das lagartinhas, e as tarefas podem ser marcadas "boa para lagartinhas", com filtro na lista. O raciocínio está em [docs/lagartinhas.md](docs/lagartinhas.md).
 - **Filtro por integrante** presente em todas as telas: escolha uma pessoa e o app mostra só as tarefas, compras, metas e conquistas dela.
 
 ## Estações
@@ -41,8 +41,7 @@ O seletor de estação fica na barra lateral e no cabeçalho, e a página
 ## Colmeias e convites
 
 Uma colmeia é uma casa. Quem cria dá um nome e escreve quem mora lá: cada nome
-vira um espantalho, uma pessoa que existe na lista mas que ninguém ocupou
-ainda.
+vira um lugar guardado na lista, esperando a pessoa dizer que é ela.
 
 A colmeia ganha um código de convite e o link `/entrar/<código>`. Quem abre o
 link vê o nome da colmeia e a lista, e escolhe:

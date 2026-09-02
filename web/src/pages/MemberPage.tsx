@@ -36,7 +36,7 @@ function UnknownMember({ search }: { search: string }) {
         hint="O link aponta para alguém que saiu da colmeia."
         action={
           <Link to={{ pathname: "/familia", search }} className="inline-flex items-center gap-1 text-sm font-semibold text-honey-700 hover:underline">
-            <ArrowLeft className="size-4" /> Voltar para a Família
+            <ArrowLeft className="size-4" /> Voltar para a família
           </Link>
         }
       />
@@ -84,7 +84,7 @@ export function MemberPage() {
       <MemberStatTiles stats={profile.stats} />
 
       <section>
-        <SectionHeading title="Conquistas" hint="Saem sozinhas do que essa pessoa já fez." />
+        <SectionHeading title="Conquistas" hint={`O que ${member.name} já ganhou, e o que falta.`} />
         <AchievementList achievements={profile.achievements} />
       </section>
 
@@ -95,7 +95,7 @@ export function MemberPage() {
           action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(member.id)}>Nova meta</Button>}
         />
         {profile.goals.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title={`${member.name} ainda não tem meta`} hint="Uma recompensa só para essa pessoa, contando só os pontos dela." />
+          <EmptyState icon={<Target className="size-6" />} title={`${member.name} ainda não tem meta`} hint={`Uma recompensa só de ${member.name}, contando os pontos dela.`} />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {profile.goals.map((item) => (
@@ -106,16 +106,16 @@ export function MemberPage() {
       </section>
 
       <section>
-        <SectionHeading title="Tarefas abertas" hint={`Atribuídas a ${member.name} nesta estação, as mais urgentes primeiro.`} />
+        <SectionHeading title="Tarefas abertas" hint={`Na fila de ${member.name} nesta estação, as mais urgentes primeiro.`} />
         {profile.openTasks.length === 0 ? (
-          <EmptyState icon={<ListChecks className="size-6" />} title="Nada na fila" hint="Ninguém atribuiu tarefa nenhuma para essa pessoa." />
+          <EmptyState icon={<ListChecks className="size-6" />} title="Nada na fila" hint={`Ninguém passou tarefa nenhuma para ${member.name} ainda.`} />
         ) : (
           <TaskList tasks={profile.openTasks} today={now} lookup={lookup} onComplete={dialogs.openComplete} onEdit={dialogs.openEdit} readOnly={closed} />
         )}
       </section>
 
       <section>
-        <SectionHeading title="Histórico" hint="Tudo que já foi feito, em todas as estações, do mais recente para o mais antigo." />
+        <SectionHeading title="Histórico" hint={`Tudo que ${member.name} já fez, em todas as estações, da mais recente para a mais antiga.`} />
         {profile.history.length === 0 ? (
           <EmptyState icon={<Sparkles className="size-6" />} title="Nada concluído ainda" hint="A primeira tarefa feita aparece aqui." />
         ) : (

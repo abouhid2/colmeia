@@ -18,6 +18,14 @@ import type {
   TaskInput,
 } from "../domain/types";
 
+/** Which slice of the history a screen wants. */
+export interface CompletionQuery {
+  /** Only what was scored inside this estação. */
+  seasonId?: number | null;
+  /** At most this many, newest first. */
+  limit?: number;
+}
+
 export interface CompleteTaskResult {
   task: Task;
   completion: Completion;
@@ -70,8 +78,9 @@ export interface ColmeiaApi {
     reopen(id: number): Promise<Task>;
   };
   completions: {
-    /** Left out on purpose most of the time: the history spans estações. */
-    list(seasonId?: number | null): Promise<Completion[]>;
+    /** Newest first, across every estação unless one is named: the profile
+     *  history and the badges are counted from all of it. */
+    list(options?: CompletionQuery): Promise<Completion[]>;
     review(id: number, input: ReviewInput): Promise<Completion>;
   };
   shopping: {

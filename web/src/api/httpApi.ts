@@ -2,7 +2,7 @@ import type {
   Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
   ReviewInput, Season, SeasonInput, SeasonUpdate, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskResult } from "./client";
+import type { ColmeiaApi, CompleteTaskResult, CompletionQuery } from "./client";
 import { ApiError } from "./errors";
 import { toCamelKeys, toSnakeKeys } from "./keys";
 
@@ -17,15 +17,23 @@ const HOUSEHOLD_HEADER = "X-Household-Code";
 
 const ERROR_LABELS: Record<string, string> = {
   not_found: "Isso não existe mais. Atualize a página.",
-  unauthorized: "Sem acesso a esta colmeia.",
-  conflict: "Alguém mexeu nisso antes de você.",
-  invalid: "Dados inválidos.",
-  bad_request: "Pedido inválido.",
+  unauthorized: "Você não está nesta colmeia. Abra o link do convite de novo.",
+  conflict: "Alguém mexeu nisso antes de você. Atualize a página.",
+  invalid: "Faltou alguma coisa. Confira o que você escreveu.",
+  bad_request: "Não deu para entender o pedido. Tente de novo.",
 };
 
 /** "/tasks?season_id=7", or "/tasks" when the whole colmeia is meant. */
 function scopedPath(path: string, seasonId: number | null | undefined): string {
   return seasonId === null || seasonId === undefined ? path : `${path}?season_id=${seasonId}`;
+}
+
+function completionsPath({ seasonId, limit }: CompletionQuery): string {
+  const query = new URLSearchParams();
+  if (seasonId !== null && seasonId !== undefined) query.set("season_id", String(seasonId));
+  if (limit !== undefined) query.set("limit", String(limit));
+  const search = query.toString();
+  return search === "" ? "/completions" : `/completions?${search}`;
 }
 
 function parseJson(text: string): unknown {
@@ -74,7 +82,7 @@ export class HttpApi implements ColmeiaApi {
     const json = parseJson(await response.text());
     if (!response.ok) {
       const { details, error } = (json ?? {}) as ErrorBody;
-      const fallback = error ? (ERROR_LABELS[error] ?? error) : `O servidor respondeu com erro ${response.status}`;
+      const fallback = error ? (ERROR_LABELS[error] ?? error) : `O servidor respondeu com erro ${response.status}. Tente de novo em instantes.`;
       throw new ApiError(response.status, details ?? [fallback]);
     }
     return toCamelKeys<T>(json);
@@ -121,7 +129,8 @@ export class HttpApi implements ColmeiaApi {
   };
 
   completions = {
-    list: (seasonId?: number | null): Promise<Completion[]> => this.request("GET", scopedPath("/completions", seasonId)),
+    list: (options: CompletionQuery = {}): Promise<Completion[]> =>
+      this.request("GET", completionsPath(options)),
     review: (id: number, input: ReviewInput): Promise<Completion> => this.request("POST", `/completions/${id}/review`, input),
   };
 

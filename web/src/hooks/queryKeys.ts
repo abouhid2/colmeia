@@ -6,6 +6,7 @@ export const queryKeys = {
   completions: ["completions"],
   shopping: ["shopping"],
   goals: ["goals"],
+  storedHouseholds: ["stored-households"],
 } as const;
 
 export type QueryKey = (typeof queryKeys)[keyof typeof queryKeys];

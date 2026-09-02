@@ -51,7 +51,7 @@ RSpec.describe Task do
       task = household.tasks.build(season: stranger, title: "Louça", points: 5)
 
       expect(task).not_to be_valid
-      expect(task.errors[:season]).to include("is from another colmeia")
+      expect(task.errors[:season]).to include("não é desta colmeia")
     end
 
     it "requires interval_days for custom recurrence" do
@@ -73,7 +73,7 @@ RSpec.describe Task do
       task = household.tasks.build(season: season, title: "Louça", points: 5, assignee: stranger)
 
       expect(task).not_to be_valid
-      expect(task.errors[:assignee]).to include("is from another colmeia")
+      expect(task.errors[:assignee]).to include("não é desta colmeia")
     end
   end
 end

@@ -59,6 +59,28 @@ RSpec.describe "Tasks API", type: :request do
       expect(json_body).to include("status" => "open", "completed_at" => nil)
     end
 
+    it "takes back the completion that closed the task, so it pays only once" do
+      task = household.tasks.create!(season: season, title: "Pendurar quadro", points: 15)
+      post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
+
+      post "/api/v1/tasks/#{task.id}/reopen", headers: headers
+      expect(response).to have_http_status(:ok)
+      expect(household.completions.count).to eq(0)
+
+      post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
+
+      expect(household.completions.approved.count).to eq(1)
+      expect(household.completions.sum(:points_awarded)).to eq(15)
+    end
+
+    it "answers 409 when the task is already open" do
+      task = household.tasks.create!(season: season, title: "Aberta", points: 5)
+
+      post "/api/v1/tasks/#{task.id}/reopen", headers: headers
+
+      expect(response).to have_http_status(:conflict)
+    end
+
     it "ignores status through mass assignment" do
       task = household.tasks.create!(season: season, title: "Aberta", points: 5)
 

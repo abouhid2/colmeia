@@ -76,11 +76,11 @@ export function HomePage() {
       <section>
         <SectionHeading
           title="Metas individuais"
-          hint={filtered ? `Só de ${filtered.name}.` : "Cada um com a sua recompensa."}
+          hint={filtered ? `Só as de ${filtered.name}.` : "Cada um com a sua recompensa."}
           action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(memberId ?? currentMember?.id ?? null)}>Nova meta</Button>}
         />
         {personalShown.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title={filtered ? `${filtered.name} ainda não tem meta` : "Ninguém tem meta individual ainda"} hint="Uma recompensa só para uma pessoa, contando só os pontos dela." />
+          <EmptyState icon={<Target className="size-6" />} title={filtered ? `${filtered.name} ainda não tem meta` : "Ninguém tem meta individual ainda"} hint="Uma recompensa para uma pessoa só, contando os pontos dela." />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {personalShown.map((item) => (
@@ -95,11 +95,11 @@ export function HomePage() {
       <section>
         <SectionHeading
           title="Para fazer agora"
-          hint={filtered ? `Atribuídas a ${filtered.name}, as mais urgentes primeiro.` : "As mais urgentes primeiro."}
+          hint={filtered ? `Na fila de ${filtered.name}, as mais urgentes primeiro.` : "As mais urgentes primeiro."}
           action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>}
         />
         {spotlight.length === 0 ? (
-          <EmptyState icon={<Sun className="size-6" />} title={filtered ? `Nada atribuído a ${filtered.name}` : "Nenhuma tarefa aberta"} hint={filtered ? "Atribua uma tarefa ou limpe o filtro." : "A casa está em dia. Aproveite."} />
+          <EmptyState icon={<Sun className="size-6" />} title={filtered ? `${filtered.name} está sem tarefa` : "Nenhuma tarefa aberta"} hint={filtered ? "Passe uma tarefa para essa pessoa ou tire o filtro." : "A casa está em dia. Aproveite."} />
         ) : (
           <>
             <TaskList tasks={spotlight} today={now} lookup={lookup} onComplete={dialogs.openComplete} onEdit={dialogs.openEdit} readOnly={closed} />

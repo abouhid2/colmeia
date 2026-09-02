@@ -18,7 +18,7 @@ export function GoalDialog({ dialog }: { dialog: GoalDialogState }) {
   if (currentSeason === null) return null;
 
   return (
-    <Dialog open={isOpen} onClose={close} title={goal ? "Ajustar a meta" : "Nova meta"} description="Uma recompensa para a casa inteira ou só para uma pessoa.">
+    <Dialog open={isOpen} onClose={close} title={goal ? "Ajustar a meta" : "Nova meta"} description="Uma recompensa para a colmeia inteira ou só para uma pessoa.">
       <GoalForm
         key={`${goal?.id ?? "new"}-${defaultMemberId ?? "all"}`}
         goal={goal}
@@ -58,20 +58,20 @@ function GoalForm({ goal, defaultMemberId, seasonId, seasonName, onDone }: GoalF
 
   const destroy = () => {
     if (!goal) return;
-    remove.mutate(goal.id, { onSuccess: () => { notify({ message: "Meta removida" }); onDone(); } });
+    remove.mutate(goal.id, { onSuccess: () => { notify({ message: "Meta apagada" }); onDone(); } });
   };
 
   return (
     <form onSubmit={submit} className="space-y-4">
       <Field label="Para quem" htmlFor="goal-owner" hint={owner === "" ? "Os pontos de todo mundo contam." : "Só os pontos dessa pessoa contam."}>
         <Select id="goal-owner" value={owner} onChange={(event) => setOwner(event.target.value)}>
-          <option value="">Toda a casa</option>
+          <option value="">A colmeia inteira</option>
           {members.map((member) => (
             <option key={member.id} value={member.id}>{member.avatar} {member.name}</option>
           ))}
         </Select>
       </Field>
-      <Field label="Recompensa" htmlFor="goal-title" hint="Ex.: pizza e filme no sábado, escolher o passeio.">
+      <Field label="Recompensa" htmlFor="goal-title" hint="Ex.: pizza e filme no sábado, escolher o passeio do domingo.">
         <Input id="goal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="O que se ganha" maxLength={LIMITS.goalTitle} required autoFocus />
       </Field>
       <Field label="Pontos para bater a meta" htmlFor="goal-target" hint={`Contam os pontos ganhos na estação ${seasonName}.`}>
@@ -80,7 +80,7 @@ function GoalForm({ goal, defaultMemberId, seasonId, seasonName, onDone }: GoalF
       <div className="flex items-center justify-between gap-2 pt-2">
         {goal ? (
           <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? destroy() : setConfirmingDelete(true))} loading={remove.isPending}>
-            {confirmingDelete ? "Confirmar remoção" : "Remover"}
+            {confirmingDelete ? "Apagar mesmo" : "Apagar meta"}
           </Button>
         ) : <span />}
         <div className="flex gap-2">

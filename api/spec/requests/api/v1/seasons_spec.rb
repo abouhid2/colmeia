@@ -181,7 +181,7 @@ RSpec.describe "Seasons API", type: :request do
     it "cannot hold this colmeia's tasks or goals" do
       post "/api/v1/tasks", params: { task: { title: "Louça", points: 5, season_id: season_of(other).id } }, headers: headers
       expect(response).to have_http_status(:unprocessable_content)
-      expect(json_body["details"]).to include(a_string_matching(/another colmeia/))
+      expect(json_body["details"]).to include(a_string_matching(/não é desta colmeia/))
 
       post "/api/v1/goals", params: { goal: { title: "Pizza", target_points: 50, season_id: season_of(other).id } }, headers: headers
       expect(response).to have_http_status(:unprocessable_content)

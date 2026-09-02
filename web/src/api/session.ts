@@ -1,4 +1,4 @@
-import type { KeyValueStore } from "./storage";
+import { parseJson, type KeyValueStore } from "./storage";
 
 /** Which colmeia this browser is in, who it is inside it, and which estação it is looking at. */
 export interface Session {
@@ -16,17 +16,8 @@ const LEGACY_INVITE_CODE = "demo";
 
 export type Memberships = Record<string, number>;
 
-function parse<T>(raw: string | null): T | null {
-  if (raw === null) return null;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
-
 export function readSession(store: KeyValueStore): Session | null {
-  const stored = parse<Partial<Session>>(store.getItem(SESSION_KEY));
+  const stored = parseJson<Partial<Session>>(store.getItem(SESSION_KEY));
   if (typeof stored?.inviteCode === "string" && typeof stored.memberId === "number") {
     // A session written before estações existed simply has no estação yet.
     return { inviteCode: stored.inviteCode, memberId: stored.memberId, seasonId: stored.seasonId ?? null };
@@ -55,6 +46,6 @@ export function clearSession(store: KeyValueStore): void {
 }
 
 export function readMemberships(store: KeyValueStore): Memberships {
-  const stored = parse<Memberships>(store.getItem(MEMBERSHIPS_KEY));
+  const stored = parseJson<Memberships>(store.getItem(MEMBERSHIPS_KEY));
   return stored === null || typeof stored !== "object" ? {} : stored;
 }

@@ -35,7 +35,7 @@ export function MemberHistory({ completions, lookup }: MemberHistoryProps) {
             <li key={completion.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-3">
               <p className="min-w-0 flex-1 truncate font-semibold">{completion.taskTitle}</p>
               {completion.status === "pending" ? (
-                <Badge icon={<Hourglass className="size-3" />}>aguardando avaliação</Badge>
+                <Badge icon={<Hourglass className="size-3" />}>Aguardando avaliação</Badge>
               ) : (
                 <span className="font-display text-sm font-bold tabular-nums text-honey-700">+{completion.pointsAwarded}</span>
               )}

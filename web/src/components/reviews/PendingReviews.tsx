@@ -28,7 +28,7 @@ export function PendingReviews() {
 
   return (
     <section>
-      <SectionHeading title="Para avaliar" hint="Os pontos só entram na colmeia depois da nota." />
+      <SectionHeading title="Para avaliar" hint="Os pontos só entram no favo depois da nota." />
       <ul className="space-y-3">
         {pending.map((completion) => {
           const doer = lookup(completion.memberId);

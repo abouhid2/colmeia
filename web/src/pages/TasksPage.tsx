@@ -79,8 +79,8 @@ export function TasksPage() {
         done.length === 0 ? (
           <EmptyState
             icon={<ListChecks className="size-6" />}
-            title={filtered ? `${filtered.name} ainda não concluiu nada` : "Nada concluído nesta estação"}
-            hint={filtered ? undefined : "Toda tarefa concluída aparece aqui, inclusive as recorrentes."}
+            title={filtered ? `${filtered.name} ainda não fez nada nesta estação` : "Nada concluído nesta estação"}
+            hint={filtered ? undefined : "Toda tarefa feita aparece aqui, até as que se repetem."}
           />
         ) : (
           <>
@@ -107,8 +107,8 @@ export function TasksPage() {
       ) : open.length === 0 ? (
         <EmptyState
           icon={<ListChecks className="size-6" />}
-          title={kidOnly ? "Nenhuma tarefa para lagartinhas" : filtered ? `Nada atribuído a ${filtered.name}` : "Nenhuma tarefa aberta"}
-          hint={kidOnly ? "Marque \"boa para lagartinhas\" nas tarefas que uma criança dá conta." : filtered ? "Crie uma tarefa para essa pessoa ou veja todas." : "Crie a primeira: o que precisa ser feito na casa?"}
+          title={kidOnly ? "Nenhuma tarefa para lagartinhas" : filtered ? `${filtered.name} está sem tarefa` : "Nenhuma tarefa aberta"}
+          hint={kidOnly ? "Marque \"boa para lagartinhas\" nas tarefas que uma criança dá conta." : filtered ? "Crie uma tarefa para essa pessoa ou tire o filtro." : "Crie a primeira: o que precisa ser feito na casa?"}
           action={closed ? undefined : <Button size="sm" icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>}
         />
       ) : (

@@ -23,7 +23,7 @@ export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryC
       )}
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-          {member ? member.name : "Toda a casa"} · {season.name}
+          {member ? member.name : "A colmeia inteira"} · {season.name}
         </p>
         <p className="truncate font-semibold">{goal.title}</p>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-honey-100" role="progressbar" aria-valuemin={0} aria-valuemax={progress.target} aria-valuenow={progress.earned} aria-label={`${goal.title}: ${progress.earned} de ${progress.target} pontos`}>

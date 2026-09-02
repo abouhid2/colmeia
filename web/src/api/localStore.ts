@@ -1,6 +1,6 @@
 import type { Goal, Household } from "../domain/types";
 import { DEMO_INVITE_CODE, normalizeState, type LocalState, type StoredMember, type StoredState } from "./localState";
-import type { KeyValueStore } from "./storage";
+import { parseJson, type KeyValueStore } from "./storage";
 
 export const HOUSEHOLD_INDEX_KEY = "colmeia.households.v4";
 export const HOUSEHOLD_KEY_PREFIX = "colmeia.db.v4.";
@@ -38,13 +38,13 @@ function fromV1({ goal, ...rest }: LegacyV1State): LegacyV2State {
   return { ...rest, goals: goal ? [ { ...goal, memberId: null } as Goal ] : [] };
 }
 
-/** Whoever was already using the app is in it; only new colmeias start out
- *  with placeholders waiting to be claimed. */
+/** v2 had no notion of who this browser was, so everybody stays a placeholder:
+ *  whoever opens the app says which of these people they are, once. */
 function fromV2(state: LegacyV2State): StoredState {
   return {
     ...state,
     household: { ...state.household, inviteCode: DEMO_INVITE_CODE },
-    members: state.members.map((member) => ({ ...member, claimedAt: member.createdAt })),
+    members: state.members.map((member) => ({ ...member, claimedAt: null })),
   };
 }
 
@@ -65,8 +65,8 @@ export class LocalStore {
    *  becomes the demo colmeia, and a browser that never saw the app gets the
    *  demo family. */
   index(): HouseholdIndex {
-    const raw = this.store.getItem(HOUSEHOLD_INDEX_KEY);
-    if (raw !== null) return JSON.parse(raw) as HouseholdIndex;
+    const stored = parseJson<HouseholdIndex>(this.store.getItem(HOUSEHOLD_INDEX_KEY));
+    if (stored !== null && typeof stored === "object") return stored;
 
     const carried = this.takeSeasonlessColmeias();
     if (carried !== null) return this.rewrite(carried);
@@ -77,9 +77,18 @@ export class LocalStore {
   }
 
   read(inviteCode: string): LocalState | null {
-    if (!(inviteCode in this.index())) return null;
-    const raw = this.store.getItem(storageKey(inviteCode));
-    return raw === null ? null : normalizeState(JSON.parse(raw) as StoredState, this.clock());
+    const stored = this.resolve(inviteCode);
+    if (stored === null) return null;
+    const state = parseJson<StoredState>(this.store.getItem(storageKey(stored)));
+    return state === null ? null : normalizeState(state, this.clock());
+  }
+
+  /** The code as this browser filed it, whatever case it was typed in. */
+  resolve(inviteCode: string): string | null {
+    const index = this.index();
+    if (inviteCode in index) return inviteCode;
+    const wanted = inviteCode.toLowerCase();
+    return Object.keys(index).find((code) => code.toLowerCase() === wanted) ?? null;
   }
 
   save(state: LocalState): void {
@@ -120,30 +129,26 @@ export class LocalStore {
 
   /** The colmeias of a browser that stopped using the app before estações. */
   private takeSeasonlessColmeias(): [ LocalState, string | undefined ][] | null {
-    const raw = this.store.getItem(LEGACY_V3_INDEX_KEY);
-    if (raw === null) return null;
+    const index = parseJson<HouseholdIndex>(this.store.getItem(LEGACY_V3_INDEX_KEY));
+    if (index === null || typeof index !== "object") return null;
 
-    const index = JSON.parse(raw) as HouseholdIndex;
     this.store.removeItem(LEGACY_V3_INDEX_KEY);
     return Object.entries(index).flatMap(([ inviteCode, entry ]) => {
-      const stored = this.store.getItem(`${LEGACY_V3_PREFIX}${inviteCode}`);
+      const stored = parseJson<StoredState>(this.store.getItem(`${LEGACY_V3_PREFIX}${inviteCode}`));
       this.store.removeItem(`${LEGACY_V3_PREFIX}${inviteCode}`);
       if (stored === null) return [];
-      const carried: [ LocalState, string | undefined ] = [
-        normalizeState(JSON.parse(stored) as StoredState, this.clock()),
-        entry.createdAt,
-      ];
+      const carried: [ LocalState, string | undefined ] = [ normalizeState(stored, this.clock()), entry.createdAt ];
       return [ carried ];
     });
   }
 
   private takeLegacyState(): StoredState | null {
-    const v2 = this.store.getItem(LEGACY_V2_KEY);
-    const v1 = this.store.getItem(LEGACY_V1_KEY);
+    const v2 = parseJson<LegacyV2State>(this.store.getItem(LEGACY_V2_KEY));
+    const v1 = parseJson<LegacyV1State>(this.store.getItem(LEGACY_V1_KEY));
     this.store.removeItem(LEGACY_V2_KEY);
     this.store.removeItem(LEGACY_V1_KEY);
-    if (v2 !== null) return fromV2(JSON.parse(v2) as LegacyV2State);
-    if (v1 !== null) return fromV2(fromV1(JSON.parse(v1) as LegacyV1State));
+    if (v2 !== null) return fromV2(v2);
+    if (v1 !== null) return fromV2(fromV1(v1));
     return null;
   }
 }

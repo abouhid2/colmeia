@@ -21,4 +21,4 @@ export function crownedTitle(crownTitle: string): string {
 }
 
 export const CROWN_EXPLANATION =
-  "Quem mais pontuou na última estação encerrada, com a meta batida, ganha o título que escolheu (Abelha Rainha, Abelhão ou o que quiser) até esta estação acabar.";
+  "Quem mais pontuou na última estação encerrada e bateu a meta usa o título que escolheu até esta estação acabar.";

@@ -20,6 +20,6 @@ module HouseholdScoped
     related = public_send(name)
     return if related.nil? || related.household_id == household_id
 
-    errors.add(name, "is from another colmeia")
+    errors.add(name, "não é desta colmeia")
   end
 end

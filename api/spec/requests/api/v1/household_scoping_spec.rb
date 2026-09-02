@@ -23,6 +23,13 @@ RSpec.describe "Household scoping", type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
 
+    it "finds the colmeia however the code was typed" do
+      get "/api/v1/household", headers: { "X-Household-Code" => house.invite_code.upcase }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body["id"]).to eq(house.id)
+    end
+
     it "rejects a blank code" do
       get "/api/v1/tasks", headers: { "X-Household-Code" => "" }
 
@@ -119,7 +126,7 @@ RSpec.describe "Household scoping", type: :request do
       post "/api/v1/tasks", params: { task: { title: "Louça", points: 5, assignee_id: stranger.id, season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(json_body["details"]).to include(a_string_matching(/another colmeia/))
+      expect(json_body["details"]).to include(a_string_matching(/não é desta colmeia/))
     end
 
     it "cannot let an outsider complete a task" do

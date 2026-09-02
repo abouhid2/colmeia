@@ -1,7 +1,7 @@
 pt-BR:
   api:
     errors:
-      missing_reference: "Alguém ou algo referenciado aqui não existe mais. Atualize a página."
+      missing_reference: "Alguém ou alguma coisa daqui não existe mais. Atualize a página."
       season_closed: "Essa estação já foi encerrada"
       season_already_closed: "Essa estação já estava encerrada"
       season_already_open: "Essa estação não está encerrada"
@@ -10,10 +10,10 @@ pt-BR:
     models:
       task: Tarefa
       member: Pessoa
-      completion: Conclusão
+      completion: Tarefa feita
       shopping_item: Item
       goal: Meta
-      household: Casa
+      household: Colmeia
       season: Estação
     errors:
       models:
@@ -59,4 +59,4 @@ pt-BR:
         ends_on: Fim
         closed_at: Encerrada em
       household:
-        name: Nome da casa
+        name: Nome da colmeia
