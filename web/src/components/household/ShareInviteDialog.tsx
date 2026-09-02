@@ -17,7 +17,7 @@ export function ShareInviteDialog({ open, inviteCode, demo = false, onClose }: S
         <InviteLinkField inviteCode={inviteCode} />
         {demo && (
           <p className="text-sm text-ink-soft">
-            Esta é uma colmeia de exemplo. Quem entrar por aqui vai mexer nas tarefas e nas pessoas de mentira junto com você.
+            Esta colmeia é um exemplo. Quem abrir o link vai mexer nas tarefas de mentira junto com você.
           </p>
         )}
         <div className="flex justify-end"><Button onClick={onClose}>Pronto</Button></div>

@@ -4,11 +4,13 @@ import { useCrown } from "../hooks/useCrown";
 import { useDisclosure } from "../hooks/useDisclosure";
 import { useMemberLookup } from "../hooks/useMembers";
 import { useMemberProfile } from "../hooks/useMemberProfile";
+import { useSession } from "../hooks/useSession";
 import { useNow } from "../hooks/useNow";
 import { GoalDialog } from "../components/goal/GoalDialog";
 import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { AchievementList } from "../components/members/AchievementList";
+import { AchievementTimeline } from "../components/members/AchievementTimeline";
 import { MemberDialog } from "../components/members/MemberDialog";
 import { MemberHero } from "../components/members/MemberHero";
 import { MemberHistory } from "../components/members/MemberHistory";
@@ -47,6 +49,7 @@ export function MemberPage() {
   const { search } = useLocation();
   const { memberId } = useParams();
   const profile = useMemberProfile(parseMemberId(memberId));
+  const { currentMember } = useSession();
   const crown = useCrown();
   const lookup = useMemberLookup();
   const dialogs = useTaskDialogs();
@@ -75,13 +78,23 @@ export function MemberPage() {
         allTimePoints={profile.allTimePoints}
         rank={profile.rank}
         houseSize={profile.houseSize}
+        favorites={profile.badges.favorites}
+        isSelf={currentMember?.id === member.id}
+        search={search}
       />
 
       <MemberStatTiles stats={profile.stats} />
 
       <section>
-        <AchievementList achievements={profile.achievements} memberName={member.name} />
+        <AchievementList achievements={profile.badges.records} memberName={member.name} />
       </section>
+
+      {profile.badges.history.length > 0 && (
+        <section>
+          <SectionHeading title="Histórico de conquistas" hint="As mais recentes, com a data de cada uma." />
+          <AchievementTimeline moments={profile.badges.history} achievements={profile.badges.records} />
+        </section>
+      )}
 
       <section>
         <SectionHeading

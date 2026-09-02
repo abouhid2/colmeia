@@ -16,6 +16,7 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 - **Lista de compras** compartilhada, com quem pediu e quem comprou.
 - **Metas** por semana ou mês: uma da colmeia inteira, com o favo enchendo e o ranking de quem mais ajudou, e quantas individuais quiserem (só os pontos daquela pessoa contam).
 - **Lagartinhas**: crianças na colmeia. Cada pessoa é abelha ou lagartinha, e a lagartinha ganha os pontos multiplicados (1,5× por padrão, ajustável de 0,5× a 3×) para conseguir acompanhar os adultos. O multiplicador fica à vista, ao lado do nome. Há um ranking só das lagartinhas, e as tarefas podem ser marcadas "boa para lagartinhas", com filtro na lista. O raciocínio está em [docs/lagartinhas.md](docs/lagartinhas.md).
+- **Conquistas**: dez medalhas que saem sozinhas do que cada pessoa já fez, na aba Conquistas. Três delas caem de novo toda vez que acontecem (nota 5 recebida, tarefa de 50 pontos ou mais, tarefa urgente) e contam quantas vezes. Cada medalha ganha fica anotada, então a contagem e as datas continuam ali mesmo que a tarefa ou a conclusão seja apagada. Cada pessoa fixa até três no próprio perfil.
 - **Filtro por integrante** presente em todas as telas: escolha uma pessoa e o app mostra só as tarefas, compras, metas e conquistas dela.
 - **Família de exemplo**: quem chega sem convite e sem colmeia clica em "Experimentar com uma família de exemplo" e cai numa colmeia só dele, já cheia de tarefas, pessoas e histórico de mentira. Dá para mexer em tudo, recomeçar do zero e sair quando quiser.
 
