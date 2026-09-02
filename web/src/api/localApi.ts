@@ -2,7 +2,8 @@ import { generateInviteCode } from "../domain/inviteCode";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
 import { LIMITS } from "../domain/limits";
-import { MAX_RATING, pointsForRating } from "../domain/points";
+import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } from "../domain/memberKinds";
+import { awardedPoints, MAX_RATING } from "../domain/points";
 import type {
   Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
   ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
@@ -42,6 +43,15 @@ function validateName(value: string | undefined, max: number, blankMessage: stri
   if (value.trim().length > max) invalid(`Use no máximo ${max} caracteres`);
 }
 
+function validateMember(input: Partial<MemberInput>): void {
+  validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
+  const multiplier = input.pointsMultiplier;
+  if (multiplier === undefined) return;
+  if (!(multiplier >= MIN_MULTIPLIER && multiplier <= MAX_MULTIPLIER)) {
+    invalid(`O multiplicador vai de ${formatMultiplier(MIN_MULTIPLIER)} a ${formatMultiplier(MAX_MULTIPLIER)}`);
+  }
+}
+
 function validateGoal(input: Partial<GoalInput>): void {
   validateName(input.title, LIMITS.goalTitle, "Diga qual é a recompensa");
   if (input.targetPoints !== undefined && (!Number.isInteger(input.targetPoints) || input.targetPoints <= 0)) invalid("A meta precisa ser maior que zero");
@@ -53,6 +63,18 @@ function validateTask(input: Partial<TaskInput>): void {
   if (input.points !== undefined && (!Number.isInteger(input.points) || input.points <= 0)) invalid("Os pontos precisam ser um número maior que zero");
   if (input.points !== undefined && input.points > LIMITS.taskPoints) invalid(`Uma tarefa vale no máximo ${LIMITS.taskPoints} pontos`);
   if (input.recurrence === "custom" && !(input.intervalDays && input.intervalDays > 0)) invalid("Informe a cada quantos dias a tarefa se repete");
+}
+
+/** Defaults a new person the way the Rails model does, handicap included. */
+function newMember(input: MemberInput): Pick<Member, "avatar" | "color" | "kind" | "name" | "pointsMultiplier"> {
+  const kind = input.kind ?? "bee";
+  return {
+    name: input.name,
+    avatar: input.avatar,
+    color: input.color,
+    kind,
+    pointsMultiplier: multiplierForKind(kind, input.pointsMultiplier ?? 1),
+  };
 }
 
 /**
@@ -150,6 +172,8 @@ export class LocalApi implements ColmeiaApi {
       name,
       avatar: AVATAR_OPTIONS[position % AVATAR_OPTIONS.length],
       color: MEMBER_COLOR_OPTIONS[position % MEMBER_COLOR_OPTIONS.length],
+      kind: "bee",
+      pointsMultiplier: 1,
       claimedAt: null,
       createdAt: now.toISOString(),
     };
@@ -182,7 +206,7 @@ export class LocalApi implements ColmeiaApi {
       this.mutateInvited(inviteCode, (state, now) => {
         if (input.name.trim() === "") invalid("Dê um nome à pessoa");
         const member: Member = {
-          ...input, name: input.name.trim(), id: this.nextId(state),
+          ...newMember(input), name: input.name.trim(), id: this.nextId(state),
           claimedAt: now.toISOString(), createdAt: now.toISOString(),
         };
         state.members.push(member);
@@ -204,9 +228,9 @@ export class LocalApi implements ColmeiaApi {
     list: (): Promise<Member[]> => this.read((state) => state.members),
     create: (input: MemberInput): Promise<Member> =>
       this.mutate((state, now) => {
-        validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
+        validateMember(input);
         const member: Member = {
-          ...input, name: input.name.trim(), id: this.nextId(state), claimedAt: null, createdAt: now.toISOString(),
+          ...newMember(input), name: input.name.trim(), id: this.nextId(state), claimedAt: null, createdAt: now.toISOString(),
         };
         state.members.push(member);
         return member;
@@ -214,8 +238,10 @@ export class LocalApi implements ColmeiaApi {
     update: (id: number, input: Partial<MemberInput>): Promise<Member> =>
       this.mutate((state) => {
         const member = findOrFail(state.members, id, "Membro");
-        validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
+        validateMember(input);
+        const wasLagartinha = member.kind === "lagartinha";
         Object.assign(member, input);
+        if (!wasLagartinha) member.pointsMultiplier = multiplierForKind(member.kind, member.pointsMultiplier);
         return member;
       }),
     remove: (id: number): Promise<void> =>
@@ -255,7 +281,7 @@ export class LocalApi implements ColmeiaApi {
     complete: (id: number, memberId: number): Promise<CompleteTaskResult> =>
       this.mutate((state, now) => {
         const task = findOrFail(state.tasks, id, "Tarefa");
-        findOrFail(state.members, memberId, "Membro");
+        const doer = findOrFail(state.members, memberId, "Membro");
         if (task.status === "done") conflict("Essa tarefa já foi concluída");
         const completion: Completion = {
           id: this.nextId(state),
@@ -264,7 +290,8 @@ export class LocalApi implements ColmeiaApi {
           reviewerId: null,
           status: task.requiresReview ? "pending" : "approved",
           rating: null,
-          pointsAwarded: task.requiresReview ? 0 : task.points,
+          pointsAwarded: task.requiresReview ? 0 : awardedPoints(task.points, null, doer.pointsMultiplier),
+          multiplier: doer.pointsMultiplier,
           taskTitle: task.title,
           taskPoints: task.points,
           completedAt: now.toISOString(),
@@ -304,7 +331,7 @@ export class LocalApi implements ColmeiaApi {
           rating: input.rating,
           reviewerId: input.reviewerId,
           reviewedAt: now.toISOString(),
-          pointsAwarded: pointsForRating(completion.taskPoints, input.rating),
+          pointsAwarded: awardedPoints(completion.taskPoints, input.rating, completion.multiplier),
         });
         return completion;
       }),

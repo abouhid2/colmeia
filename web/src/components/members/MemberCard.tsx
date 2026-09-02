@@ -3,6 +3,7 @@ import type { Standing } from "../../domain/leaderboard";
 import type { Member } from "../../domain/types";
 import { Avatar } from "../ui/Avatar";
 import { IconButton } from "../ui/IconButton";
+import { LagartinhaMark } from "./LagartinhaMark";
 
 interface MemberCardProps {
   member: Member;
@@ -16,7 +17,10 @@ export function MemberCard({ member, periodStanding, allTimeStanding, onEdit }: 
     <li className="flex items-center gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
       <Avatar member={member} size="md" />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold">{member.name}</p>
+        <div className="flex items-center gap-2">
+          <p className="truncate font-semibold">{member.name}</p>
+          <LagartinhaMark member={member} compact />
+        </div>
         <p className="text-sm text-ink-soft">
           <span className="font-semibold text-ink tabular-nums">{periodStanding?.points ?? 0}</span> no período · {allTimeStanding?.points ?? 0} no total
         </p>

@@ -2,6 +2,7 @@ import { MEMBER_COLORS } from "../../domain/memberColors";
 import type { Standing } from "../../domain/leaderboard";
 import { Avatar } from "../ui/Avatar";
 import { Card } from "../ui/Card";
+import { LagartinhaMark } from "./LagartinhaMark";
 
 interface LeaderboardProps {
   standings: Standing[];
@@ -18,7 +19,10 @@ export function Leaderboard({ standings }: LeaderboardProps) {
             <Avatar member={standing.member} size="sm" />
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
-                <p className="truncate font-semibold">{standing.member.name}</p>
+                <p className="flex min-w-0 items-center gap-1.5 font-semibold">
+                  <span className="truncate">{standing.member.name}</span>
+                  <LagartinhaMark member={standing.member} compact />
+                </p>
                 <p className="text-sm tabular-nums text-ink-soft">
                   <span className="font-display text-base font-bold text-ink">{standing.points}</span> pts · {standing.tasksCount} {standing.tasksCount === 1 ? "tarefa" : "tarefas"}
                 </p>

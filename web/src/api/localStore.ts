@@ -1,5 +1,5 @@
 import type { Goal, Household, Member } from "../domain/types";
-import { DEMO_INVITE_CODE, type LocalState } from "./localState";
+import { DEMO_INVITE_CODE, normalizeState, type LocalState } from "./localState";
 import type { KeyValueStore } from "./storage";
 
 export const HOUSEHOLD_INDEX_KEY = "colmeia.households.v3";
@@ -63,7 +63,7 @@ export class LocalStore {
     const raw = this.store.getItem(HOUSEHOLD_INDEX_KEY);
     if (raw !== null) return JSON.parse(raw) as HouseholdIndex;
 
-    const state = this.takeLegacyState() ?? this.seed();
+    const state = normalizeState(this.takeLegacyState() ?? this.seed());
     state.household.inviteCode = DEMO_INVITE_CODE;
     this.writeState(state);
     const index: HouseholdIndex = { [DEMO_INVITE_CODE]: this.entry(state) };
@@ -74,7 +74,7 @@ export class LocalStore {
   read(inviteCode: string): LocalState | null {
     if (!(inviteCode in this.index())) return null;
     const raw = this.store.getItem(storageKey(inviteCode));
-    return raw === null ? null : (JSON.parse(raw) as LocalState);
+    return raw === null ? null : normalizeState(JSON.parse(raw) as LocalState);
   }
 
   save(state: LocalState): void {

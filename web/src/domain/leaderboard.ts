@@ -18,3 +18,8 @@ export function rankMembers(members: Member[], completions: Completion[]): Stand
   });
   return standings.sort((left, right) => right.points - left.points || right.tasksCount - left.tasksCount);
 }
+
+/** The kids' own league, so a lagartinha can also come first somewhere. */
+export function lagartinhaStandings(standings: Standing[]): Standing[] {
+  return standings.filter((standing) => standing.member.kind === "lagartinha");
+}

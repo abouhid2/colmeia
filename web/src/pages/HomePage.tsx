@@ -15,6 +15,7 @@ import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ActivityFeed } from "../components/home/ActivityFeed";
 import { Greeting } from "../components/home/Greeting";
+import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
 import { MemberFilter } from "../components/members/MemberFilter";
 import { PendingReviews } from "../components/reviews/PendingReviews";
@@ -101,6 +102,8 @@ export function HomePage() {
         <SectionHeading title="Quem mais contribuiu" hint={period === "month" ? "Neste mês" : "Nesta semana"} />
         <Leaderboard standings={standings} />
       </section>
+
+      <LagartinhaLeague standings={standings} />
 
       <ActivityFeed completions={recent} lookup={lookup} />
 

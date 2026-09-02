@@ -11,6 +11,7 @@ export interface TaskFormValues {
   intervalDays: string;
   dueOn: string;
   requiresReview: boolean;
+  kidFriendly: boolean;
   assigneeId: string;
 }
 
@@ -26,6 +27,7 @@ function initialValues(task: Task | null): TaskFormValues {
     intervalDays: task?.intervalDays ? String(task.intervalDays) : "",
     dueOn: task?.dueOn ?? "",
     requiresReview: task?.requiresReview ?? false,
+    kidFriendly: task?.kidFriendly ?? false,
     assigneeId: task?.assigneeId ? String(task.assigneeId) : "",
   };
 }
@@ -49,6 +51,7 @@ export function toTaskInput(values: TaskFormValues, createdById: number | null):
     intervalDays: values.recurrence === "custom" ? Number(values.intervalDays) : null,
     dueOn: values.dueOn || null,
     requiresReview: values.requiresReview,
+    kidFriendly: values.kidFriendly,
     assigneeId: values.assigneeId ? Number(values.assigneeId) : null,
     createdById,
   };
