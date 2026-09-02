@@ -1,4 +1,6 @@
 import type {
+  AchievementAward,
+  AchievementAwardInput,
   Completion,
   Goal,
   GoalInput,
@@ -93,6 +95,12 @@ export interface ColmeiaApi {
      *  history and the badges are counted from all of it. */
     list(options?: CompletionQuery): Promise<Completion[]>;
     review(id: number, input: ReviewInput): Promise<Completion>;
+  };
+  achievementAwards: {
+    /** null asks for everyone in the colmeia. */
+    list(memberId: number | null): Promise<AchievementAward[]>;
+    /** Idempotent: whatever is already written down is left alone. */
+    record(memberId: number, awards: AchievementAwardInput[]): Promise<AchievementAward[]>;
   };
   shopping: {
     list(): Promise<ShoppingItem[]>;

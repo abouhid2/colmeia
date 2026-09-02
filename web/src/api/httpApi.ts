@@ -1,6 +1,7 @@
 import type {
-  Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
-  ReviewInput, Season, SeasonInput, SeasonUpdate, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
+  AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
+  HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
+  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
 import type { ColmeiaApi, CompleteTaskResult, CompletionQuery, DemoColmeia } from "./client";
 import { ApiError } from "./errors";
@@ -134,6 +135,13 @@ export class HttpApi implements ColmeiaApi {
     list: (options: CompletionQuery = {}): Promise<Completion[]> =>
       this.request("GET", completionsPath(options)),
     review: (id: number, input: ReviewInput): Promise<Completion> => this.request("POST", `/completions/${id}/review`, input),
+  };
+
+  achievementAwards = {
+    list: (memberId: number | null): Promise<AchievementAward[]> =>
+      this.request("GET", memberId === null ? "/achievement_awards" : `/achievement_awards?member_id=${memberId}`),
+    record: (memberId: number, awards: AchievementAwardInput[]): Promise<AchievementAward[]> =>
+      this.request("POST", "/achievement_awards", { memberId, awards }),
   };
 
   shopping = {

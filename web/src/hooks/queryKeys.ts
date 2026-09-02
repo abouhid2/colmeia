@@ -4,6 +4,7 @@ export const queryKeys = {
   seasons: ["seasons"],
   tasks: ["tasks"],
   completions: ["completions"],
+  awards: ["awards"],
   shopping: ["shopping"],
   goals: ["goals"],
   storedHouseholds: ["stored-households"],

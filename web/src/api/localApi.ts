@@ -1,3 +1,4 @@
+import { isAchievementId, MAX_FAVORITE_ACHIEVEMENTS, type AchievementId } from "../domain/achievements";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { generateInviteCode } from "../domain/inviteCode";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
@@ -7,8 +8,9 @@ import { LIMITS } from "../domain/limits";
 import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } from "../domain/memberKinds";
 import { awardedPoints, MAX_RATING } from "../domain/points";
 import type {
-  Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
-  ReviewInput, Season, SeasonInput, SeasonUpdate, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
+  AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
+  HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
+  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
 import type { ColmeiaApi, CompleteTaskResult, CompletionQuery, DemoColmeia, StoredHousehold } from "./client";
 import { ApiError } from "./errors";
@@ -66,8 +68,17 @@ function validateShoppingItem(input: { name?: string; quantity?: string | null }
   if (input.quantity && input.quantity.length > LIMITS.shoppingQuantity) invalid(`A quantidade cabe em ${LIMITS.shoppingQuantity} letras`);
 }
 
+/** The same three rules the Rails validation applies to a pinned badge. */
+function validateFavorites(favorites: AchievementId[] | undefined): void {
+  if (favorites === undefined) return;
+  if (favorites.length > MAX_FAVORITE_ACHIEVEMENTS) invalid(`Dá para fixar no máximo ${MAX_FAVORITE_ACHIEVEMENTS} conquistas`);
+  if (favorites.some((key) => !isAchievementId(key))) invalid("Essa conquista não existe");
+  if (new Set(favorites).size !== favorites.length) invalid("Essa conquista já está fixada");
+}
+
 function validateMember(input: Partial<MemberInput>): void {
   validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
+  validateFavorites(input.favoriteAchievements);
   // A blank crown title is allowed on purpose: it is how someone says they want no crown.
   if (input.crownTitle !== undefined && input.crownTitle.trim().length > LIMITS.crownTitle) {
     invalid(`O título cabe em ${LIMITS.crownTitle} letras`);
@@ -109,7 +120,17 @@ function newMember(input: MemberInput): Omit<Member, "claimedAt" | "createdAt" |
     kind,
     pointsMultiplier: multiplierForKind(kind, input.pointsMultiplier ?? 1),
     crownTitle: input.crownTitle.trim(),
+    favoriteAchievements: input.favoriteAchievements ?? [],
   };
+}
+
+/** One badge earned once: the same shape the unique index on Rails guards. */
+function awardSlot(key: string, completionId: number | null): string {
+  return `${key}:${completionId ?? "sem conclusão"}`;
+}
+
+function oldestAwardsFirst(awards: AchievementAward[]): AchievementAward[] {
+  return [ ...awards ].sort((left, right) => Date.parse(left.awardedAt) - Date.parse(right.awardedAt));
 }
 
 /**
@@ -232,6 +253,7 @@ export class LocalApi implements ColmeiaApi {
       kind: "bee",
       pointsMultiplier: 1,
       crownTitle: DEFAULT_CROWN_TITLE,
+      favoriteAchievements: [],
       claimedAt: null,
       createdAt: now.toISOString(),
     };
@@ -329,6 +351,8 @@ export class LocalApi implements ColmeiaApi {
         state.completions.forEach((completion) => { completion.memberId = nullify(completion.memberId); completion.reviewerId = nullify(completion.reviewerId); });
         state.shoppingItems.forEach((item) => { item.addedById = nullify(item.addedById); item.purchasedById = nullify(item.purchasedById); });
         state.goals = state.goals.filter((goal) => goal.memberId !== id);
+        // Whoever leaves the colmeia takes their badges with them.
+        state.awards = state.awards.filter((award) => award.memberId !== id);
       }),
   };
 
@@ -468,6 +492,27 @@ export class LocalApi implements ColmeiaApi {
           pointsAwarded: awardedPoints(completion.taskPoints, input.rating, completion.multiplier),
         });
         return completion;
+      }),
+  };
+
+  achievementAwards = {
+    list: (memberId: number | null): Promise<AchievementAward[]> =>
+      this.read((state) =>
+        oldestAwardsFirst(memberId === null ? state.awards : state.awards.filter((award) => award.memberId === memberId))),
+    record: (memberId: number, awards: AchievementAwardInput[]): Promise<AchievementAward[]> =>
+      this.mutate((state) => {
+        findOrFail(state.members, memberId, "Membro");
+        const taken = new Set(
+          state.awards.filter((award) => award.memberId === memberId).map((award) => awardSlot(award.key, award.completionId)),
+        );
+        awards.forEach((input) => {
+          if (!isAchievementId(input.key)) invalid("Essa conquista não existe");
+          const slot = awardSlot(input.key, input.completionId);
+          if (taken.has(slot)) return;
+          taken.add(slot);
+          state.awards.push({ ...input, id: this.nextId(state), memberId });
+        });
+        return oldestAwardsFirst(state.awards.filter((award) => award.memberId === memberId));
       }),
   };
 

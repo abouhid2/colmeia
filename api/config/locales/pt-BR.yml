@@ -17,12 +17,7 @@ pt-BR:
       goal: Meta
       household: Colmeia
       season: Estação
-    errors:
-      models:
-        season:
-          attributes:
-            ends_on:
-              on_or_after_start: "não pode ser antes do começo"
+      achievement_award: Conquista
     attributes:
       task:
         title: Título
@@ -41,6 +36,7 @@ pt-BR:
         kind: Tipo
         points_multiplier: Multiplicador de pontos
         crown_title: Título de vencedor
+        favorite_achievements: Conquistas fixadas
       completion:
         rating: Nota
         status: Situação
@@ -62,3 +58,19 @@ pt-BR:
         closed_at: Encerrada em
       household:
         name: Nome da colmeia
+      achievement_award:
+        key: Conquista
+        completion_id: Conclusão
+        awarded_at: Conquistada em
+    errors:
+      models:
+        season:
+          attributes:
+            ends_on:
+              on_or_after_start: "não pode ser antes do começo"
+        member:
+          attributes:
+            favorite_achievements:
+              too_many: "não passam de %{count}"
+              unknown: "trazem uma conquista que não existe"
+              duplicated: "não podem repetir a mesma conquista"

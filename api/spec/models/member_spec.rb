@@ -68,6 +68,33 @@ RSpec.describe Member do
     expect(member.reload.points_multiplier).to eq(described_class::DEFAULT_LAGARTINHA_MULTIPLIER)
   end
 
+  it "starts with an empty shelf of pinned badges" do
+    member = household.members.create!(name: "Ana")
+
+    expect(member.reload.favorite_achievements).to eq([])
+  end
+
+  it "pins badges it knows, up to three, without repeating" do
+    member = household.members.create!(name: "Ana")
+
+    member.update!(favorite_achievements: %w[ firstTask bigTask ])
+    expect(member.reload.favorite_achievements).to eq(%w[ firstTask bigTask ])
+
+    expect(member.update(favorite_achievements: %w[ firstTask firstTask ])).to be(false)
+    expect(member.update(favorite_achievements: %w[ firstTask melhorDaCasa ])).to be(false)
+    expect(member.update(favorite_achievements: %w[ firstTask bigTask flawless sevenDays ])).to be(false)
+    expect(member.reload.favorite_achievements).to eq(%w[ firstTask bigTask ])
+  end
+
+  it "takes its badges along when it leaves the colmeia" do
+    member = household.members.create!(name: "Ana")
+    household.achievement_awards.create!(member: member, key: "firstTask", awarded_at: Time.current)
+
+    member.destroy!
+
+    expect(AchievementAward.count).to eq(0)
+  end
+
   it "refuses an unknown kind and a multiplier out of range" do
     member = household.members.new(name: "Duda", kind: "borboleta")
     expect(member).not_to be_valid

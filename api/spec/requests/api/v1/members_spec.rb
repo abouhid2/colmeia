@@ -53,6 +53,29 @@ RSpec.describe "Members API", type: :request do
     expect(response).to have_http_status(:unprocessable_content)
   end
 
+  it "pins and unpins the badges shown on the profile" do
+    member = household.members.create!(name: "Ana")
+
+    patch "/api/v1/members/#{member.id}", params: { member: { favorite_achievements: %w[ firstTask bigTask ] } }, headers: headers
+    expect(json_body["favorite_achievements"]).to eq(%w[ firstTask bigTask ])
+
+    patch "/api/v1/members/#{member.id}", params: { member: { favorite_achievements: %w[ bigTask ] } }, headers: headers
+    expect(json_body["favorite_achievements"]).to eq(%w[ bigTask ])
+  end
+
+  it "refuses to pin a fourth badge, or one that does not exist" do
+    member = household.members.create!(name: "Ana")
+
+    patch "/api/v1/members/#{member.id}",
+      params: { member: { favorite_achievements: %w[ firstTask bigTask flawless sevenDays ] } }, headers: headers
+    expect(response).to have_http_status(:unprocessable_content)
+
+    patch "/api/v1/members/#{member.id}", params: { member: { favorite_achievements: %w[ melhorDaCasa ] } }, headers: headers
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(json_body["details"].first).to include("Conquistas fixadas")
+    expect(member.reload.favorite_achievements).to eq([])
+  end
+
   it "rejects unknown colors" do
     post "/api/v1/members", params: { member: { name: "X", color: "neon" } }, headers: headers
 

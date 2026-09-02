@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_03_000012) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
+  create_table "achievement_awards", force: :cascade do |t|
+    t.datetime "awarded_at", null: false
+    t.integer "completion_id"
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.string "key", null: false
+    t.integer "member_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id"], name: "index_achievement_awards_on_household_id"
+    t.index ["member_id", "key", "completion_id"], name: "idx_on_member_id_key_completion_id_c9d8c9a41a", unique: true
+  end
+
   create_table "completions", force: :cascade do |t|
     t.datetime "completed_at", null: false
     t.datetime "created_at", null: false
@@ -65,6 +77,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_000012) do
     t.string "color", default: "honey", null: false
     t.datetime "created_at", null: false
     t.string "crown_title", default: "Abelha Rainha", null: false
+    t.json "favorite_achievements", default: [], null: false
     t.integer "household_id", null: false
     t.string "kind", default: "bee", null: false
     t.string "name", null: false
@@ -126,6 +139,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_000012) do
     t.index ["status"], name: "index_tasks_on_status"
   end
 
+  add_foreign_key "achievement_awards", "households"
+  add_foreign_key "achievement_awards", "members"
   add_foreign_key "completions", "households"
   add_foreign_key "completions", "members"
   add_foreign_key "completions", "members", column: "reviewer_id"

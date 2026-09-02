@@ -4,7 +4,7 @@ import type { Completion, Goal, Member, Season } from "./types";
 
 const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member => ({
   id, name, avatar: "🐝", color: "honey", crownTitle, kind: "bee", pointsMultiplier: 1,
-  claimedAt: null, createdAt: "2026-01-01T00:00:00.000Z",
+  favoriteAchievements: [], claimedAt: null, createdAt: "2026-01-01T00:00:00.000Z",
 });
 
 const members = [member(1, "Ana"), member(2, "Bruno"), member(3, "Clara")];

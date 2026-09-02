@@ -35,6 +35,7 @@ Rails.application.routes.draw do
           post :reopen
         end
       end
+      resources :achievement_awards, only: %i[ index create ]
     end
   end
 end

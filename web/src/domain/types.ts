@@ -1,3 +1,5 @@
+import type { AchievementId } from "./achievements";
+
 export type Priority = "low" | "medium" | "high" | "urgent";
 export type Recurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
 export type TaskStatus = "open" | "done";
@@ -42,6 +44,8 @@ export interface Member {
   claimedAt: string | null;
   /** What they want to be called when they win an estação. Blank means they never wear the crown. */
   crownTitle: string;
+  /** Up to three badges this person pinned on their own profile. */
+  favoriteAchievements: AchievementId[];
   createdAt: string;
 }
 
@@ -82,6 +86,18 @@ export interface Completion {
   reviewedAt: string | null;
 }
 
+/** A badge written down, so the history outlives the completion that earned it. */
+export interface AchievementAward {
+  id: number;
+  memberId: number;
+  key: AchievementId;
+  /** The completion that earned it, kept as a plain number: it may be gone. */
+  completionId: number | null;
+  awardedAt: string;
+}
+
+export type AchievementAwardInput = Omit<AchievementAward, "id" | "memberId">;
+
 export interface ShoppingItem {
   id: number;
   name: string;
@@ -115,6 +131,7 @@ export interface HouseholdInput {
 export interface MemberInput extends Pick<Member, "name" | "avatar" | "color" | "crownTitle"> {
   kind?: MemberKind;
   pointsMultiplier?: number;
+  favoriteAchievements?: AchievementId[];
 }
 
 export interface TaskInput {

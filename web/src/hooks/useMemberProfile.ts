@@ -1,14 +1,14 @@
 import { useMemo } from "react";
-import { memberAchievements, type Achievement } from "../domain/achievements";
 import { completionsForMember } from "../domain/history";
 import { memberStats, type MemberStats } from "../domain/memberStats";
 import { sortOpenTasks } from "../domain/taskSort";
 import type { Completion, Member, Season, Task } from "../domain/types";
 import { useCompletions } from "./useCompletions";
 import { useGoalOverview, type GoalWithProgress } from "./useGoalOverview";
+import { useMemberAchievements, type MemberAchievements } from "./useMemberAchievements";
 import { useMembers } from "./useMembers";
 import { useNow } from "./useNow";
-import { useAllTasks, useTasks } from "./useTasks";
+import { useTasks } from "./useTasks";
 
 export interface MemberProfile {
   /** null once loading is done means the id in the URL is not a real person. */
@@ -21,7 +21,7 @@ export interface MemberProfile {
   /** 1-based place in the estação ranking, out of everyone in the house. */
   rank: number | null;
   houseSize: number;
-  achievements: Achievement[];
+  badges: MemberAchievements;
   history: Completion[];
   openTasks: Task[];
   goals: GoalWithProgress[];
@@ -35,18 +35,17 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
   const { members, isLoading: loadingMembers } = useMembers();
   const { completions, isLoading: loadingCompletions } = useCompletions();
   const { tasks, isLoading: loadingTasks } = useTasks();
-  // Badges are colmeia-wide, so they read every estação, not just this one.
-  const { tasks: allTasks } = useAllTasks();
   const { personal, season, standings, allTimeStandings, isLoading: loadingGoals } = useGoalOverview();
 
   const isLoading = loadingMembers || loadingCompletions || loadingTasks || loadingGoals;
+  const member = memberId === null ? null : (members.find((candidate) => candidate.id === memberId) ?? null);
+  const badges = useMemberAchievements(member);
 
   return useMemo(() => {
-    const member = memberId === null ? null : (members.find((candidate) => candidate.id === memberId) ?? null);
     if (member === null) {
       return {
         member: null, isLoading, stats: NO_STATS, season, seasonPoints: 0, allTimePoints: 0,
-        rank: null, houseSize: members.length, achievements: [], history: [], openTasks: [], goals: [],
+        rank: null, houseSize: members.length, badges, history: [], openTasks: [], goals: [],
       };
     }
 
@@ -61,11 +60,11 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
       allTimePoints: allTimeStandings.find((standing) => standing.member.id === member.id)?.points ?? 0,
       rank: place === -1 ? null : place + 1,
       houseSize: standings.length,
-      achievements: memberAchievements({ memberId: member.id, completions, tasks: allTasks }),
+      badges,
       // The history spans every estação: what this person did is theirs for good.
       history: completionsForMember(completions, member.id),
       openTasks: sortOpenTasks(tasks.filter((task) => task.status === "open" && task.assigneeId === member.id), now),
       goals: personal.filter((item) => item.goal.memberId === member.id),
     };
-  }, [memberId, members, completions, tasks, allTasks, personal, season, standings, allTimeStandings, now, isLoading]);
+  }, [member, members, completions, tasks, personal, season, standings, allTimeStandings, now, isLoading, badges]);
 }

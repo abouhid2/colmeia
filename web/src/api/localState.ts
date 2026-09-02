@@ -1,5 +1,7 @@
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
-import type { Completion, Goal, Household, HouseholdWithMembers, Member, Season, ShoppingItem, Task } from "../domain/types";
+import type {
+  AchievementAward, Completion, Goal, Household, HouseholdWithMembers, Member, Season, ShoppingItem, Task,
+} from "../domain/types";
 import { toIsoDate } from "../lib/dates";
 
 /** The colmeia older single-store data becomes, and the one earlier versions
@@ -24,6 +26,8 @@ export interface LocalState {
   completions: Completion[];
   shoppingItems: ShoppingItem[];
   goals: Goal[];
+  /** Badges already written down, so they outlive their completions. */
+  awards: AchievementAward[];
   nextId: number;
 }
 
@@ -36,6 +40,7 @@ export function emptyState(inviteCode: string, name: string, now: Date): LocalSt
     completions: [],
     shoppingItems: [],
     goals: [],
+    awards: [],
     nextId: 3,
   };
 }
@@ -55,17 +60,20 @@ export function withCounts(state: LocalState, season: StoredSeason): Season {
 
 /** A browser can hold a state written before crown titles, lagartinhas or estações existed. */
 export type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier">;
+export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements">;
 /** Goals used to carry a weekly or monthly period instead of belonging to an estação. */
 type StoredGoal = Older<Goal, "seasonId"> & { period?: string };
 
-export type StoredState = Omit<LocalState, "household" | "members" | "seasons" | "tasks" | "completions" | "goals"> & {
+export type StoredState = Omit<
+  LocalState, "household" | "members" | "seasons" | "tasks" | "completions" | "goals" | "awards"
+> & {
   household: Older<Household, "demo">;
   members: StoredMember[];
   seasons?: StoredSeason[];
   tasks: Older<Task, "kidFriendly" | "seasonId">[];
   completions: Older<Completion, "multiplier" | "seasonId">[];
   goals: StoredGoal[];
+  awards?: AchievementAward[];
 };
 
 /** Fills in every field an older store can be missing, on read, so nothing
@@ -87,6 +95,7 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
       kind: member.kind ?? "bee",
       pointsMultiplier: member.pointsMultiplier ?? 1,
       crownTitle: member.crownTitle ?? DEFAULT_CROWN_TITLE,
+      favoriteAchievements: member.favoriteAchievements ?? [],
     })),
     tasks: state.tasks.map((task) => ({ ...task, kidFriendly: task.kidFriendly ?? false, seasonId: task.seasonId ?? first.id })),
     completions: state.completions.map((completion) => ({
@@ -95,6 +104,7 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
       seasonId: completion.seasonId ?? first.id,
     })),
     goals: state.goals.map(({ period: _period, ...goal }) => ({ ...goal, seasonId: goal.seasonId ?? first.id })),
+    awards: state.awards ?? [],
   };
 }
 

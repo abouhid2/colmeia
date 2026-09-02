@@ -1,5 +1,6 @@
 import { Link2Off } from "lucide-react";
 import { Outlet } from "react-router";
+import { useAchievementSync } from "../../hooks/useAchievementAwards";
 import { useApi } from "../../hooks/useApi";
 import { useHousehold } from "../../hooks/useHousehold";
 import { useSession } from "../../hooks/useSession";
@@ -17,9 +18,11 @@ import { PlainPage } from "./PlainPage";
 
 export function AppShell() {
   const { session, leave } = useSessionContext();
-  const { isLoading } = useSession();
+  const { currentMember, isLoading } = useSession();
   const household = useHousehold();
   const { mode } = useApi();
+  // Wherever this person is in the app, the badges they earn get written down.
+  useAchievementSync(currentMember?.id ?? null);
 
   if (session === null) return <LandingPage />;
   if (isLoading || household.isLoading) return <LoadingScreen />;

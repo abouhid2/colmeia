@@ -91,7 +91,25 @@ resposta é `401 { "error": "unauthorized" }`. Um id de outra colmeia responde
 `members`, `seasons` (+ `close` e `reopen`), `tasks`
 (+ `POST /tasks/:id/complete`), `completions`
 (+ `POST /completions/:id/review`), `shopping_items`
-(+ `DELETE /shopping_items/purchased`), `goals`.
+(+ `DELETE /shopping_items/purchased`), `goals`, `achievement_awards`.
+
+## Conquistas
+
+As medalhas saem do que cada pessoa fez, e o front sabe derivá-las sozinho. O
+que a API guarda é o histórico, para que a contagem e as datas não morram junto
+com a conclusão que as gerou:
+
+| Verbo  | Rota                                        | O que faz |
+| ------ | ------------------------------------------- | --------- |
+| `GET`  | `/api/v1/achievement_awards?member_id=`     | As medalhas anotadas, da mais antiga para a mais nova. Sem `member_id`, as da colmeia inteira. |
+| `POST` | `/api/v1/achievement_awards`                | Corpo `{ member_id, awards: [{ key, completion_id, awarded_at }] }`. Idempotente: só entra o que falta, e mandar o mesmo lote duas vezes não cria nada (201 quando criou, 200 quando não havia o que criar). |
+
+`key` é um dos ids em `AchievementAward::KEYS`, escritos igual aos do front.
+`completion_id` não tem chave estrangeira de propósito: a medalha continua ali
+depois que a conclusão some. Sair da colmeia, porém, leva as medalhas junto.
+
+Cada pessoa fixa até três medalhas no perfil em `members.favorite_achievements`,
+validado contra a mesma lista de ids.
 
 ```bash
 curl -H "X-Household-Code: demo" http://localhost:3000/api/v1/tasks
