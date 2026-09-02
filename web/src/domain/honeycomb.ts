@@ -22,6 +22,50 @@ export function honeycombCells(earned: number, target: number): number[] {
   });
 }
 
+/** What one person put into the goal. */
+export interface Contribution {
+  memberId: number;
+  points: number;
+}
+
+/** A slice of one cell, as fractions of the cell's height, bottom to top. */
+export interface CellSegment {
+  memberId: number;
+  from: number;
+  to: number;
+}
+
+/** Who filled each cell, left to right. Contributions arrive sorted, biggest
+ *  first, and are laid end to end, so a cell where two people meet is split
+ *  between them. What a cell adds up to is what honeycombCells says it is;
+ *  points past the target are dropped, the rest of the comb stays empty. */
+export function honeycombSegments(contributions: Contribution[], target: number): CellSegment[][] {
+  const value = cellValueFor(target);
+  const count = Math.ceil(target / value);
+  const cells: CellSegment[][] = Array.from({ length: count }, () => []);
+  let filled = 0;
+
+  for (const { memberId, points } of contributions) {
+    if (filled >= target) break;
+    const start = filled;
+    const end = Math.min(start + Math.max(points, 0), target);
+    filled = end;
+    if (end === start) continue;
+
+    const first = Math.floor(start / value);
+    const last = Math.min(Math.ceil(end / value) - 1, count - 1);
+    for (let index = first; index <= last; index += 1) {
+      const cellStart = index * value;
+      const cellSpan = Math.min(value, target - cellStart);
+      const from = clamp01((start - cellStart) / cellSpan);
+      const to = clamp01((end - cellStart) / cellSpan);
+      if (to > from) cells[index].push({ memberId, from, to });
+    }
+  }
+
+  return cells;
+}
+
 export function honeycombColumns(count: number): number {
   if (count <= 8) return count;
   if (count <= 16) return Math.ceil(count / 2);

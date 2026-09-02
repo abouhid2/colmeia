@@ -1,4 +1,5 @@
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
+import { DEFAULT_MEMBER_PATTERN } from "../domain/memberPatterns";
 import type {
   AchievementAward, Completion, Goal, Household, HouseholdWithMembers, Member, Season, ShoppingItem, Task,
 } from "../domain/types";
@@ -58,9 +59,9 @@ export function withCounts(state: LocalState, season: StoredSeason): Season {
   };
 }
 
-/** A browser can hold a state written before crown titles, lagartinhas or estações existed. */
+/** A browser can hold a state written before textures, crown titles, lagartinhas or estações existed. */
 export type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements">;
+export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements" | "pattern">;
 /** Goals used to carry a weekly or monthly period instead of belonging to an estação. */
 type StoredGoal = Older<Goal, "seasonId"> & { period?: string };
 
@@ -97,6 +98,7 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
     members: state.members.map((member) => ({
       ...member,
       kind: member.kind ?? "bee",
+      pattern: member.pattern ?? DEFAULT_MEMBER_PATTERN,
       pointsMultiplier: member.pointsMultiplier ?? 1,
       crownTitle: member.crownTitle ?? DEFAULT_CROWN_TITLE,
       favoriteAchievements: member.favoriteAchievements ?? [],

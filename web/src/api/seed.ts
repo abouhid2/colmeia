@@ -41,19 +41,20 @@ export function buildDemoState(now: Date = new Date()): LocalState {
 
   // Nobody has claimed a place yet: the invite link is what lets a browser in.
   const member = (
-    id: number, name: string, avatar: string, color: Member["color"],
+    id: number, name: string, avatar: string, color: Member["color"], pattern: Member["pattern"],
     crownTitle = DEFAULT_CROWN_TITLE, kind: Member["kind"] = "bee", favoriteAchievements: AchievementId[] = [],
   ): Member => ({
-    id, name, avatar, color, crownTitle, kind, favoriteAchievements,
+    id, name, avatar, color, pattern, crownTitle, kind, favoriteAchievements,
     pointsMultiplier: kind === "lagartinha" ? 1.5 : 1, claimedAt: null, createdAt: iso(240),
   });
   // Duda is the child of the house: everything she does is worth 1,5x. Ana and
   // Bruno already pinned badges they earned, which is what the profile shows.
+  // Each one fills the honeycomb with a texture of their own.
   const members = [
-    member(1, EXAMPLE_ENTRY_MEMBER, "🦊", "pollen", DEFAULT_CROWN_TITLE, "bee", [ "firstTask", "bigTask" ]),
-    member(2, "Bruno", "🐻", "sky", "Abelhão", "bee", [ "flawless" ]),
-    member(3, "Clara", "🐼", "plum", "Rainha da Louça"),
-    member(4, "Duda", "🦉", "leaf", DEFAULT_CROWN_TITLE, "lagartinha"),
+    member(1, EXAMPLE_ENTRY_MEMBER, "🦊", "pollen", "dots", DEFAULT_CROWN_TITLE, "bee", [ "firstTask", "bigTask" ]),
+    member(2, "Bruno", "🐻", "sky", "stripes", "Abelhão", "bee", [ "flawless" ]),
+    member(3, "Clara", "🐼", "plum", "crosses", "Rainha da Louça"),
+    member(4, "Duda", "🦉", "leaf", "rings", DEFAULT_CROWN_TITLE, "lagartinha"),
   ];
 
   const task = (seed: TaskSeed): Task => ({
