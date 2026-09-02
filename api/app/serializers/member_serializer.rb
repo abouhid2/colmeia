@@ -6,6 +6,8 @@ module MemberSerializer
       avatar: member.avatar,
       color: member.color,
       crown_title: member.crown_title,
+      claimed: member.claimed?,
+      claimed_at: member.claimed_at,
       created_at: member.created_at
     }
   end

@@ -2,9 +2,11 @@ class Completion < ApplicationRecord
   STATUSES = %w[ pending approved ].freeze
   MAX_RATING = 5
 
-  belongs_to :task, optional: true
-  belongs_to :member, optional: true
-  belongs_to :reviewer, class_name: "Member", optional: true
+  include HouseholdScoped
+
+  belongs_to_in_household :task, optional: true
+  belongs_to_in_household :member, optional: true
+  belongs_to_in_household :reviewer, class_name: "Member", optional: true
 
   validates :status, inclusion: { in: STATUSES }
   validates :rating, numericality: { only_integer: true, in: 1..MAX_RATING }, allow_nil: true

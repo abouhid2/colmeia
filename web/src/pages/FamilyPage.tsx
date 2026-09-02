@@ -11,6 +11,7 @@ import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
 import { crownExplanation } from "../domain/crownTitles";
 import { periodScopeLabel } from "../components/goal/goalCopy";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
+import { ColmeiaCard } from "../components/household/ColmeiaCard";
 import { DemoResetCard } from "../components/members/DemoResetCard";
 import { HouseholdNameForm } from "../components/members/HouseholdNameForm";
 import { Leaderboard } from "../components/members/Leaderboard";
@@ -79,6 +80,11 @@ export function FamilyPage() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section>
+        <SectionHeading title="Esta colmeia" />
+        <ColmeiaCard />
       </section>
 
       <DemoResetCard />

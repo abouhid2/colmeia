@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ApiError } from "./errors";
-import { LocalApi, type KeyValueStore } from "./localApi";
+import { DEMO_INVITE_CODE, LocalApi, type KeyValueStore } from "./localApi";
 import { buildDemoState } from "./seed";
 
 class MemoryStore implements KeyValueStore {
@@ -17,6 +17,7 @@ describe("LocalApi", () => {
 
   beforeEach(() => {
     api = new LocalApi(new MemoryStore(), { seed: () => buildDemoState(now), clock: () => now });
+    api.setInviteCode(DEMO_INVITE_CODE);
   });
 
   it("closes one-off tasks and pays out right away", async () => {
@@ -77,6 +78,7 @@ describe("LocalApi", () => {
     const store = new MemoryStore();
     store.setItem("colmeia.db.v1", JSON.stringify({ ...buildDemoState(now), goals: undefined, goal: { id: 9, title: "Antiga", targetPoints: 50, period: "week" } }));
     const migrated = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
+    migrated.setInviteCode(DEMO_INVITE_CODE);
     expect(await migrated.goals.list()).toEqual([{ id: 9, title: "Antiga", targetPoints: 50, period: "week", memberId: null }]);
     expect(store.getItem("colmeia.db.v1")).toBeNull();
   });
@@ -88,6 +90,7 @@ describe("LocalApi", () => {
     store.setItem("colmeia.db.v2", JSON.stringify({ ...stored, members: bare }));
 
     const upgraded = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
+    upgraded.setInviteCode(DEMO_INVITE_CODE);
 
     expect((await upgraded.members.list()).map((member) => member.crownTitle)).toEqual(
       ["Abelha Rainha", "Abelha Rainha", "Abelha Rainha", "Abelha Rainha"],

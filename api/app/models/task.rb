@@ -4,8 +4,10 @@ class Task < ApplicationRecord
   STATUSES = %w[ open done ].freeze
   MAX_POINTS = 1000
 
-  belongs_to :assignee, class_name: "Member", optional: true
-  belongs_to :created_by, class_name: "Member", optional: true
+  include HouseholdScoped
+
+  belongs_to_in_household :assignee, class_name: "Member", optional: true
+  belongs_to_in_household :created_by, class_name: "Member", optional: true
   has_many :completions, dependent: :nullify
 
   validates :title, presence: true, length: { maximum: 120 }

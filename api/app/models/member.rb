@@ -1,9 +1,11 @@
 class Member < ApplicationRecord
   COLORS = %w[ honey pollen leaf berry sky plum ].freeze
+  AVATARS = %w[ 🐝 🦊 🐻 🐼 🦉 🐸 🐙 🦁 🐨 🦄 🐧 🐢 ].freeze
   # What someone wants to be called when they win the reward period.
   # Blank is a deliberate choice: that person never wears the crown.
   CROWN_TITLE_LIMIT = 30
 
+  belongs_to :household
   has_many :assigned_tasks, class_name: "Task", foreign_key: :assignee_id,
     dependent: :nullify, inverse_of: :assignee
   has_many :created_tasks, class_name: "Task", foreign_key: :created_by_id,
@@ -22,4 +24,17 @@ class Member < ApplicationRecord
   validates :avatar, presence: true, length: { maximum: 8 }
   validates :color, inclusion: { in: COLORS }
   validates :crown_title, length: { maximum: CROWN_TITLE_LIMIT }, allow_blank: true
+
+  scope :unclaimed, -> { where(claimed_at: nil) }
+
+  # A member starts as a placeholder ("espantalho"): a name on the list nobody
+  # sits behind yet. Claiming through the invite link is what turns it into a
+  # person using the app.
+  def claimed?
+    claimed_at.present?
+  end
+
+  def claim!(now = Time.current)
+    update!(claimed_at: now)
+  end
 end

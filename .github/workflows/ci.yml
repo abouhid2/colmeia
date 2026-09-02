@@ -21,7 +21,8 @@ jobs:
           working-directory: api
       - run: bundle exec rubocop
       - run: bundle exec brakeman -q --no-pager
-      - run: bin/rails db:prepare
+      # db:prepare would also seed a fresh database; specs expect it empty.
+      - run: bin/rails db:schema:load
         env:
           RAILS_ENV: test
       - run: bundle exec rspec

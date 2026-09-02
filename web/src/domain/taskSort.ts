@@ -18,7 +18,3 @@ export function sortOpenTasks(tasks: Task[], today: Date): Task[] {
     return right.points - left.points;
   });
 }
-
-export function sortDoneTasks(tasks: Task[]): Task[] {
-  return [...tasks].sort((left, right) => Date.parse(right.completedAt ?? "") - Date.parse(left.completedAt ?? ""));
-}

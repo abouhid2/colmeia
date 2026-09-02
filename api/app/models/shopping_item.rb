@@ -1,6 +1,8 @@
 class ShoppingItem < ApplicationRecord
-  belongs_to :added_by, class_name: "Member", optional: true
-  belongs_to :purchased_by, class_name: "Member", optional: true
+  include HouseholdScoped
+
+  belongs_to_in_household :added_by, class_name: "Member", optional: true
+  belongs_to_in_household :purchased_by, class_name: "Member", optional: true
 
   validates :name, presence: true, length: { maximum: 80 }
   validates :quantity, length: { maximum: 30 }, allow_nil: true

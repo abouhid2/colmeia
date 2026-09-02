@@ -33,6 +33,7 @@ export function MemberCard({ member, periodStanding, allTimeStanding, crowned, p
           <p className="text-sm text-ink-soft">
             <span className="font-semibold text-ink tabular-nums">{periodStanding?.points ?? 0}</span> no período · {allTimeStanding?.points ?? 0} no total
           </p>
+          {member.claimedAt === null && <p className="text-xs text-ink-faint">Ainda não entrou</p>}
         </div>
       </Link>
       <IconButton label={`Editar ${member.name}`} icon={<Pencil className="size-4" />} onClick={() => onEdit(member)} />

@@ -1,4 +1,7 @@
-import type { Completion, Goal, Household, Member, ShoppingItem, Task } from "../domain/types";
+import type { Completion, Goal, Household, HouseholdWithMembers, Member, ShoppingItem, Task } from "../domain/types";
+
+/** The colmeia the demo lives in, and the one older single-store data becomes. */
+export const DEMO_INVITE_CODE = "demo";
 
 export interface LocalState {
   household: Household;
@@ -10,9 +13,9 @@ export interface LocalState {
   nextId: number;
 }
 
-export function emptyState(): LocalState {
+export function emptyState(inviteCode: string, name: string): LocalState {
   return {
-    household: { id: 1, name: "Nossa casa" },
+    household: { id: 1, name, inviteCode },
     members: [],
     tasks: [],
     completions: [],
@@ -20,4 +23,8 @@ export function emptyState(): LocalState {
     goals: [],
     nextId: 2,
   };
+}
+
+export function withMembers(state: LocalState): HouseholdWithMembers {
+  return { ...state.household, members: state.members };
 }

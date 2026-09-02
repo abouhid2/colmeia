@@ -3,7 +3,7 @@ import { crownHolder, previousPeriodBounds } from "./crown";
 import type { Completion, Goal, Member } from "./types";
 
 const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member => ({
-  id, name, avatar: "🐝", color: "honey", crownTitle, createdAt: "2026-01-01T00:00:00.000Z",
+  id, name, avatar: "🐝", color: "honey", crownTitle, claimedAt: null, createdAt: "2026-01-01T00:00:00.000Z",
 });
 
 const members = [member(1, "Ana"), member(2, "Bruno"), member(3, "Clara")];

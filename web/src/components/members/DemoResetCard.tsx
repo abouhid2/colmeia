@@ -1,15 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCcw } from "lucide-react";
+import { DEMO_INVITE_CODE } from "../../api";
 import { useApi } from "../../hooks/useApi";
+import { useHousehold } from "../../hooks/useHousehold";
 import { useToast } from "../../hooks/useToast";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 
+/** Only the demo colmeia has an example to go back to. */
 export function DemoResetCard() {
   const api = useApi();
   const queryClient = useQueryClient();
   const { notify } = useToast();
-  if (api.mode !== "local" || !api.reset) return null;
+  const { data: household } = useHousehold();
+  if (api.mode !== "local" || !api.reset || household?.inviteCode !== DEMO_INVITE_CODE) return null;
 
   const reset = async () => {
     await api.reset?.();

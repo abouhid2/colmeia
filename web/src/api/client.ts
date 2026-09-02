@@ -3,6 +3,8 @@ import type {
   Goal,
   GoalInput,
   Household,
+  HouseholdInput,
+  HouseholdWithMembers,
   Member,
   MemberInput,
   ReviewInput,
@@ -18,8 +20,24 @@ export interface CompleteTaskResult {
   completion: Completion;
 }
 
+/** A colmeia this browser knows about, for the in-browser store only. */
+export interface StoredHousehold {
+  inviteCode: string;
+  name: string;
+  createdAt: string;
+}
+
 export interface ColmeiaApi {
   readonly mode: "local" | "http";
+  /** Which colmeia every scoped call below belongs to. */
+  setInviteCode(code: string | null): void;
+  /** Reachable with nothing but the code in the invite link. */
+  households: {
+    create(input: HouseholdInput): Promise<HouseholdWithMembers>;
+    lookup(code: string): Promise<HouseholdWithMembers>;
+    claim(code: string, memberId: number): Promise<Member>;
+    join(code: string, input: MemberInput): Promise<Member>;
+  };
   household: {
     get(): Promise<Household>;
     update(input: Pick<Household, "name">): Promise<Household>;
@@ -57,4 +75,5 @@ export interface ColmeiaApi {
   };
   /** Only meaningful for the in-browser store. */
   reset?(): Promise<void>;
+  listStoredHouseholds?(): Promise<StoredHousehold[]>;
 }

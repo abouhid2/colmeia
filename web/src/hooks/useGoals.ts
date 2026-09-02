@@ -1,14 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import type { Goal, GoalInput } from "../domain/types";
 import { queryKeys } from "./queryKeys";
 import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
+import { useScopedQuery } from "./useScopedQuery";
 
 const EMPTY: Goal[] = [];
 
 export function useGoals() {
   const api = useApi();
-  const query = useQuery({ queryKey: queryKeys.goals, queryFn: () => api.goals.list() });
+  const query = useScopedQuery(queryKeys.goals, () => api.goals.list());
   return { ...query, goals: query.data ?? EMPTY };
 }
 

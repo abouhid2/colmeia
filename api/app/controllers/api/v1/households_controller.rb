@@ -1,20 +1,45 @@
 module Api
   module V1
+    # The public door: creating a colmeia and joining one only need the invite
+    # code that comes in the link.
     class HouseholdsController < BaseController
-      def show
-        render json: HouseholdSerializer.call(Household.current)
+      skip_before_action :require_household!
+
+      def create
+        household = Households::Create.new(**create_params).call
+        render json: HouseholdSerializer.with_members(household), status: :created
       end
 
-      def update
-        household = Household.current
-        household.update!(household_params)
-        render json: HouseholdSerializer.call(household)
+      def show
+        render json: HouseholdSerializer.with_members(invited_household)
+      end
+
+      def claim
+        member = invited_household.members.find(params.require(:member_id))
+        return render_conflict("essa pessoa já entrou na colmeia") if member.claimed?
+
+        member.claim!
+        render json: MemberSerializer.call(member)
+      end
+
+      def join
+        member = invited_household.members.create!(member_params.merge(claimed_at: Time.current))
+        render json: MemberSerializer.call(member), status: :created
       end
 
       private
 
-      def household_params
-        params.require(:household).permit(:name)
+      def invited_household
+        @invited_household ||= Household.find_by!(invite_code: params[:invite_code])
+      end
+
+      def create_params
+        permitted = params.require(:household).permit(:name, member_names: [])
+        { name: permitted[:name], member_names: permitted[:member_names] || [] }
+      end
+
+      def member_params
+        params.require(:member).permit(:name, :avatar, :color)
       end
     end
   end

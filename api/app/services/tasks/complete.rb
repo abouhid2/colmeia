@@ -14,6 +14,7 @@ module Tasks
     end
 
     def call
+      raise ActiveRecord::RecordNotFound if task.household_id != member.household_id
       raise AlreadyDone, "task is already done" if task.done?
 
       ActiveRecord::Base.transaction do
@@ -29,6 +30,7 @@ module Tasks
 
     def completion_attributes
       {
+        household_id: task.household_id,
         member: member,
         status: task.requires_review? ? "pending" : "approved",
         points_awarded: task.requires_review? ? 0 : task.points,

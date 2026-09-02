@@ -2,7 +2,7 @@ import { addDays, addHours, startOfWeek, subHours, subWeeks } from "date-fns";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { toIsoDate } from "../lib/dates";
 import type { Completion, Member, ShoppingItem, Task } from "../domain/types";
-import type { LocalState } from "./localState";
+import { DEMO_INVITE_CODE, type LocalState } from "./localState";
 
 type TaskSeed = Partial<Task> & Pick<Task, "id" | "title" | "points">;
 type CompletionSeed = Partial<Completion> & Pick<Completion, "id" | "taskId" | "memberId" | "taskTitle" | "taskPoints">;
@@ -17,8 +17,9 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   const lastWeekStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
   const lastWeek = (weekday: number) => addHours(addDays(lastWeekStart, weekday), 10).toISOString();
 
+  // Nobody has claimed a place yet: the invite link is what lets a browser in.
   const member = (id: number, name: string, avatar: string, color: Member["color"], crownTitle = DEFAULT_CROWN_TITLE): Member => ({
-    id, name, avatar, color, crownTitle, createdAt: iso(240),
+    id, name, avatar, color, crownTitle, claimedAt: null, createdAt: iso(240),
   });
   const members = [
     member(1, "Ana", "🦊", "pollen"),
@@ -84,7 +85,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   ];
 
   return {
-    household: { id: 1, name: "Família Colmeia" },
+    household: { id: 1, name: "Família Colmeia", inviteCode: DEMO_INVITE_CODE },
     members,
     tasks,
     completions,

@@ -1,14 +1,16 @@
 require "rails_helper"
 
 RSpec.describe "Tasks API", type: :request do
-  let!(:member) { Member.create!(name: "Ana") }
+  let(:household) { create_household }
+  let(:headers) { headers_for(household) }
+  let!(:member) { household.members.create!(name: "Ana") }
 
   describe "GET /api/v1/tasks" do
     it "lists tasks, optionally filtered by status" do
-      Task.create!(title: "Aberta", points: 5)
-      Task.create!(title: "Feita", points: 5, status: "done")
+      household.tasks.create!(title: "Aberta", points: 5)
+      household.tasks.create!(title: "Feita", points: 5, status: "done")
 
-      get "/api/v1/tasks", params: { status: "open" }
+      get "/api/v1/tasks", params: { status: "open" }, headers: headers
 
       expect(response).to have_http_status(:ok)
       expect(json_body.map { |task| task["title"] }).to eq([ "Aberta" ])
@@ -17,14 +19,14 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks" do
     it "creates a task" do
-      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, recurrence: "custom", interval_days: 3, assignee_id: member.id } }
+      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, recurrence: "custom", interval_days: 3, assignee_id: member.id } }, headers: headers
 
       expect(response).to have_http_status(:created)
       expect(json_body).to include("title" => "Regar", "recurrence" => "custom", "interval_days" => 3, "assignee_id" => member.id)
     end
 
     it "returns validation errors" do
-      post "/api/v1/tasks", params: { task: { title: "", points: 0 } }
+      post "/api/v1/tasks", params: { task: { title: "", points: 0 } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json_body["details"]).to include("Título não pode ficar em branco")
@@ -33,7 +35,7 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks with a member that no longer exists" do
     it "answers 422 in Portuguese instead of crashing" do
-      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999 } }
+      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999 } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json_body["details"].first).to include("não existe mais")
@@ -42,18 +44,18 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks/:id/reopen" do
     it "reopens a done task and clears completed_at" do
-      task = Task.create!(title: "Feita", points: 5, status: "done", completed_at: Time.current)
+      task = household.tasks.create!(title: "Feita", points: 5, status: "done", completed_at: Time.current)
 
-      post "/api/v1/tasks/#{task.id}/reopen"
+      post "/api/v1/tasks/#{task.id}/reopen", headers: headers
 
       expect(response).to have_http_status(:ok)
       expect(json_body).to include("status" => "open", "completed_at" => nil)
     end
 
     it "ignores status through mass assignment" do
-      task = Task.create!(title: "Aberta", points: 5)
+      task = household.tasks.create!(title: "Aberta", points: 5)
 
-      patch "/api/v1/tasks/#{task.id}", params: { task: { status: "done" } }
+      patch "/api/v1/tasks/#{task.id}", params: { task: { status: "done" } }, headers: headers
 
       expect(task.reload.status).to eq("open")
     end
@@ -61,9 +63,9 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks/:id/complete" do
     it "returns the updated task and the new completion" do
-      task = Task.create!(title: "Louça", points: 5, recurrence: "daily", due_on: Date.current)
+      task = household.tasks.create!(title: "Louça", points: 5, recurrence: "daily", due_on: Date.current)
 
-      post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }
+      post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
 
       expect(response).to have_http_status(:ok)
       expect(json_body.dig("task", "due_on")).to eq((Date.current + 1).iso8601)
@@ -71,9 +73,9 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "responds with 409 when the task is already done" do
-      task = Task.create!(title: "Feita", points: 5, status: "done")
+      task = household.tasks.create!(title: "Feita", points: 5, status: "done")
 
-      post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }
+      post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
 
       expect(response).to have_http_status(:conflict)
     end

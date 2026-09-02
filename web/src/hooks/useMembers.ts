@@ -1,16 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { Member, MemberInput } from "../domain/types";
 import { queryKeys } from "./queryKeys";
 import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
+import { useScopedQuery } from "./useScopedQuery";
 
 const EMPTY: Member[] = [];
 const EVERYTHING = [queryKeys.members, queryKeys.tasks, queryKeys.completions, queryKeys.shopping, queryKeys.goals] as const;
 
 export function useMembers() {
   const api = useApi();
-  const query = useQuery({ queryKey: queryKeys.members, queryFn: () => api.members.list() });
+  const query = useScopedQuery(queryKeys.members, () => api.members.list());
   return { ...query, members: query.data ?? EMPTY };
 }
 

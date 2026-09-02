@@ -1,50 +1,26 @@
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
+import { generateInviteCode } from "../domain/inviteCode";
+import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
 import { LIMITS } from "../domain/limits";
 import { MAX_RATING, pointsForRating } from "../domain/points";
 import type {
-  Completion, Goal, GoalInput, Household, Member, MemberInput, ReviewInput,
-  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
+  Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
+  ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskResult } from "./client";
+import type { ColmeiaApi, CompleteTaskResult, StoredHousehold } from "./client";
 import { ApiError } from "./errors";
-import { emptyState, type LocalState } from "./localState";
+import { DEMO_INVITE_CODE, emptyState, withMembers, type LocalState } from "./localState";
+import { LocalStore } from "./localStore";
+import type { KeyValueStore } from "./storage";
 
-export interface KeyValueStore {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  removeItem(key: string): void;
-}
+export type { KeyValueStore } from "./storage";
+export { DEMO_INVITE_CODE } from "./localState";
 
 interface LocalApiOptions {
   seed?: () => LocalState;
   clock?: () => Date;
-  storageKey?: string;
-}
-
-export const LOCAL_STORAGE_KEY = "colmeia.db.v2";
-const LEGACY_STORAGE_KEY = "colmeia.db.v1";
-
-/** What a browser may actually hold: fields added later can be missing. */
-type StoredMember = Omit<Member, "crownTitle"> & Partial<Pick<Member, "crownTitle">>;
-type StoredState = Omit<LocalState, "members"> & { members: StoredMember[] };
-
-interface LegacyState extends Omit<StoredState, "goals"> {
-  goal: Omit<Goal, "memberId"> | null;
-}
-
-/** v1 kept a single household goal; v2 keeps a list with optional owners. */
-function migrateLegacy(raw: string): StoredState {
-  const { goal, ...rest } = JSON.parse(raw) as LegacyState;
-  return { ...rest, goals: goal ? [{ ...goal, memberId: null }] : [] };
-}
-
-/** Anyone stored before crown titles existed reads with the default title. */
-function normalize(state: StoredState): LocalState {
-  return {
-    ...state,
-    members: state.members.map((member) => ({ ...member, crownTitle: member.crownTitle ?? DEFAULT_CROWN_TITLE })),
-  };
+  newCode?: () => string;
 }
 
 function invalid(...details: string[]): never {
@@ -52,7 +28,7 @@ function invalid(...details: string[]): never {
 }
 
 function conflict(detail: string): never {
-  throw new ApiError(409, [detail]);
+  throw new ApiError(409, [ detail ]);
 }
 
 function findOrFail<T extends { id: number }>(items: T[], id: number, label: string): T {
@@ -61,15 +37,15 @@ function findOrFail<T extends { id: number }>(items: T[], id: number, label: str
   return found;
 }
 
-/** Blank is allowed on purpose: it is how someone says they want no crown. */
-function validateCrownTitle(value: string | undefined): void {
-  if (value !== undefined && value.trim().length > LIMITS.crownTitle) invalid(`O título cabe em ${LIMITS.crownTitle} caracteres`);
-}
-
 function validateName(value: string | undefined, max: number, blankMessage: string): void {
   if (value === undefined) return;
   if (value.trim() === "") invalid(blankMessage);
   if (value.trim().length > max) invalid(`Use no máximo ${max} caracteres`);
+}
+
+/** Blank is allowed on purpose: it is how someone says they want no crown. */
+function validateCrownTitle(value: string | undefined): void {
+  if (value !== undefined && value.trim().length > LIMITS.crownTitle) invalid(`O título cabe em ${LIMITS.crownTitle} caracteres`);
 }
 
 function validateGoal(input: Partial<GoalInput>): void {
@@ -87,65 +63,146 @@ function validateTask(input: Partial<TaskInput>): void {
 
 /**
  * Same rules as the Rails API, kept in the browser so the app works with no
- * server at all (that is what GitHub Pages runs).
+ * server at all (that is what GitHub Pages runs). Invite links resolve here
+ * too, but only inside this browser: there is nowhere else for them to reach.
  */
 export class LocalApi implements ColmeiaApi {
   readonly mode = "local" as const;
-  private readonly store: KeyValueStore;
-  private readonly seed: () => LocalState;
+  private readonly store: LocalStore;
   private readonly clock: () => Date;
-  private readonly storageKey: string;
+  private readonly newCode: () => string;
+  private inviteCode: string | null = null;
 
   constructor(store: KeyValueStore, options: LocalApiOptions = {}) {
-    this.store = store;
-    this.seed = options.seed ?? emptyState;
     this.clock = options.clock ?? (() => new Date());
-    this.storageKey = options.storageKey ?? LOCAL_STORAGE_KEY;
+    this.newCode = options.newCode ?? generateInviteCode;
+    this.store = new LocalStore(store, options.seed ?? (() => emptyState(DEMO_INVITE_CODE, "Nossa casa")), this.clock);
   }
 
-  private load(): LocalState {
-    const raw = this.store.getItem(this.storageKey);
-    if (raw) return normalize(JSON.parse(raw) as StoredState);
-    const legacy = this.storageKey === LOCAL_STORAGE_KEY ? this.store.getItem(LEGACY_STORAGE_KEY) : null;
-    const fresh = legacy ? normalize(migrateLegacy(legacy)) : this.seed();
-    this.persist(fresh);
-    if (legacy) this.store.removeItem(LEGACY_STORAGE_KEY);
-    return fresh;
+  setInviteCode(inviteCode: string | null): void {
+    this.inviteCode = inviteCode;
   }
 
-  private persist(state: LocalState): void {
-    this.store.setItem(this.storageKey, JSON.stringify(state));
+  reset(): Promise<void> {
+    this.store.resetDemo();
+    return Promise.resolve();
   }
 
-  private read<T>(select: (state: LocalState) => T): Promise<T> {
-    return Promise.resolve(structuredClone(select(this.load())));
+  listStoredHouseholds(): Promise<StoredHousehold[]> {
+    const index = this.store.index();
+    return Promise.resolve(
+      Object.entries(index)
+        .map(([ inviteCode, entry ]) => ({ inviteCode, ...entry }))
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    );
   }
 
-  private mutate<T>(change: (state: LocalState, now: Date) => T): Promise<T> {
+  private currentState(): LocalState {
+    if (this.inviteCode === null) throw new ApiError(401, [ "Entre em uma colmeia para ver isso" ]);
+    const state = this.store.read(this.inviteCode);
+    if (state === null) throw new ApiError(401, [ "Essa colmeia não está neste navegador" ]);
+    return state;
+  }
+
+  private invitedState(inviteCode: string): LocalState {
+    const state = this.store.read(inviteCode);
+    if (state === null) throw new ApiError(404, [ "Esse convite não existe" ]);
+    return state;
+  }
+
+  private attempt<T>(run: () => T): Promise<T> {
     try {
-      const state = this.load();
-      const result = change(state, this.clock());
-      this.persist(state);
-      return Promise.resolve(structuredClone(result));
+      return Promise.resolve(run());
     } catch (error) {
       return Promise.reject(error);
     }
+  }
+
+  private read<T>(select: (state: LocalState) => T): Promise<T> {
+    return this.attempt(() => structuredClone(select(this.currentState())));
+  }
+
+  private mutate<T>(change: (state: LocalState, now: Date) => T): Promise<T> {
+    return this.change(() => this.currentState(), change);
+  }
+
+  private mutateInvited<T>(inviteCode: string, change: (state: LocalState, now: Date) => T): Promise<T> {
+    return this.change(() => this.invitedState(inviteCode), change);
+  }
+
+  private change<T>(load: () => LocalState, apply: (state: LocalState, now: Date) => T): Promise<T> {
+    return this.attempt(() => {
+      const state = load();
+      const result = apply(state, this.clock());
+      this.store.save(state);
+      return structuredClone(result);
+    });
   }
 
   private nextId(state: LocalState): number {
     return state.nextId++;
   }
 
-  reset(): Promise<void> {
-    this.store.removeItem(this.storageKey);
-    return Promise.resolve();
+  private freshInviteCode(): string {
+    const index = this.store.index();
+    let candidate = this.newCode();
+    while (candidate in index) candidate = this.newCode();
+    return candidate;
   }
+
+  private placeholder(state: LocalState, name: string, position: number, now: Date): Member {
+    return {
+      id: this.nextId(state),
+      name,
+      avatar: AVATAR_OPTIONS[position % AVATAR_OPTIONS.length],
+      color: MEMBER_COLOR_OPTIONS[position % MEMBER_COLOR_OPTIONS.length],
+      crownTitle: DEFAULT_CROWN_TITLE,
+      claimedAt: null,
+      createdAt: now.toISOString(),
+    };
+  }
+
+  households = {
+    create: (input: HouseholdInput): Promise<HouseholdWithMembers> =>
+      this.attempt(() => {
+        const name = input.name.trim();
+        if (name === "") invalid("Dê um nome à colmeia");
+        const now = this.clock();
+        const state = emptyState(this.freshInviteCode(), name);
+        input.memberNames
+          .map((value) => value.trim())
+          .filter((value) => value !== "")
+          .forEach((memberName, position) => state.members.push(this.placeholder(state, memberName, position, now)));
+        this.store.save(state);
+        return structuredClone(withMembers(state));
+      }),
+    lookup: (inviteCode: string): Promise<HouseholdWithMembers> =>
+      this.attempt(() => structuredClone(withMembers(this.invitedState(inviteCode)))),
+    claim: (inviteCode: string, memberId: number): Promise<Member> =>
+      this.mutateInvited(inviteCode, (state, now) => {
+        const member = findOrFail(state.members, memberId, "Membro");
+        if (member.claimedAt !== null) conflict("Essa pessoa já entrou na colmeia");
+        member.claimedAt = now.toISOString();
+        return member;
+      }),
+    join: (inviteCode: string, input: MemberInput): Promise<Member> =>
+      this.mutateInvited(inviteCode, (state, now) => {
+        if (input.name.trim() === "") invalid("Dê um nome à pessoa");
+        validateCrownTitle(input.crownTitle);
+        const member: Member = {
+          ...input, name: input.name.trim(), crownTitle: input.crownTitle.trim(), id: this.nextId(state),
+          claimedAt: now.toISOString(), createdAt: now.toISOString(),
+        };
+        state.members.push(member);
+        return member;
+      }),
+  };
 
   household = {
     get: (): Promise<Household> => this.read((state) => state.household),
     update: (input: Pick<Household, "name">): Promise<Household> =>
       this.mutate((state) => {
-        validateName(input.name, LIMITS.householdName, "Dê um nome à casa");
+        validateName(input.name, LIMITS.householdName, "Dê um nome à colmeia");
         state.household = { ...state.household, name: input.name.trim() };
         return state.household;
       }),
@@ -159,7 +216,7 @@ export class LocalApi implements ColmeiaApi {
         validateCrownTitle(input.crownTitle);
         const member: Member = {
           ...input, name: input.name.trim(), crownTitle: input.crownTitle.trim(),
-          id: this.nextId(state), createdAt: now.toISOString(),
+          id: this.nextId(state), claimedAt: null, createdAt: now.toISOString(),
         };
         state.members.push(member);
         return member;
@@ -246,7 +303,7 @@ export class LocalApi implements ColmeiaApi {
 
   completions = {
     list: (): Promise<Completion[]> =>
-      this.read((state) => [...state.completions].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))),
+      this.read((state) => [ ...state.completions ].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))),
     review: (id: number, input: ReviewInput): Promise<Completion> =>
       this.mutate((state, now) => {
         const completion = findOrFail(state.completions, id, "Conclusão");

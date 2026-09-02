@@ -1,18 +1,24 @@
-import { createContext, useContext } from "react";
+import { useMemo } from "react";
 import type { Member } from "../domain/types";
+import { useMembers } from "./useMembers";
+import { useSessionContext, type SessionContextValue } from "./useSessionContext";
 
-export interface SessionContextValue {
-  /** Who is using the app right now. Picked in the header, remembered per browser. */
+export interface SessionValue extends SessionContextValue {
+  /** Who is using the app right now, inside the colmeia of the session. */
   currentMember: Member | null;
   members: Member[];
   isLoading: boolean;
-  setCurrentMemberId(id: number): void;
 }
 
-export const SessionContext = createContext<SessionContextValue | null>(null);
+export function useSession(): SessionValue {
+  const context = useSessionContext();
+  const { members, isLoading } = useMembers();
+  const memberId = context.session?.memberId;
 
-export function useSession(): SessionContextValue {
-  const context = useContext(SessionContext);
-  if (!context) throw new Error("useSession must be used inside AppProviders");
-  return context;
+  const currentMember = useMemo(
+    () => members.find((member) => member.id === memberId) ?? members[0] ?? null,
+    [ members, memberId ],
+  );
+
+  return { ...context, currentMember, members, isLoading };
 }

@@ -3,7 +3,9 @@ import { AppShell } from "./components/layout/AppShell";
 import { AppProviders } from "./components/providers/AppProviders";
 import { FamilyPage } from "./pages/FamilyPage";
 import { HomePage } from "./pages/HomePage";
+import { InvitePage } from "./pages/InvitePage";
 import { MemberPage } from "./pages/MemberPage";
+import { NewHouseholdPage } from "./pages/NewHouseholdPage";
 import { ShoppingPage } from "./pages/ShoppingPage";
 import { TasksPage } from "./pages/TasksPage";
 
@@ -14,6 +16,9 @@ export default function App() {
     <AppProviders>
       <BrowserRouter basename={basename}>
         <Routes>
+          {/* No colmeia needed, and no navigation either. */}
+          <Route path="nova" element={<NewHouseholdPage />} />
+          <Route path="entrar/:code" element={<InvitePage />} />
           <Route element={<AppShell />}>
             <Route index element={<HomePage />} />
             <Route path="tarefas" element={<TasksPage />} />

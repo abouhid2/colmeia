@@ -1,14 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import type { ShoppingItem, ShoppingItemInput, ShoppingItemUpdate } from "../domain/types";
 import { queryKeys } from "./queryKeys";
 import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
+import { useScopedQuery } from "./useScopedQuery";
 
 const EMPTY: ShoppingItem[] = [];
 
 export function useShoppingItems() {
   const api = useApi();
-  const query = useQuery({ queryKey: queryKeys.shopping, queryFn: () => api.shopping.list() });
+  const query = useScopedQuery(queryKeys.shopping, () => api.shopping.list());
   const items = query.data ?? EMPTY;
   return {
     ...query,
