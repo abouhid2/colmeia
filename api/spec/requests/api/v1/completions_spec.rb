@@ -15,6 +15,46 @@ RSpec.describe "Completions API", type: :request do
     expect(json_body.map { |c| c["id"] }).to eq([ completion.id ])
   end
 
+  # A colmeia running for years should not send its whole archive to a phone.
+  context "with a longer history" do
+    let(:base) { Time.zone.local(2026, 3, 10, 12) }
+
+    before do
+      completion.update!(completed_at: base - 10.hours)
+      3.times do |index|
+        household.completions.create!(member: worker, status: "approved", points_awarded: 5, task_title: "Louça #{index}",
+          task_points: 5, completed_at: base - index.hours)
+      end
+    end
+
+    it "answers with the newest slice when a limit is asked for" do
+      get "/api/v1/completions", params: { limit: 2 }, headers: headers
+
+      expect(json_body.map { |c| c["task_title"] }).to eq([ "Louça 0", "Louça 1" ])
+    end
+
+    it "leaves nothing out when nobody asks for a slice" do
+      get "/api/v1/completions", headers: headers
+
+      expect(json_body.map { |c| c["task_title"] }).to eq([ "Louça 0", "Louça 1", "Louça 2", "Banheiro" ])
+    end
+
+    it "ignores a limit that makes no sense" do
+      get "/api/v1/completions", params: { limit: "todas" }, headers: headers
+
+      expect(json_body.map { |c| c["task_title"] }).to eq([ "Louça 0", "Louça 1", "Louça 2", "Banheiro" ])
+    end
+
+    it "never sends more than its hard ceiling" do
+      stub_const("Api::V1::CompletionsController::MAX_LIMIT", 2)
+
+      get "/api/v1/completions", params: { limit: 100_000 }, headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body.map { |c| c["task_title"] }).to eq([ "Louça 0", "Louça 1" ])
+    end
+  end
+
   it "reviews a completion" do
     post "/api/v1/completions/#{completion.id}/review", params: { reviewer_id: reviewer.id, rating: 4 }, headers: headers
 
