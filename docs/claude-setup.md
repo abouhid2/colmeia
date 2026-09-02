@@ -9,6 +9,7 @@ máquina. Se você abrir o repositório em outro computador, só a primeira part
 | ---------------------- | ------------------------------------------------------------------ |
 | `CLAUDE.md`            | As regras do projeto. É lido automaticamente em toda sessão.        |
 | `docs/claude-setup.md` | Este arquivo.                                                       |
+| `.claude/rules/`, `skills/`, `agents/`, `hooks/`, `settings.json` | O detalhe longo, as rotinas, os contratos de subagente, o guarda de shell e as permissões. |
 
 O `CLAUDE.md` é curto de propósito. Ele tem o mapa da stack, as regras que não podem ser quebradas,
 os comandos e a lista de verificação antes de dar qualquer coisa por pronta. Ele aponta para os
@@ -17,8 +18,13 @@ tudo que importa.
 
 ## O que fica só na sua máquina
 
-Toda a pasta `.claude/` está no `.gitignore`. Ela foi destilada das suas configurações de trabalho, e
-essas configurações não vão para um repositório público. Nada no `CLAUDE.md` depende dela existir.
+Só duas coisas ficam fora do git: `.claude/memory/` (fatos desta máquina) e
+`.claude/settings.local.json` (permissões só suas). O resto da pasta é versionado de propósito: uma
+worktree nova é um checkout, e o que está no `.gitignore` não vem junto. Versionar as regras e o guarda
+é o que faz cada worktree, e cada subagente que trabalha nela, herdar tudo isso.
+
+Tudo aqui foi destilado das suas configurações de trabalho sem carregar nada delas: nenhum nome de
+empresa, ferramenta interna ou ambiente aparece nestes arquivos.
 
 ```
 .claude/
@@ -26,7 +32,7 @@ essas configurações não vão para um repositório público. Nada no `CLAUDE.m
   skills/      rotinas repetíveis, invocáveis pelo nome
   agents/      contratos de subagente
   hooks/       um guarda de segurança para comandos de shell
-  memory/      fatos do projeto que o código não registra
+  memory/      fatos do projeto que o código não registra (só nesta máquina)
   settings.json  permissões e o hook
 ```
 
@@ -75,22 +81,21 @@ Três contratos de subagente.
 
 ### `hooks/guard-bash.sh`
 
-Um `PreToolUse` que roda antes de qualquer comando de shell e bloqueia cinco coisas: `git push` com
-força, `--no-verify`, um `git commit` cuja mensagem contenha atribuição de IA, um `git commit` feito
-na `main`, e comandos destrutivos de banco. Ele falha aberto de propósito: se o `jq` sumir ou o
-payload vier estranho, o comando passa. Um guarda quebrado não pode travar a sessão.
+Um `PreToolUse` que roda antes de qualquer comando de shell e bloqueia quatro coisas: `git push` com
+força, `--no-verify`, um `git commit` cuja mensagem contenha atribuição de IA, e comandos destrutivos
+de banco. Ele falha aberto de propósito: se o `jq` sumir ou o payload vier estranho, o comando passa.
+Um guarda quebrado não pode travar a sessão.
 
 O bloqueio de atribuição existe porque a ferramenta às vezes sugere sozinha um rodapé
 `Co-Authored-By` ou um link de sessão. Esse repositório nunca leva isso.
 
-O bloqueio de commit na `main` segue o fluxo de worktree: a feature nasce em `feat/<slug>` e a `main`
-recebe por fast-forward, que não cria commit e portanto passa. Se você quiser mesmo commitar direto
-na `main`, apague o bloco `git commit` com `BRANCH` do `guard-bash.sh`. São seis linhas.
+Commit direto na `main` é permitido: projeto pessoal, o dono decide onde commita.
 
 ### `memory/`
 
 Fatos que o código não conta. Um fato por arquivo, com frontmatter, mais um `MEMORY.md` que é só o
-índice. Já vem com oito: por que cada worktree precisa das próprias dependências, por que o oxlint
+índice. Fica fora do git, e o `CLAUDE.md` manda ler o índice no começo da sessão se ele existir. Já
+vem com oito: por que cada worktree precisa das próprias dependências, por que o oxlint
 estoura memória, as faixas de timestamp das migrations, o truque do `404.html` no GitHub Pages, o
 código da colmeia de demonstração, o arredondamento que difere entre Ruby e JavaScript, por que o CI
 carrega o schema em vez de preparar o banco, e por que a paleta padrão do Tailwind foi apagada.
@@ -107,7 +112,9 @@ do `credentials.yml.enc` e de qualquer `.env`.
 
 ## Como usar no dia a dia
 
-1. Abra o Claude Code na raiz do repositório. O `CLAUDE.md` entra sozinho.
+1. Abra o Claude Code na raiz do repositório (`cd ~/Documents/colmeia && claude`). O `CLAUDE.md`, as
+   regras, as skills, as permissões e o guarda entram sozinhos. Nada disso carrega se a sessão começar
+   em outra pasta.
 2. Para uma feature nova, peça uma worktree e delegue com o modelo do `subagent-brief`.
 3. Antes de fechar qualquer coisa, `/verify-feature`.
 4. Antes de mergear, rode o `adversarial-reviewer` na branch.

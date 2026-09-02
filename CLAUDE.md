@@ -100,5 +100,8 @@ inside it. If `schema.rb` conflicts on merge, take `main`'s version and rerun `b
 ## More detail
 
 `.claude/rules/` holds the long form: `frontend.md`, `rails.md`, `parity.md`, `review.md`,
-`workflow.md`, `copy.md`. `.claude/skills/` holds the repeatable routines. Both are local only and not
-committed, so nothing here may depend on them existing for someone else.
+`workflow.md`, `copy.md`. `.claude/skills/` holds the repeatable routines. Both are tracked, so a
+worktree gets them too.
+
+`.claude/memory/` is local only. If `.claude/memory/MEMORY.md` exists, read it at the start of the
+session: it holds the facts the code and the git log do not record.

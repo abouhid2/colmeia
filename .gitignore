@@ -4,10 +4,10 @@
 .env.*
 !.env.example
 
-# Claude Code local configuration.
-# CLAUDE.md and docs/claude-setup.md are tracked on purpose: they are the rules
-# of this repo and anyone cloning it should get them.
+# Claude Code. CLAUDE.md, docs/claude-setup.md and .claude/ (rules, skills,
+# agents, hooks, settings.json) are tracked on purpose, so every clone and every
+# worktree gets the same rules and the same shell guard.
 #
-# Everything under .claude/ stays local. It is distilled from private work
-# setups, and nothing in CLAUDE.md depends on it existing.
-.claude/
+# Only what belongs to one machine stays local.
+.claude/memory/
+.claude/settings.local.json
