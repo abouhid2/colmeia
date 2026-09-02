@@ -33,7 +33,13 @@ RSpec.describe "Completions API", type: :request do
       expect(json_body.map { |c| c["task_title"] }).to eq([ "Louça 0", "Louça 1" ])
     end
 
-    it "falls back to its own ceiling when the limit makes no sense" do
+    it "leaves nothing out when nobody asks for a slice" do
+      get "/api/v1/completions", headers: headers
+
+      expect(json_body.map { |c| c["task_title"] }).to eq([ "Louça 0", "Louça 1", "Louça 2", "Banheiro" ])
+    end
+
+    it "ignores a limit that makes no sense" do
       get "/api/v1/completions", params: { limit: "todas" }, headers: headers
 
       expect(json_body.map { |c| c["task_title"] }).to eq([ "Louça 0", "Louça 1", "Louça 2", "Banheiro" ])
