@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { awardedPoints, formatPoints } from "../../domain/points";
 import type { Task } from "../../domain/types";
+import { useSeason } from "../../hooks/useSeasonContext";
 import { useSession } from "../../hooks/useSession";
 import { useTaskMutations } from "../../hooks/useTasks";
 import { useToast } from "../../hooks/useToast";
@@ -25,8 +26,11 @@ export function CompleteTaskDialog({ task, onClose }: CompleteTaskDialogProps) {
 
 function CompleteTaskForm({ task, onDone }: { task: Task; onDone(): void }) {
   const { members, currentMember } = useSession();
+  const { seasons } = useSeason();
   const [memberId, setMemberId] = useState<number | null>(currentMember?.id ?? null);
-  const moment = useCompletionMoment();
+  // The task's own estação, not the one on screen: it is the one that scores.
+  const season = seasons.find((candidate) => candidate.id === task.seasonId);
+  const moment = useCompletionMoment(season?.startsOn ?? null);
   const { complete } = useTaskMutations();
   const { notify } = useToast();
   const doer = members.find((member) => member.id === memberId);

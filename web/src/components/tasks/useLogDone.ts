@@ -18,7 +18,7 @@ export function useLogDone(onDone: () => void) {
   const { create, complete } = useTaskMutations();
   const { notify } = useToast();
   const [memberId, setMemberId] = useState<number | null>(currentMember?.id ?? null);
-  const moment = useCompletionMoment();
+  const moment = useCompletionMoment(currentSeason?.startsOn ?? null);
   const created = useRef<number | null>(null);
 
   const finish = (taskId: number, doerId: number, doerName: string) => {

@@ -56,10 +56,10 @@ function validateName(value: string | undefined, max: number, blankMessage: stri
 }
 
 /** When the work happened: what the person said, or now if they said nothing. */
-function resolveMoment(completedAt: string | undefined, now: Date): Date {
+function resolveMoment(completedAt: string | undefined, now: Date, seasonStartsOn: string): Date {
   if (completedAt === undefined || completedAt === "") return now;
   const moment = new Date(completedAt);
-  const error = completedAtError(moment, now);
+  const error = completedAtError(moment, now, seasonStartsOn);
   if (error !== null) invalid(error);
   return moment;
 }
@@ -449,9 +449,9 @@ export class LocalApi implements ColmeiaApi {
       this.mutate((state, now) => {
         const task = findOrFail(state.tasks, id, "Essa tarefa");
         const doer = findOrFail(state.members, memberId, "Essa pessoa");
-        this.openSeason(state, task.seasonId);
+        const season = this.openSeason(state, task.seasonId);
         if (task.status === "done") conflict("Essa tarefa já foi concluída");
-        const moment = resolveMoment(options.completedAt, now);
+        const moment = resolveMoment(options.completedAt, now, season.startsOn);
         const completion: Completion = {
           id: this.nextId(state),
           seasonId: task.seasonId,

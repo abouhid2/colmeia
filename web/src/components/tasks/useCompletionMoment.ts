@@ -22,15 +22,18 @@ export interface CompletionMoment {
   day: string | null;
 }
 
-/** When a task was done: now by default, or the day and hour a person picks. */
-export function useCompletionMoment(): CompletionMoment {
+/**
+ * When a task was done: now by default, or the day and hour a person picks.
+ * The estação it will score in bounds how far back that can go.
+ */
+export function useCompletionMoment(seasonStartsOn: string | null): CompletionMoment {
   const now = useNow();
   const [custom, setCustom] = useState(false);
   const [date, setDate] = useState(() => toIsoDate(now));
   const [time, setTime] = useState(() => toTimeInput(now));
 
   const moment = custom ? fromDateAndTimeInput(date, time) : null;
-  const error = moment === null ? null : completedAtError(moment, now);
+  const error = moment === null ? null : completedAtError(moment, now, seasonStartsOn);
   const chosen = moment !== null && error === null ? moment : null;
 
   return {

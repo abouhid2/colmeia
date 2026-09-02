@@ -90,6 +90,13 @@ describe("LocalApi", () => {
   describe("a completion registered after the fact", () => {
     const twoDaysAgo = new Date(2026, 2, 9, 18, 30);
 
+    /** Push the running estação's start back, so its own bound is not what is under test. */
+    const openSince = async (startsOn: string) => {
+      const running = (await api.seasons.list()).find((season) => season.closedAt === null);
+      if (running === undefined) throw new Error("o exemplo abriu sem estação");
+      await api.seasons.update(running.id, { startsOn });
+    };
+
     it("closes a one-off task on the day the work happened, not today", async () => {
       const { task, completion } = await api.tasks.complete(13, 2, { completedAt: twoDaysAgo.toISOString() });
 
@@ -105,6 +112,8 @@ describe("LocalApi", () => {
     });
 
     it("keeps the due date when the completion belongs to a cycle already closed", async () => {
+      await openSince("2024-01-01");
+
       const { task } = await api.tasks.complete(16, 1, { completedAt: new Date(2026, 1, 1, 10).toISOString() });
 
       expect(task.dueOn).toBe("2026-03-13");
@@ -129,16 +138,37 @@ describe("LocalApi", () => {
       expect(completion.completedAt).toBe(ahead.toISOString());
     });
 
-    it("refuses a moment more than a year back", async () => {
+    it("refuses a moment more than a year back, even in an estação that old", async () => {
+      await openSince("2024-01-01");
+
       await expect(api.tasks.complete(13, 2, { completedAt: new Date(2025, 0, 1, 10).toISOString() }))
         .rejects.toMatchObject({ status: 422, details: [ "Só dá para registrar até um ano atrás" ] });
     });
 
     it("accepts a moment exactly a year back", async () => {
+      await openSince("2024-01-01");
       const aYearBack = new Date(2025, 2, 11, 15);
+
       const { completion } = await api.tasks.complete(13, 2, { completedAt: aYearBack.toISOString() });
 
       expect(completion.completedAt).toBe(aYearBack.toISOString());
+    });
+
+    it("refuses a moment from before the estação started", async () => {
+      await expect(api.tasks.complete(13, 2, { completedAt: new Date(2026, 2, 8, 20).toISOString() }))
+        .rejects.toMatchObject({ status: 422, details: [ "Essa data é de antes da estação começar" ] });
+    });
+
+    it("accepts a moment from the very day the estação started", async () => {
+      const openingDay = new Date(2026, 2, 9, 8, 0);
+      const { completion } = await api.tasks.complete(13, 2, { completedAt: openingDay.toISOString() });
+
+      expect(completion.completedAt).toBe(openingDay.toISOString());
+    });
+
+    it("names the estação, not the year, when the date is outside both", async () => {
+      await expect(api.tasks.complete(13, 2, { completedAt: new Date(2025, 0, 1, 10).toISOString() }))
+        .rejects.toMatchObject({ status: 422, details: [ "Essa data é de antes da estação começar" ] });
     });
 
     it("refuses a moment it cannot read", async () => {
