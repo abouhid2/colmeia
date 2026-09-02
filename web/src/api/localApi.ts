@@ -612,6 +612,8 @@ export class LocalApi implements ColmeiaApi {
     reopen: (id: number): Promise<Task> =>
       this.mutate((state) => {
         const task = findOrFail(state.tasks, id, "Essa tarefa");
+        // Reopening throws away the completion that closed the task, so a frozen estação keeps it.
+        this.openSeason(state, task.seasonId);
         if (task.status !== "done") conflict("Essa tarefa já está aberta");
         const closing = lastCompletionFor(state.completions, task.id);
         state.completions = state.completions.filter((completion) => completion !== closing);
@@ -632,6 +634,8 @@ export class LocalApi implements ColmeiaApi {
     review: (id: number, input: ReviewInput): Promise<Completion> =>
       this.mutate((state, now) => {
         const completion = findOrFail(state.completions, id, "Essa tarefa feita");
+        // The nota awards the points, and a frozen estação takes no more of them.
+        this.openSeason(state, completion.seasonId);
         findOrFail(state.members, input.reviewerId, "Essa pessoa");
         if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > MAX_RATING) invalid("A nota vai de 1 a 5 estrelas");
         if (completion.status !== "pending") conflict("Essa tarefa já foi avaliada");

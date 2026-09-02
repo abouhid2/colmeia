@@ -9,7 +9,12 @@ import { useToast } from "../../hooks/useToast";
 import { SectionHeading } from "../ui/SectionHeading";
 import { ReviewCard } from "./ReviewCard";
 
-export function PendingReviews() {
+interface PendingReviewsProps {
+  /** A closed estação scores nothing more, so what is pending stays pending. */
+  readOnly?: boolean;
+}
+
+export function PendingReviews({ readOnly = false }: PendingReviewsProps) {
   const now = useNow();
   const { pending: everything } = useCompletions();
   const { currentSeason } = useSeason();
@@ -30,7 +35,10 @@ export function PendingReviews() {
 
   return (
     <section>
-      <SectionHeading title="Para avaliar" hint="Os pontos só entram no favo depois da nota." />
+      <SectionHeading
+        title="Para avaliar"
+        hint={readOnly ? "A estação encerrou, então essas ficaram sem nota." : "Os pontos só entram no favo depois da nota."}
+      />
       <ul className="space-y-3">
         {pending.map((completion) => {
           const doer = lookup(completion.memberId);
@@ -43,6 +51,7 @@ export function PendingReviews() {
               canReview={completion.memberId !== currentMember.id}
               submitting={review.isPending && review.variables?.id === completion.id}
               onReview={(rating) => submit(completion.id, doer?.name ?? "Alguém", rating)}
+              readOnly={readOnly}
             />
           );
         })}

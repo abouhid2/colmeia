@@ -109,7 +109,7 @@ export function HomePage() {
         </Link>
       </section>
 
-      <PendingReviews />
+      <PendingReviews readOnly={closed} />
 
       <section>
         <SectionHeading

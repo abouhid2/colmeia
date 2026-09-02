@@ -519,6 +519,24 @@ describe("LocalApi", () => {
       await expect(openTask(SEASON_ID)).resolves.toMatchObject({ status: "open" });
     });
 
+    it("takes no nota once the estação is closed, and the pending points stay put", async () => {
+      const { completion } = await api.tasks.complete(10, 2);
+      await api.seasons.close(SEASON_ID);
+
+      await expect(api.completions.review(completion.id, { reviewerId: 1, rating: 5 }))
+        .rejects.toMatchObject({ status: 409 });
+      const untouched = (await api.completions.list()).find((candidate) => candidate.id === completion.id);
+      expect(untouched).toMatchObject({ status: "pending", pointsAwarded: 0, reviewerId: null });
+    });
+
+    it("refuses to reopen a task of a closed estação, so its completion survives", async () => {
+      await api.seasons.close(SEASON_ID);
+
+      await expect(api.tasks.reopen(19)).rejects.toMatchObject({ status: 409 });
+      expect((await api.completions.list()).some((completion) => completion.id === 30)).toBe(true);
+      expect((await api.tasks.list(SEASON_ID)).find((task) => task.id === 19)?.status).toBe("done");
+    });
+
     it("keeps an estação that already has history and deletes one that has none", async () => {
       await expect(api.seasons.remove(SEASON_ID)).rejects.toMatchObject({ status: 409 });
 
