@@ -91,6 +91,31 @@ RSpec.describe "Members API", type: :request do
     expect(response).to have_http_status(:unprocessable_content)
   end
 
+  it "remembers the navigation one person arranged for themselves" do
+    member = household.members.create!(name: "Ana")
+
+    patch "/api/v1/members/#{member.id}",
+      params: { member: { nav_preferences: { order: %w[ home seasons tasks ], hidden: %w[ shopping ] } } }, headers: headers
+
+    expect(json_body["nav_preferences"]).to eq({ "order" => %w[ home seasons tasks ], "hidden" => %w[ shopping ] })
+  end
+
+  it "starts everybody on the navigation the app arranges by default" do
+    post "/api/v1/members", params: { member: { name: "Bruno" } }, headers: headers
+
+    expect(json_body["nav_preferences"]).to eq({ "order" => [], "hidden" => [] })
+  end
+
+  it "drops a screen it does not know instead of storing it" do
+    member = household.members.create!(name: "Ana")
+
+    patch "/api/v1/members/#{member.id}",
+      params: { member: { nav_preferences: { order: %w[ garagem home ], hidden: %w[ home garagem ] } } }, headers: headers
+
+    expect(response).to have_http_status(:ok)
+    expect(member.reload.nav_preferences).to eq({ "order" => %w[ home ], "hidden" => [] })
+  end
+
   it "rejects unknown colors" do
     post "/api/v1/members", params: { member: { name: "X", color: "neon" } }, headers: headers
 

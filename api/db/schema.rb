@@ -82,10 +82,40 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
     t.integer "household_id", null: false
     t.string "kind", default: "bee", null: false
     t.string "name", null: false
+    t.json "nav_preferences", default: {}, null: false
     t.string "pattern", default: "solid", null: false
     t.decimal "points_multiplier", precision: 3, scale: 2, default: "1.0", null: false
     t.datetime "updated_at", null: false
     t.index ["household_id"], name: "index_members_on_household_id"
+  end
+
+  create_table "season_title_votes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.integer "season_id", null: false
+    t.integer "season_title_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "votee_id", null: false
+    t.integer "voter_id", null: false
+    t.index ["household_id"], name: "index_season_title_votes_on_household_id"
+    t.index ["season_id", "season_title_id", "voter_id"], name: "index_season_title_votes_on_season_title_and_voter", unique: true
+    t.index ["season_id"], name: "index_season_title_votes_on_season_id"
+    t.index ["season_title_id"], name: "index_season_title_votes_on_season_title_id"
+    t.index ["votee_id"], name: "index_season_title_votes_on_votee_id"
+    t.index ["voter_id"], name: "index_season_title_votes_on_voter_id"
+  end
+
+  create_table "season_titles", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "description", default: "", null: false
+    t.string "emoji", null: false
+    t.integer "household_id", null: false
+    t.string "kind", default: "vote", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id"], name: "index_season_titles_on_household_id"
   end
 
   create_table "seasons", force: :cascade do |t|
@@ -152,6 +182,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
   add_foreign_key "goals", "members"
   add_foreign_key "goals", "seasons"
   add_foreign_key "members", "households"
+  add_foreign_key "season_title_votes", "households"
+  add_foreign_key "season_title_votes", "members", column: "votee_id"
+  add_foreign_key "season_title_votes", "members", column: "voter_id"
+  add_foreign_key "season_title_votes", "season_titles"
+  add_foreign_key "season_title_votes", "seasons"
+  add_foreign_key "season_titles", "households"
   add_foreign_key "seasons", "households"
   add_foreign_key "shopping_items", "households"
   add_foreign_key "shopping_items", "members", column: "added_by_id"
