@@ -56,7 +56,7 @@ export function InvitePage() {
       )}
 
       {joining.isOpen ? (
-        <JoinForm submitting={join.isPending} onSubmit={(input) => join.mutate(input)} onCancel={joining.close} />
+        <JoinForm lagartinhasEnabled={household.lagartinhasEnabled} submitting={join.isPending} onSubmit={(input) => join.mutate(input)} onCancel={joining.close} />
       ) : (
         <Button variant="secondary" size="lg" className="w-full" onClick={joining.open}>
           {household.members.length === 0 ? "Entrar nesta colmeia" : "Sou outra pessoa"}

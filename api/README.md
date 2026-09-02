@@ -86,7 +86,8 @@ colmeia daquele código. Sem cabeçalho, ou com um código que ninguém tem, a
 resposta é `401 { "error": "unauthorized" }`. Um id de outra colmeia responde
 404: não dá para completar uma tarefa com alguém de fora, nem avaliar por ela.
 
-`household` (`GET` devolve `{ id, name, invite_code, demo }`, `PATCH` renomeia,
+`household` (`GET` devolve `{ id, name, invite_code, demo, lagartinhas_enabled }`,
+`PATCH` renomeia e liga ou desliga as lagartinhas,
 `POST /household/reseed` recomeça uma colmeia de exemplo),
 `members`, `seasons` (+ `close` e `reopen`), `tasks`
 (+ `POST /tasks/:id/complete`), `completions`

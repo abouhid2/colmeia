@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { memberTitles } from "./memberTitles";
+import { emptyNavPreferences } from "./navigation";
 import { defaultSeasonTitles } from "./seasonTitles";
 import type { Completion, Goal, Member, Season, SeasonTitleVote } from "./types";
 
 const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member => ({
   id, name, avatar: "🐝", color: "honey", crownTitle, kind: "bee", pointsMultiplier: 1,
-  favoriteAchievements: [], claimedAt: null, createdAt: "2026-01-01T00:00:00.000Z",
+  favoriteAchievements: [], navPreferences: emptyNavPreferences(), claimedAt: null,
+  createdAt: "2026-01-01T00:00:00.000Z",
 });
 
 const [ ana, bruno ] = [ member(1, "Ana", "Rainha da Louça"), member(2, "Bruno", "Abelhão") ];

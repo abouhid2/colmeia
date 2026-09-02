@@ -1,6 +1,7 @@
 import { isAchievementId, MAX_FAVORITE_ACHIEVEMENTS, type AchievementId } from "../domain/achievements";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { generateInviteCode } from "../domain/inviteCode";
+import { emptyNavPreferences, normalizeNavPreferences } from "../domain/navigation";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { completedAtError } from "../domain/completionMoment";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
@@ -11,7 +12,7 @@ import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } f
 import { awardedPoints, MAX_RATING } from "../domain/points";
 import type {
   AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
-  HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonTitle,
+  HouseholdUpdate, HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonTitle,
   SeasonTitleInput, SeasonTitleUpdate, SeasonTitleVote, SeasonUpdate,
   ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput, VoteInput, VoteKey,
 } from "../domain/types";
@@ -155,6 +156,7 @@ function newMember(input: MemberInput): Omit<Member, "claimedAt" | "createdAt" |
     pointsMultiplier: multiplierForKind(kind, input.pointsMultiplier ?? 1),
     crownTitle: input.crownTitle.trim(),
     favoriteAchievements: input.favoriteAchievements ?? [],
+    navPreferences: normalizeNavPreferences(input.navPreferences),
   };
 }
 
@@ -287,6 +289,7 @@ export class LocalApi implements ColmeiaApi {
       kind: "bee",
       pointsMultiplier: 1,
       crownTitle: DEFAULT_CROWN_TITLE,
+      navPreferences: emptyNavPreferences(),
       favoriteAchievements: [],
       claimedAt: null,
       createdAt: now.toISOString(),
@@ -337,10 +340,16 @@ export class LocalApi implements ColmeiaApi {
 
   household = {
     get: (): Promise<Household> => this.read((state) => state.household),
-    update: (input: Pick<Household, "name">): Promise<Household> =>
+    update: (input: HouseholdUpdate): Promise<Household> =>
       this.mutate((state) => {
         validateName(input.name, LIMITS.householdName, "Dê um nome à colmeia");
-        state.household = { ...state.household, name: input.name.trim() };
+        // Each field is left alone unless it was sent, so renaming the colmeia
+        // never answers the lagartinhas question by accident.
+        state.household = {
+          ...state.household,
+          ...(input.name === undefined ? {} : { name: input.name.trim() }),
+          ...(input.lagartinhasEnabled === undefined ? {} : { lagartinhasEnabled: input.lagartinhasEnabled }),
+        };
         return state.household;
       }),
     reseed: (): Promise<Member> =>
@@ -373,6 +382,7 @@ export class LocalApi implements ColmeiaApi {
         const wasLagartinha = member.kind === "lagartinha";
         Object.assign(member, input);
         if (input.crownTitle !== undefined) member.crownTitle = input.crownTitle.trim();
+        if (input.navPreferences !== undefined) member.navPreferences = normalizeNavPreferences(input.navPreferences);
         if (!wasLagartinha) member.pointsMultiplier = multiplierForKind(member.kind, member.pointsMultiplier);
         return member;
       }),

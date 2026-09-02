@@ -4,6 +4,7 @@ import { LIMITS } from "../../domain/limits";
 import { MAX_MULTIPLIER, MEMBER_KIND_OPTIONS, MEMBER_KINDS, MIN_MULTIPLIER, multiplierHint } from "../../domain/memberKinds";
 import type { Member } from "../../domain/types";
 import { useDisclosure } from "../../hooks/useDisclosure";
+import { useLagartinhasEnabled } from "../../hooks/useLagartinhas";
 import { useMemberMutations } from "../../hooks/useMembers";
 import { useToast } from "../../hooks/useToast";
 import { Avatar } from "../ui/Avatar";
@@ -37,9 +38,10 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
   const { name, avatar, color, kind, multiplier, crownTitle } = form.values;
   const [ confirmingDelete, setConfirmingDelete ] = useState(false);
   const advanced = useDisclosure();
+  const lagartinhasEnabled = useLagartinhasEnabled();
   const { create, update, remove } = useMemberMutations();
   const { notify } = useToast();
-  const showMultiplier = kind === "lagartinha" || advanced.isOpen;
+  const showMultiplier = lagartinhasEnabled && (kind === "lagartinha" || advanced.isOpen);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -64,16 +66,18 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
         </Field>
       </div>
       <AvatarPicker avatar={avatar} color={color} onAvatar={form.setAvatar} onColor={form.setColor} />
-      <Field label="É abelha ou lagartinha?" hint={MEMBER_KINDS[kind].hint}>
-        <Segmented label="Tipo de pessoa" options={KIND_SEGMENTS} value={kind} onChange={form.setKind} />
-      </Field>
+      {lagartinhasEnabled && (
+        <Field label="É abelha ou lagartinha?" hint={MEMBER_KINDS[kind].hint}>
+          <Segmented label="Tipo de pessoa" options={KIND_SEGMENTS} value={kind} onChange={form.setKind} />
+        </Field>
+      )}
       {showMultiplier ? (
         <Field label="Multiplicador de pontos" htmlFor="member-multiplier" error={form.multiplierError} hint={multiplierHint(name, kind, Number(multiplier.replace(",", ".")))}>
           <Input id="member-multiplier" type="number" inputMode="decimal" min={MIN_MULTIPLIER} max={MAX_MULTIPLIER} step={0.1} value={multiplier} onChange={(event) => form.setMultiplier(event.target.value)} className="w-28" />
         </Field>
-      ) : (
+      ) : lagartinhasEnabled ? (
         <Button variant="ghost" size="sm" onClick={advanced.open}>Mexer no multiplicador</Button>
-      )}
+      ) : null}
       <CrownTitleField id="member-crown-title" value={crownTitle} onChange={form.setCrownTitle} />
       <div className="flex items-center justify-between gap-2 pt-2">
         {member ? (

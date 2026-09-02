@@ -1,6 +1,7 @@
 import type { AchievementRecord } from "../../domain/achievementHistory";
 import { crownedTitle, WORKER_BEE_LABEL } from "../../domain/crownTitles";
 import type { Member } from "../../domain/types";
+import { useLagartinhasEnabled } from "../../hooks/useLagartinhas";
 import { Card } from "../ui/Card";
 import { BeeAvatar } from "./BeeAvatar";
 import { FavoriteBadges } from "./FavoriteBadges";
@@ -21,6 +22,7 @@ interface MemberHeroProps {
 }
 
 export function MemberHero({ member, crowned, seasonPoints, allTimePoints, rank, houseSize, favorites, isSelf, search }: MemberHeroProps) {
+  const lagartinhasEnabled = useLagartinhasEnabled();
   const title = crowned ? crownedTitle(member.crownTitle) : WORKER_BEE_LABEL;
 
   return (
@@ -29,7 +31,7 @@ export function MemberHero({ member, crowned, seasonPoints, allTimePoints, rank,
       <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">{title}</p>
         <h1 className="mt-0.5 text-3xl font-bold tracking-tight">{member.name}</h1>
-        {member.kind === "lagartinha" && (
+        {lagartinhasEnabled && member.kind === "lagartinha" && (
           <p className="mt-2 flex justify-center sm:justify-start">
             <LagartinhaMark member={member} />
           </p>

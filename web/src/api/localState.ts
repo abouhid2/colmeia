@@ -1,4 +1,5 @@
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
+import { normalizeNavPreferences } from "../domain/navigation";
 import { defaultSeasonTitles } from "../domain/seasonTitles";
 import type {
   AchievementAward, Completion, Goal, Household, HouseholdWithMembers, Member, Season,
@@ -40,7 +41,7 @@ export interface LocalState {
 export function emptyState(inviteCode: string, name: string, now: Date): LocalState {
   const titles = defaultSeasonTitles(3);
   return {
-    household: { id: 1, name, inviteCode, demo: false },
+    household: { id: 1, name, inviteCode, demo: false, lagartinhasEnabled: false },
     members: [],
     seasons: [ firstSeason(2, toIsoDate(now), now) ],
     tasks: [],
@@ -69,7 +70,7 @@ export function withCounts(state: LocalState, season: StoredSeason): Season {
 
 /** A browser can hold a state written before crown titles, lagartinhas or estações existed. */
 export type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements">;
+export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements" | "navPreferences">;
 /** Goals used to carry a weekly or monthly period instead of belonging to an estação. */
 type StoredGoal = Older<Goal, "seasonId"> & { period?: string };
 
@@ -77,7 +78,7 @@ export type StoredState = Omit<
   LocalState,
   "household" | "members" | "seasons" | "tasks" | "completions" | "goals" | "awards" | "seasonTitles" | "titleVotes"
 > & {
-  household: Older<Household, "demo">;
+  household: Older<Household, "demo" | "lagartinhasEnabled">;
   members: StoredMember[];
   seasons?: StoredSeason[];
   tasks: Older<Task, "kidFriendly" | "seasonId">[];
@@ -103,7 +104,11 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
   return {
     ...state,
     // Anything stored before sandboxes existed is somebody's real colmeia.
-    household: { ...state.household, demo: state.household.demo ?? false },
+    household: {
+      ...state.household,
+      demo: state.household.demo ?? false,
+      lagartinhasEnabled: state.household.lagartinhasEnabled ?? hadLagartinhas(state),
+    },
     seasons: adopted,
     seasonTitles,
     titleVotes: state.titleVotes ?? [],
@@ -114,6 +119,7 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
       pointsMultiplier: member.pointsMultiplier ?? 1,
       crownTitle: member.crownTitle ?? DEFAULT_CROWN_TITLE,
       favoriteAchievements: member.favoriteAchievements ?? [],
+      navPreferences: normalizeNavPreferences(member.navPreferences),
     })),
     tasks: state.tasks.map((task) => ({ ...task, kidFriendly: task.kidFriendly ?? false, seasonId: task.seasonId ?? first.id })),
     completions: state.completions.map((completion) => ({
@@ -124,6 +130,12 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
     goals: state.goals.map(({ period: _period, ...goal }) => ({ ...goal, seasonId: goal.seasonId ?? first.id })),
     awards: state.awards ?? [],
   };
+}
+
+/** A colmeia stored before the switch existed answers for itself: it was using
+ *  lagartinhas if somebody in it is one. Everyone else opens with them off. */
+function hadLagartinhas(state: StoredState): boolean {
+  return state.members.some((member) => member.kind === "lagartinha");
 }
 
 /** The oldest day the colmeia has, so nothing predates its own first estação. */

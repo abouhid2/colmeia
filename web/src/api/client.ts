@@ -6,6 +6,7 @@ import type {
   GoalInput,
   Household,
   HouseholdInput,
+  HouseholdUpdate,
   HouseholdWithMembers,
   Member,
   MemberInput,
@@ -73,7 +74,7 @@ export interface ColmeiaApi {
   };
   household: {
     get(): Promise<Household>;
-    update(input: Pick<Household, "name">): Promise<Household>;
+    update(input: HouseholdUpdate): Promise<Household>;
     /** Only for a sandbox: back to the example, with the member to carry on as. */
     reseed(): Promise<Member>;
   };

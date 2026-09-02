@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { Crown } from "../../domain/crown";
+import { emptyNavPreferences } from "../../domain/navigation";
 import type { TitleResult } from "../../domain/titleResults";
 import type { Member, Season, SeasonTitle } from "../../domain/types";
 import { crownTitleLine, crownVerdict, joinNames, titleResultLine, voteCount } from "./titleCopy";
 
 const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member => ({
   id, name, avatar: "🐝", color: "honey", crownTitle, kind: "bee", pointsMultiplier: 1,
-  favoriteAchievements: [], claimedAt: null, createdAt: "2026-01-01T00:00:00.000Z",
+  favoriteAchievements: [], navPreferences: emptyNavPreferences(), claimedAt: null,
+  createdAt: "2026-01-01T00:00:00.000Z",
 });
 
 const [ ana, bruno, duda ] = [ member(1, "Ana"), member(2, "Bruno", "Abelhão"), member(3, "Duda") ];

@@ -1,5 +1,6 @@
 import { formatMultiplier } from "../../domain/memberKinds";
 import type { Member } from "../../domain/types";
+import { useLagartinhasEnabled } from "../../hooks/useLagartinhas";
 import { cn } from "../../lib/cn";
 
 interface LagartinhaMarkProps {
@@ -9,9 +10,12 @@ interface LagartinhaMarkProps {
   className?: string;
 }
 
-/** Says out loud that this person earns more, and how much. */
+/** Says out loud that this person earns more, and how much. Every caterpillar
+ *  mark in the app comes from here, so a colmeia with the switch off is quiet
+ *  wherever a name is shown, without each screen having to remember. */
 export function LagartinhaMark({ member, compact = false, className }: LagartinhaMarkProps) {
-  if (member.kind !== "lagartinha") return null;
+  const enabled = useLagartinhasEnabled();
+  if (!enabled || member.kind !== "lagartinha") return null;
   const multiplier = formatMultiplier(member.pointsMultiplier);
 
   return (

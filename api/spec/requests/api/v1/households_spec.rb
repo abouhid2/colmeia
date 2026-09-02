@@ -13,6 +13,12 @@ RSpec.describe "Households API", type: :request do
       expect(json_body["members"].map { |member| member["color"] }.uniq.size).to eq(3)
     end
 
+    it "opens with no lagartinhas, because a colmeia only says so once it has them" do
+      post "/api/v1/households", params: { household: { name: "Família Silva" } }
+
+      expect(json_body).to include("lagartinhas_enabled" => false)
+    end
+
     it "needs no invite code of its own" do
       post "/api/v1/households", params: { household: { name: "Sem cabeçalho" } }
 
@@ -86,7 +92,7 @@ RSpec.describe "Households API", type: :request do
       expect(response).to have_http_status(:created)
       household = Household.find_by!(invite_code: json_body["household"]["invite_code"])
       expect(household).to have_attributes(demo: true, name: Households::SeedExample::NAME)
-      expect(json_body["household"]).to include("demo" => true)
+      expect(json_body["household"]).to include("demo" => true, "lagartinhas_enabled" => true)
       expect(json_body["household"]["members"].map { |member| member["name"] }).to eq(%w[ Ana Bruno Clara Duda ])
       expect(household.tasks.count).to eq(12)
       expect(household.goals.count).to eq(4)

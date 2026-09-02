@@ -2,6 +2,7 @@ import { CalendarDays, Repeat, ShieldCheck } from "lucide-react";
 import { describeDue, type DueTone } from "../../domain/dueDates";
 import { isRecurring, recurrenceLabel } from "../../domain/recurrence";
 import type { Member, Task } from "../../domain/types";
+import { useLagartinhasEnabled } from "../../hooks/useLagartinhas";
 import { Avatar } from "../ui/Avatar";
 import { Badge } from "../ui/Badge";
 import { PriorityBadge } from "./PriorityBadge";
@@ -20,6 +21,7 @@ interface TaskMetaProps {
 }
 
 export function TaskMeta({ task, assignee, today }: TaskMetaProps) {
+  const lagartinhasEnabled = useLagartinhasEnabled();
   const due = task.dueOn ? describeDue(task.dueOn, today) : null;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -27,7 +29,7 @@ export function TaskMeta({ task, assignee, today }: TaskMetaProps) {
       {due && <Badge tone={DUE_TONES[due.tone]} icon={<CalendarDays className="size-3" />}>{due.label}</Badge>}
       {isRecurring(task.recurrence) && <Badge icon={<Repeat className="size-3" />}>{recurrenceLabel(task)}</Badge>}
       {task.requiresReview && <Badge tone="bg-lake-100 text-lake-700" icon={<ShieldCheck className="size-3" />}>Com avaliação</Badge>}
-      {task.kidFriendly && <Badge tone="bg-leaf-100 text-leaf-700" icon={<span aria-hidden>🐛</span>}>Para lagartinhas</Badge>}
+      {lagartinhasEnabled && task.kidFriendly && <Badge tone="bg-leaf-100 text-leaf-700" icon={<span aria-hidden>🐛</span>}>Para lagartinhas</Badge>}
       {assignee ? (
         <Badge tone="bg-surface border border-line text-ink" icon={<Avatar member={assignee} size="xs" className="-ml-1.5 size-4 text-[0.6rem]" />}>{assignee.name}</Badge>
       ) : (

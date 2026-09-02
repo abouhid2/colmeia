@@ -15,8 +15,8 @@ import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
 import { ALL_TIME_SCOPE_LABEL, SEASON_SCOPE_LABEL } from "../components/goal/goalCopy";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ColmeiaCard } from "../components/household/ColmeiaCard";
+import { HouseholdSettingsCard } from "../components/household/HouseholdSettingsCard";
 import { ExampleResetCard } from "../components/members/ExampleResetCard";
-import { HouseholdNameForm } from "../components/members/HouseholdNameForm";
 import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
 import { MemberCard } from "../components/members/MemberCard";
@@ -53,10 +53,7 @@ export function FamilyPage() {
 
   return (
     <div className="space-y-8 animate-rise">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Família</h1>
-        <div className="mt-3"><HouseholdNameForm /></div>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight">Família</h1>
       {closed && <SeasonClosedNotice name={currentSeason.name} />}
       <MemberFilter />
 
@@ -107,6 +104,11 @@ export function FamilyPage() {
             <span className="block text-sm text-ink-soft">Agora em {currentSeason.name}.</span>
           </span>
         </Link>
+      </section>
+
+      <section>
+        <SectionHeading title="Ajustes da colmeia" />
+        <HouseholdSettingsCard />
       </section>
 
       <section>
