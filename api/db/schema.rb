@@ -48,16 +48,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
     t.index ["task_id"], name: "index_completions_on_task_id"
   end
 
+  create_table "goal_members", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "goal_id", null: false
+    t.integer "household_id", null: false
+    t.integer "member_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["goal_id", "member_id"], name: "index_goal_members_on_goal_id_and_member_id", unique: true
+    t.index ["household_id"], name: "index_goal_members_on_household_id"
+    t.index ["member_id"], name: "index_goal_members_on_member_id"
+  end
+
   create_table "goals", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.date "ends_on"
     t.integer "household_id", null: false
-    t.integer "member_id"
     t.integer "season_id", null: false
+    t.date "starts_on"
     t.integer "target_points", default: 300, null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.index ["household_id"], name: "index_goals_on_household_id"
-    t.index ["member_id"], name: "index_goals_on_member_id"
     t.index ["season_id"], name: "index_goals_on_season_id"
   end
 
@@ -146,8 +157,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
   add_foreign_key "completions", "members", column: "reviewer_id"
   add_foreign_key "completions", "seasons"
   add_foreign_key "completions", "tasks"
+  add_foreign_key "goal_members", "goals"
+  add_foreign_key "goal_members", "households"
+  add_foreign_key "goal_members", "members"
   add_foreign_key "goals", "households"
-  add_foreign_key "goals", "members"
   add_foreign_key "goals", "seasons"
   add_foreign_key "members", "households"
   add_foreign_key "seasons", "households"

@@ -51,6 +51,8 @@ pt-BR:
       goal:
         title: Recompensa
         target_points: Pontos da meta
+        starts_on: Começo
+        ends_on: Fim
       season:
         name: Nome
         starts_on: Começo
@@ -68,6 +70,12 @@ pt-BR:
           attributes:
             ends_on:
               on_or_after_start: "não pode ser antes do começo"
+        goal:
+          attributes:
+            base:
+              outside_season: "A meta precisa caber dentro da estação"
+              ends_before_starts: "O fim vem antes do começo"
+              unknown_member: "Escolha só quem mora nesta colmeia"
         member:
           attributes:
             favorite_achievements:

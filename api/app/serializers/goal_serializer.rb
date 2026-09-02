@@ -5,7 +5,9 @@ module GoalSerializer
       season_id: goal.season_id,
       title: goal.title,
       target_points: goal.target_points,
-      member_id: goal.member_id,
+      member_ids: goal.member_ids,
+      starts_on: goal.starts_on,
+      ends_on: goal.ends_on,
       created_at: goal.created_at
     }
   end

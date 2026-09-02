@@ -5,6 +5,8 @@ module Households
   # a single example to keep believable.
   class SeedExample
     NAME = "Família de exemplo".freeze
+    # Three months of championship, long enough to hold metas with windows.
+    SEASON_LENGTH_DAYS = 90
     # Whoever opens the example walks in as Ana: her place is already claimed,
     # so there is nothing to sign up for before touching the app.
     ENTRY_MEMBER_NAME = "Ana".freeze
@@ -77,8 +79,10 @@ module Households
     end
 
     # Two estações, so the example opens with a championship already decided
-    # and another one running: the crown comes from the closed one. The example
-    # replaces whatever the colmeia opened with, so no empty estação is left over.
+    # and another one running: the crown comes from the closed one. The running
+    # one lasts three months and opened a few days ago, which is what gives the
+    # roteiro something to draw. The example replaces whatever the colmeia opened
+    # with, so no empty estação is left over.
     def create_seasons
       household.seasons.destroy_all
       week_start = now.beginning_of_week
@@ -86,7 +90,14 @@ module Households
         name: "Estação passada", starts_on: (week_start - 1.week).to_date,
         ends_on: (week_start - 1.day).to_date, closed_at: week_start
       )
-      seasons[:current] = household.seasons.create!(name: "Estação atual", starts_on: week_start.to_date)
+      seasons[:current] = household.seasons.create!(
+        name: "Estação atual", starts_on: season_starts_on, ends_on: season_starts_on + SEASON_LENGTH_DAYS
+      )
+    end
+
+    # A few days back, so today already sits inside the first window.
+    def season_starts_on
+      (now.beginning_of_week - 3.days).to_date
     end
 
     def create_members
@@ -198,12 +209,30 @@ module Households
       ]
     end
 
+    # The running estação carries three metas da colmeia spread across its three
+    # months, so the roteiro shows one running, one adiante and one no fim.
     def create_goals
       # The closed estação kept its own reward, so the crown has a target to beat.
       household.goals.create!(season: seasons.fetch(:past), title: "Pizza e filme no sábado", target_points: 300)
-      household.goals.create!(season: season, title: "Pizza e filme no sábado", target_points: 300)
-      household.goals.create!(season: season, title: "Sorvete na sexta", target_points: 30, member: members.fetch(:duda))
-      household.goals.create!(season: season, title: "Escolher o filme do sábado", target_points: 60, member: members.fetch(:bruno))
+      opening = season.starts_on
+
+      household.goals.create!(
+        season: season, title: "Pizza e filme no sábado", target_points: 300,
+        starts_on: opening, ends_on: opening + 29
+      )
+      household.goals.create!(
+        season: season, title: "Fim de semana na praia", target_points: 250,
+        starts_on: opening + 35, ends_on: opening + 41
+      )
+      household.goals.create!(
+        season: season, title: "Jantar fora para fechar a estação", target_points: 200,
+        starts_on: opening + 83, ends_on: season.ends_on
+      )
+
+      household.goals.create!(season: season, title: "Sorvete duplo", target_points: 40,
+        member_ids: members.values_at(:ana, :duda).map(&:id))
+      household.goals.create!(season: season, title: "Sorvete na sexta", target_points: 30, member_ids: [ members.fetch(:duda).id ])
+      household.goals.create!(season: season, title: "Escolher o filme do sábado", target_points: 60, member_ids: [ members.fetch(:bruno).id ])
     end
 
     def create_shopping_items

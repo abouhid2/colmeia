@@ -2,7 +2,7 @@ module Api
   module V1
     class GoalsController < BaseController
       def index
-        scope = goals.oldest_first
+        scope = goals.oldest_first.includes(:goal_members)
         scope = scope.where(season_id: params[:season_id]) if params[:season_id].present?
         render json: scope.map { |goal| GoalSerializer.call(goal) }
       end
@@ -37,7 +37,7 @@ module Api
       end
 
       def goal_params
-        params.require(:goal).permit(:title, :target_points, :member_id, :season_id)
+        params.require(:goal).permit(:title, :target_points, :season_id, :starts_on, :ends_on, member_ids: [])
       end
     end
   end

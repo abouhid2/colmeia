@@ -24,9 +24,13 @@ class Member < ApplicationRecord
   has_many :shopping_items, foreign_key: :added_by_id, dependent: :nullify, inverse_of: :added_by
   has_many :purchases, class_name: "ShoppingItem", foreign_key: :purchased_by_id,
     dependent: :nullify, inverse_of: :purchased_by
-  has_many :goals, dependent: :destroy
+  has_many :goal_members, dependent: :destroy
+  has_many :goals, through: :goal_members
   # Whoever leaves the colmeia takes their badges with them.
   has_many :achievement_awards, dependent: :destroy
+
+  # Prepended so it runs while the goal_members rows still point at the goals.
+  before_destroy :drop_goals_nobody_else_is_in, prepend: true
 
   normalizes :crown_title, with: ->(title) { title.to_s.strip }, apply_to_nil: true
   normalizes :favorite_achievements, with: ->(keys) { Array(keys).map(&:to_s) }, apply_to_nil: true
@@ -68,6 +72,12 @@ class Member < ApplicationRecord
   end
 
   private
+
+  # A goal this person was the only one in is theirs, and leaves with them. One
+  # they shared stays for whoever is left, never turning into a colmeia goal.
+  def drop_goals_nobody_else_is_in
+    goals.includes(:goal_members).select { |goal| goal.goal_members.size == 1 }.each(&:destroy)
+  end
 
   # Three badges, all real, no repeats: the shelf on the profile has three slots.
   def favorite_achievements_are_pinnable
