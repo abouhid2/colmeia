@@ -1,4 +1,4 @@
-import { ListChecks, Plus } from "lucide-react";
+import { CalendarCheck, ListChecks, Plus } from "lucide-react";
 import { useState } from "react";
 import { canReopen, completionsForMember } from "../domain/history";
 import { sortOpenTasks } from "../domain/taskSort";
@@ -52,9 +52,14 @@ export function TasksPage() {
 
   return (
     <div className="space-y-5 animate-rise">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold tracking-tight">Tarefas</h1>
-        <Button icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" icon={<CalendarCheck className="size-4" />} onClick={dialogs.openLogDone}>
+            Registrar algo já feito
+          </Button>
+          <Button icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>
+        </div>
       </div>
       <MemberFilter />
       <div className="flex flex-wrap items-center gap-2">

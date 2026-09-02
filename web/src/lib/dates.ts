@@ -41,6 +41,11 @@ export function momentPhrase(date: Date): string {
   return format(date, "d 'de' MMM 'às' HH:mm", { locale: ptBR });
 }
 
+/** "14 de ago": the same sentence form, when the hour does not matter. */
+export function dayPhrase(date: Date): string {
+  return format(date, "d 'de' MMM", { locale: ptBR });
+}
+
 /**
  * When a completion happened: relative while it is still today, absolute once
  * it is not. "há 5 dias" hides which day, and a task registered after the fact

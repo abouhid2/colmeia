@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { completedAtError } from "../../domain/completionMoment";
 import { useNow } from "../../hooks/useNow";
-import { fromDateAndTimeInput, momentPhrase, toIsoDate, toTimeInput } from "../../lib/dates";
+import { dayPhrase, fromDateAndTimeInput, momentPhrase, toIsoDate, toTimeInput } from "../../lib/dates";
 
 export interface CompletionMoment {
   /** False while the completion is simply "agora". */
@@ -18,6 +18,8 @@ export interface CompletionMoment {
   completedAt: string | undefined;
   /** "14 de ago às 18:30", once a moment of its own is picked. */
   phrase: string | null;
+  /** The same day without the hour, for a message that has no room for it. */
+  day: string | null;
 }
 
 /** When a task was done: now by default, or the day and hour a person picks. */
@@ -42,5 +44,6 @@ export function useCompletionMoment(): CompletionMoment {
     isValid: error === null,
     completedAt: chosen?.toISOString(),
     phrase: chosen === null ? null : momentPhrase(chosen),
+    day: chosen === null ? null : dayPhrase(chosen),
   };
 }
