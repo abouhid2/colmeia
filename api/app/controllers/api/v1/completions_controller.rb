@@ -12,8 +12,12 @@ module Api
         render json: scope.map { |completion| CompletionSerializer.call(completion) }
       end
 
+      # Rating releases points into the estação the work belongs to, so a
+      # closed one refuses it: its ranking, its meta and its coroa are settled.
       def review
         completion = completions.find(params[:id])
+        return render_conflict(t_error(:season_closed)) if season_closed?(completion.season)
+
         reviewer = current_household.members.find(params.require(:reviewer_id))
         rating = Integer(params.require(:rating).to_s, 10)
         reviewed = Completions::Review.new(completion: completion, reviewer: reviewer, rating: rating).call

@@ -6,10 +6,17 @@ module Api
       # How many sandbox colmeias this API hands out per hour. Nobody signs up
       # for one, so this is all that stands between the endpoint and a script.
       DEMO_LIMIT_PER_HOUR = 30
+      # The same door, and cheaper to push on: one call writes a colmeia, an
+      # estação, six títulos and up to twenty people, and nobody has to sign up
+      # for it either. Counted apart from the sandbox so a script hammering one
+      # endpoint cannot lock a family out of the other.
+      CREATE_LIMIT_PER_HOUR = 60
 
       skip_before_action :require_household!
 
       def create
+        return render_creation_limit_reached if households_opened_in_the_last_hour >= CREATE_LIMIT_PER_HOUR
+
         household = Households::Create.new(**create_params).call
         render json: HouseholdSerializer.with_members(household), status: :created
       end
@@ -48,6 +55,15 @@ module Api
       def render_demo_limit_reached
         render json: { error: "too_many_requests", details: [ I18n.t("api.errors.too_many_demos") ] },
           status: :too_many_requests
+      end
+
+      def render_creation_limit_reached
+        render json: { error: "too_many_requests", details: [ I18n.t("api.errors.too_many_households") ] },
+          status: :too_many_requests
+      end
+
+      def households_opened_in_the_last_hour
+        Household.where(demo: false, created_at: 1.hour.ago..).count
       end
 
       def invited_household

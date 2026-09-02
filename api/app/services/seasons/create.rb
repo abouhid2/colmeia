@@ -4,7 +4,7 @@ module Seasons
   class Create
     COPIED_ATTRIBUTES = %i[
       title description points priority recurrence interval_days
-      requires_review assignee_id created_by_id
+      requires_review kid_friendly assignee_id created_by_id
     ].freeze
 
     def initialize(household:, attributes:, copy_tasks_from_season_id: nil)

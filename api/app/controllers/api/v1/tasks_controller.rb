@@ -41,9 +41,13 @@ module Api
         render_unprocessable(e.message)
       end
 
+      # Reopening takes back the completion that closed the task, so a closed
+      # estação refuses it: nothing is scored out of frozen history either.
       def reopen
-        task = Tasks::Reopen.new(task: tasks.find(params[:id])).call
-        render json: TaskSerializer.call(task)
+        task = tasks.find(params[:id])
+        return render_conflict(t_error(:season_closed)) if season_closed?(task.season)
+
+        render json: TaskSerializer.call(Tasks::Reopen.new(task: task).call)
       rescue Tasks::Reopen::AlreadyOpen => e
         render_conflict(e.message)
       end

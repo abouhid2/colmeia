@@ -54,6 +54,35 @@ RSpec.describe "Households API", type: :request do
 
       expect(response).to have_http_status(:unprocessable_content)
     end
+
+    it "stops opening them once the hour is full" do
+      limit = Api::V1::HouseholdsController::CREATE_LIMIT_PER_HOUR
+      limit.times { |index| Household.create!(name: "Casa #{index}") }
+
+      post "/api/v1/households", params: { household: { name: "Tarde demais", member_names: [ "Ana" ] } }
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(json_body["details"]).to eq([ "Tem muita colmeia nascendo agora. Tente de novo daqui a pouco." ])
+      expect(Household.where(name: "Tarde demais")).to be_empty
+    end
+
+    it "counts only the last hour, so yesterday's colmeias do not block today's" do
+      Api::V1::HouseholdsController::CREATE_LIMIT_PER_HOUR.times do |index|
+        Household.create!(name: "Casa #{index}", created_at: 2.hours.ago)
+      end
+
+      post "/api/v1/households", params: { household: { name: "Nova" } }
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it "does not let the sandbox eat the ceiling the families need" do
+      Api::V1::HouseholdsController::CREATE_LIMIT_PER_HOUR.times { Household.create!(name: "Exemplo", demo: true) }
+
+      post "/api/v1/households", params: { household: { name: "Nova" } }
+
+      expect(response).to have_http_status(:created)
+    end
   end
 
   describe "GET /api/v1/households/:invite_code" do

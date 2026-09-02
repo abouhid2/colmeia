@@ -9,6 +9,7 @@ pt-BR:
       season_voting_closed: "A votação abre quando a estação encerrar"
       auto_title_kept: "Esse é o título da coroa, e a coroa fica na lista"
       too_many_demos: "Tem muita gente experimentando o exemplo agora. Tente de novo daqui a pouco."
+      too_many_households: "Tem muita colmeia nascendo agora. Tente de novo daqui a pouco."
       not_a_demo: "Só dá para recomeçar uma colmeia de exemplo."
   activerecord:
     models:
