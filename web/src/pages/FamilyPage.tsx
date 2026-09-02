@@ -17,6 +17,7 @@ import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ColmeiaCard } from "../components/household/ColmeiaCard";
 import { DemoResetCard } from "../components/members/DemoResetCard";
 import { HouseholdNameForm } from "../components/members/HouseholdNameForm";
+import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
 import { MemberCard } from "../components/members/MemberCard";
 import { MemberDialog } from "../components/members/MemberDialog";
@@ -66,6 +67,8 @@ export function FamilyPage() {
         />
         <Leaderboard standings={scope === "season" ? standings : allTimeStandings} crownedMemberId={crown?.member.id ?? null} />
       </section>
+
+      <LagartinhaLeague standings={scope === "season" ? standings : allTimeStandings} />
 
       <section>
         <SectionHeading title="Quem mora aqui" hint={CROWN_EXPLANATION} action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => openMember(null)}>Adicionar</Button>} />

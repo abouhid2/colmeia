@@ -4,12 +4,12 @@ import { canReopen, completionsForMember } from "./history";
 
 const completion = (overrides: Partial<Completion> = {}): Completion => ({
   id: 1, seasonId: 7, taskId: 1, memberId: 1, reviewerId: null, status: "approved", rating: null,
-  pointsAwarded: 10, taskTitle: "Lavar louça", taskPoints: 10, completedAt: "2026-03-11T10:00:00.000Z", reviewedAt: null, ...overrides,
+  pointsAwarded: 10, multiplier: 1, taskTitle: "Lavar louça", taskPoints: 10, completedAt: "2026-03-11T10:00:00.000Z", reviewedAt: null, ...overrides,
 });
 
 const task = (overrides: Partial<Task> = {}): Task => ({
   id: 1, seasonId: 7, title: "Lavar louça", description: null, points: 10, priority: "medium", recurrence: "none",
-  intervalDays: null, dueOn: null, requiresReview: false, status: "done", completedAt: "2026-03-11T10:00:00.000Z",
+  intervalDays: null, dueOn: null, requiresReview: false, kidFriendly: false, status: "done", completedAt: "2026-03-11T10:00:00.000Z",
   assigneeId: null, createdById: null, createdAt: "2026-03-01T10:00:00.000Z", ...overrides,
 });
 

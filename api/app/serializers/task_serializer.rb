@@ -11,6 +11,7 @@ module TaskSerializer
       interval_days: task.interval_days,
       due_on: task.due_on,
       requires_review: task.requires_review,
+      kid_friendly: task.kid_friendly,
       status: task.status,
       completed_at: task.completed_at,
       assignee_id: task.assignee_id,

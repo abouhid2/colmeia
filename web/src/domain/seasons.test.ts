@@ -9,7 +9,7 @@ const season = (overrides: Partial<Season> & Pick<Season, "id">): Season => ({
 
 const completion = (id: number, seasonId: number): Completion => ({
   id, seasonId, taskId: null, memberId: 1, reviewerId: null, status: "approved", rating: null,
-  pointsAwarded: 10, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-11T10:00:00.000Z", reviewedAt: null,
+  pointsAwarded: 10, multiplier: 1, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-11T10:00:00.000Z", reviewedAt: null,
 });
 
 const now = new Date(2026, 2, 11, 15);

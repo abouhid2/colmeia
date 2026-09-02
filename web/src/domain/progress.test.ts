@@ -9,7 +9,7 @@ const season = (overrides: Partial<Season> = {}): Season => ({
 
 const completion = (overrides: Partial<Completion>): Completion => ({
   id: 1, seasonId: 7, taskId: null, memberId: 1, reviewerId: null, status: "approved", rating: null,
-  pointsAwarded: 10, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-11T10:00:00.000Z", reviewedAt: null, ...overrides,
+  pointsAwarded: 10, multiplier: 1, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-11T10:00:00.000Z", reviewedAt: null, ...overrides,
 });
 
 describe("seasonBounds", () => {

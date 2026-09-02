@@ -1,12 +1,16 @@
 import { useState, type FormEvent } from "react";
 import { DEFAULT_CROWN_TITLE } from "../../domain/crownTitles";
-import type { MemberColor, MemberInput } from "../../domain/types";
+import { MEMBER_KIND_OPTIONS, MEMBER_KINDS } from "../../domain/memberKinds";
+import type { MemberColor, MemberInput, MemberKind } from "../../domain/types";
 import { AvatarPicker } from "../members/AvatarPicker";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Field } from "../ui/Field";
 import { Input } from "../ui/Input";
+import { Segmented } from "../ui/Segmented";
+
+const KIND_SEGMENTS = MEMBER_KIND_OPTIONS.map((kind) => ({ value: kind, label: MEMBER_KINDS[kind].label }));
 
 interface JoinFormProps {
   submitting: boolean;
@@ -19,10 +23,11 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
   const [ name, setName ] = useState("");
   const [ avatar, setAvatar ] = useState("🐝");
   const [ color, setColor ] = useState<MemberColor>("honey");
+  const [ kind, setKind ] = useState<MemberKind>("bee");
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    onSubmit({ name, avatar, color, crownTitle: DEFAULT_CROWN_TITLE });
+    onSubmit({ name, avatar, color, kind, crownTitle: DEFAULT_CROWN_TITLE });
   };
 
   return (
@@ -35,6 +40,9 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
           </Field>
         </div>
         <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />
+        <Field label="Tipo" hint={MEMBER_KINDS[kind].hint}>
+          <Segmented label="Tipo de pessoa" options={KIND_SEGMENTS} value={kind} onChange={setKind} />
+        </Field>
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
           <Button type="submit" loading={submitting} disabled={name.trim() === ""}>Entrar na colmeia</Button>

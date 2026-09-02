@@ -20,7 +20,8 @@ season = household.seasons.create!(name: "Estação atual", starts_on: week_star
 ana = household.members.create!(name: "Ana", avatar: "🦊", color: "pollen", claimed_at: now)
 bruno = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky", crown_title: "Abelhão")
 clara = household.members.create!(name: "Clara", avatar: "🐼", color: "plum", crown_title: "Rainha da Louça")
-duda = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf")
+# Duda is the child of the house: everything she does is worth 1,5x.
+duda = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf", kind: "lagartinha")
 
 household.tasks.create!(
   season: season,
@@ -32,12 +33,12 @@ bathroom = household.tasks.create!(
   season: season, title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly",
   due_on: today + 7, requires_review: true, assignee: bruno
 )
-dishes = household.tasks.create!(season: season, title: "Lavar a louça do jantar", points: 5, priority: "medium", recurrence: "daily", due_on: today + 1)
+dishes = household.tasks.create!(season: season, title: "Lavar a louça do jantar", points: 5, priority: "medium", recurrence: "daily", due_on: today + 1, kid_friendly: true)
 household.tasks.create!(season: season, title: "Pendurar o quadro da sala", points: 15, priority: "low", assignee: bruno, created_by: clara)
-trash = household.tasks.create!(season: season, title: "Levar o lixo para fora", points: 5, priority: "medium", recurrence: "daily", due_on: today + 1)
+trash = household.tasks.create!(season: season, title: "Levar o lixo para fora", points: 5, priority: "medium", recurrence: "daily", due_on: today + 1, kid_friendly: true)
 household.tasks.create!(
   season: season, title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom",
-  interval_days: 3, due_on: today + 1, assignee: duda
+  interval_days: 3, due_on: today + 1, assignee: duda, kid_friendly: true
 )
 household.tasks.create!(season: season, title: "Aspirar a sala e os quartos", points: 15, priority: "medium", recurrence: "weekly", due_on: today + 2)
 household.tasks.create!(
@@ -55,8 +56,8 @@ household.completions.create!(season: season, task: car, member: ana, reviewer: 
 household.completions.create!(season: season, task: lunch, member: bruno, status: "approved", points_awarded: 30,
   task_title: lunch.title, task_points: 30, completed_at: now - 7.hours)
 household.completions.create!(season: season, task: ironing, member: clara, reviewer: ana, status: "approved", rating: 5, points_awarded: 20,
-  task_title: ironing.title, task_points: 20, completed_at: now - 5.hours)
-household.completions.create!(season: season, task: dishes, member: duda, status: "approved", points_awarded: 5,
+  task_title: ironing.title, task_points: 20, completed_at: now - 5.hours, reviewed_at: now - 4.hours)
+household.completions.create!(season: season, task: dishes, member: duda, status: "approved", points_awarded: 8, multiplier: 1.5,
   task_title: dishes.title, task_points: 5, completed_at: now - 3.hours)
 household.completions.create!(season: season, task: trash, member: ana, status: "approved", points_awarded: 5,
   task_title: trash.title, task_points: 5, completed_at: now - 2.hours)
@@ -75,14 +76,15 @@ weekday = ->(offset) { last_week + offset.days + 10.hours }
   { member: ana, title: "Trocar as lâmpadas", points: 20, awarded: 20, day: 5 },
   { member: clara, title: "Passar as roupas", points: 20, awarded: 16, rating: 4, reviewer: bruno, day: 2 },
   { member: clara, title: "Organizar a despensa", points: 30, awarded: 30, day: 5 },
-  { member: duda, title: "Regar as plantas", points: 5, awarded: 5, day: 2 },
-  { member: duda, title: "Lavar a louça do jantar", points: 5, awarded: 5, day: 5 },
-  { member: duda, title: "Aspirar a sala e os quartos", points: 20, awarded: 20, day: 6 }
+  { member: duda, title: "Regar as plantas", points: 5, awarded: 8, day: 2 },
+  { member: duda, title: "Lavar a louça do jantar", points: 5, awarded: 8, day: 5 },
+  { member: duda, title: "Aspirar a sala e os quartos", points: 20, awarded: 30, day: 6 }
 ].each do |row|
   done_at = weekday.call(row[:day])
   household.completions.create!(
     season: past_season, member: row[:member], reviewer: row[:reviewer], status: "approved", rating: row[:rating],
-    points_awarded: row[:awarded], task_title: row[:title], task_points: row[:points],
+    points_awarded: row[:awarded], multiplier: row[:member].points_multiplier,
+    task_title: row[:title], task_points: row[:points],
     completed_at: done_at, reviewed_at: (done_at if row[:rating])
   )
 end

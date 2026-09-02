@@ -35,7 +35,8 @@ module Tasks
         season_id: task.season_id,
         member: member,
         status: task.requires_review? ? "pending" : "approved",
-        points_awarded: task.requires_review? ? 0 : task.points,
+        points_awarded: task.requires_review? ? 0 : member.award(task.points),
+        multiplier: member.points_multiplier,
         task_title: task.title,
         task_points: task.points,
         completed_at: now

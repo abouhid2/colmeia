@@ -1,7 +1,5 @@
-import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
-import type { Goal, Household, Member } from "../domain/types";
-import { toIsoDate } from "../lib/dates";
-import { DEMO_INVITE_CODE, firstSeason, type LocalState, type StoredSeason } from "./localState";
+import type { Goal, Household } from "../domain/types";
+import { DEMO_INVITE_CODE, normalizeState, type LocalState, type StoredMember, type StoredState } from "./localState";
 import type { KeyValueStore } from "./storage";
 
 export const HOUSEHOLD_INDEX_KEY = "colmeia.households.v4";
@@ -18,22 +16,8 @@ export interface HouseholdEntry {
 
 export type HouseholdIndex = Record<string, HouseholdEntry>;
 
-/** A browser can hold a state written before crown titles or estações existed. */
-type StoredMember = Omit<Member, "crownTitle"> & Partial<Pick<Member, "crownTitle">>;
-type StoredTask = Omit<LocalState["tasks"][number], "seasonId"> & Partial<{ seasonId: number }>;
-type StoredCompletion = Omit<LocalState["completions"][number], "seasonId"> & Partial<{ seasonId: number }>;
-/** v3 goals carried a weekly or monthly period instead of belonging to an estação. */
-type StoredGoal = Omit<Goal, "seasonId"> & Partial<{ seasonId: number; period: string }>;
-
-interface StoredState extends Omit<LocalState, "members" | "seasons" | "tasks" | "completions" | "goals"> {
-  members: StoredMember[];
-  seasons?: StoredSeason[];
-  tasks: StoredTask[];
-  completions: StoredCompletion[];
-  goals: StoredGoal[];
-}
-
 type LegacyMember = Omit<StoredMember, "claimedAt">;
+type StoredGoal = StoredState["goals"][number];
 
 /** v2 held one colmeia per browser, with no invite code and nobody to claim. */
 interface LegacyV2State extends Omit<StoredState, "household" | "members"> {
@@ -50,41 +34,8 @@ function storageKey(inviteCode: string): string {
   return `${HOUSEHOLD_KEY_PREFIX}${inviteCode}`;
 }
 
-/** The day the colmeia started doing things, so nothing predates its own estação. */
-function firstDay(state: StoredState, today: string): string {
-  const days = [
-    ...state.tasks.map((task) => task.createdAt),
-    ...state.completions.map((completion) => completion.completedAt),
-  ].map((moment) => moment.slice(0, 10));
-  return days.reduce((earliest, day) => (day < earliest ? day : earliest), today);
-}
-
-/**
- * Everything written before estações existed belongs to the first one, which
- * opens on the oldest day the colmeia has and never ends. Members stored before
- * crown titles read with the default title.
- */
-function upgrade(state: StoredState, now: Date): LocalState {
-  const members = state.members.map((member) => ({ ...member, crownTitle: member.crownTitle ?? DEFAULT_CROWN_TITLE }));
-  if (state.seasons !== undefined && state.seasons.length > 0) {
-    return { ...state, members, seasons: state.seasons } as LocalState;
-  }
-
-  const season = firstSeason(state.nextId, firstDay(state, toIsoDate(now)), now);
-  const adopt = <T extends { seasonId?: number }>(record: T) => ({ ...record, seasonId: record.seasonId ?? season.id });
-  return {
-    ...state,
-    members,
-    seasons: [ season ],
-    tasks: state.tasks.map(adopt),
-    completions: state.completions.map(adopt),
-    goals: state.goals.map(({ period: _period, ...goal }) => adopt(goal)),
-    nextId: state.nextId + 1,
-  } as LocalState;
-}
-
 function fromV1({ goal, ...rest }: LegacyV1State): LegacyV2State {
-  return { ...rest, goals: goal ? [ { ...goal, memberId: null } ] : [] };
+  return { ...rest, goals: goal ? [ { ...goal, memberId: null } as Goal ] : [] };
 }
 
 /** Whoever was already using the app is in it; only new colmeias start out
@@ -120,7 +71,7 @@ export class LocalStore {
     const carried = this.takeSeasonlessColmeias();
     if (carried !== null) return this.rewrite(carried);
 
-    const state = upgrade(this.takeLegacyState() ?? this.seed(), this.clock());
+    const state = normalizeState(this.takeLegacyState() ?? this.seed(), this.clock());
     state.household.inviteCode = DEMO_INVITE_CODE;
     return this.rewrite([ [ state, undefined ] ]);
   }
@@ -128,7 +79,7 @@ export class LocalStore {
   read(inviteCode: string): LocalState | null {
     if (!(inviteCode in this.index())) return null;
     const raw = this.store.getItem(storageKey(inviteCode));
-    return raw === null ? null : upgrade(JSON.parse(raw) as StoredState, this.clock());
+    return raw === null ? null : normalizeState(JSON.parse(raw) as StoredState, this.clock());
   }
 
   save(state: LocalState): void {
@@ -178,7 +129,11 @@ export class LocalStore {
       const stored = this.store.getItem(`${LEGACY_V3_PREFIX}${inviteCode}`);
       this.store.removeItem(`${LEGACY_V3_PREFIX}${inviteCode}`);
       if (stored === null) return [];
-      return [ [ upgrade(JSON.parse(stored) as StoredState, this.clock()), entry.createdAt ] as [ LocalState, string | undefined ] ];
+      const carried: [ LocalState, string | undefined ] = [
+        normalizeState(JSON.parse(stored) as StoredState, this.clock()),
+        entry.createdAt,
+      ];
+      return [ carried ];
     });
   }
 

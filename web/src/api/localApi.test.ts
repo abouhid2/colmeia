@@ -47,6 +47,37 @@ describe("LocalApi", () => {
     expect(reviewed).toMatchObject({ status: "approved", rating: 3, pointsAwarded: 30, reviewerId: 1 });
   });
 
+  it("multiplies what a lagartinha earns and records the multiplier used", async () => {
+    const { completion } = await api.tasks.complete(12, 4);
+
+    expect(completion).toMatchObject({ pointsAwarded: 8, taskPoints: 5, multiplier: 1.5 });
+  });
+
+  it("pays a review with the multiplier the work was done under", async () => {
+    const { completion } = await api.tasks.complete(17, 4);
+    expect(completion).toMatchObject({ status: "pending", multiplier: 1.5 });
+
+    await api.members.update(4, { pointsMultiplier: 3 });
+    const reviewed = await api.completions.review(completion.id, { reviewerId: 1, rating: 4 });
+
+    expect(reviewed.pointsAwarded).toBe(12);
+  });
+
+  it("hands a new lagartinha the default handicap and keeps a chosen one", async () => {
+    const promoted = await api.members.update(2, { kind: "lagartinha" });
+    expect(promoted).toMatchObject({ kind: "lagartinha", pointsMultiplier: 1.5 });
+
+    const demoted = await api.members.update(2, { kind: "bee" });
+    expect(demoted.pointsMultiplier).toBe(1.5);
+
+    const created = await api.members.create({ name: "Tino", avatar: "🐢", color: "leaf", crownTitle: "Tartaruga-mor", kind: "lagartinha", pointsMultiplier: 2 });
+    expect(created.pointsMultiplier).toBe(2);
+  });
+
+  it("refuses a multiplier outside the sane range", async () => {
+    await expect(api.members.update(4, { pointsMultiplier: 9 })).rejects.toMatchObject({ status: 422 });
+  });
+
   it("refuses to complete a finished task", async () => {
     await expect(api.tasks.complete(19, 1)).rejects.toMatchObject({ status: 409 });
   });
@@ -161,14 +192,14 @@ describe("LocalApi", () => {
   it("validates task input", async () => {
     await expect(api.tasks.create({
       seasonId: SEASON_ID, title: "Regar", description: null, points: 5, priority: "low", recurrence: "custom", intervalDays: null,
-      dueOn: null, requiresReview: false, assigneeId: null, createdById: null,
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeId: null, createdById: null,
     })).rejects.toMatchObject({ status: 422 });
   });
 
   describe("estações", () => {
     const openTask = (seasonId: number) => api.tasks.create({
       seasonId, title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null,
-      dueOn: null, requiresReview: false, assigneeId: null, createdById: null,
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeId: null, createdById: null,
     });
 
     it("lists them newest first, with what each one holds", async () => {

@@ -1,5 +1,5 @@
 require "rails_helper"
-require Rails.root.join("db/migrate/20260903000003_backfill_seasons")
+require Rails.root.join("db/migrate/20260903000004_backfill_seasons")
 
 RSpec.describe BackfillSeasons do
   # The migration runs against a database where nothing had an estação yet, so

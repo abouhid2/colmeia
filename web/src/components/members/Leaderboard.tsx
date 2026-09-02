@@ -4,6 +4,7 @@ import type { Standing } from "../../domain/leaderboard";
 import { Avatar } from "../ui/Avatar";
 import { Card } from "../ui/Card";
 import { CrownMark } from "./CrownMark";
+import { LagartinhaMark } from "./LagartinhaMark";
 
 interface LeaderboardProps {
   standings: Standing[];
@@ -24,8 +25,9 @@ export function Leaderboard({ standings, crownedMemberId = null }: LeaderboardPr
               <Avatar member={standing.member} size="sm" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
-                  <p className="flex items-center gap-1.5 truncate font-semibold">
-                    {standing.member.name}
+                  <p className="flex min-w-0 items-center gap-1.5 font-semibold">
+                    <span className="truncate">{standing.member.name}</span>
+                    <LagartinhaMark member={standing.member} compact />
                     {standing.member.id === crownedMemberId && <CrownMark member={standing.member} />}
                   </p>
                   <p className="text-sm tabular-nums text-ink-soft">

@@ -28,7 +28,7 @@ module Api
       end
 
       def member_params
-        params.require(:member).permit(:name, :avatar, :color, :crown_title)
+        params.require(:member).permit(:name, :avatar, :color, :kind, :points_multiplier, :crown_title)
       end
     end
   end

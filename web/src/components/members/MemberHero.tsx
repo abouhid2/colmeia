@@ -2,6 +2,7 @@ import { crownedTitle, WORKER_BEE_LABEL } from "../../domain/crownTitles";
 import type { Member } from "../../domain/types";
 import { Card } from "../ui/Card";
 import { BeeAvatar } from "./BeeAvatar";
+import { LagartinhaMark } from "./LagartinhaMark";
 
 interface MemberHeroProps {
   member: Member;
@@ -21,6 +22,11 @@ export function MemberHero({ member, crowned, seasonPoints, allTimePoints, rank,
       <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">{title}</p>
         <h1 className="mt-0.5 text-3xl font-bold tracking-tight">{member.name}</h1>
+        {member.kind === "lagartinha" && (
+          <p className="mt-2 flex justify-center sm:justify-start">
+            <LagartinhaMark member={member} />
+          </p>
+        )}
         <p className="mt-3 text-sm text-ink-soft">
           <span className="font-display font-bold text-ink tabular-nums">{seasonPoints}</span> pontos nesta estação
           <span className="px-1.5 text-ink-faint">·</span>

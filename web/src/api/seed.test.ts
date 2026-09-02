@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { crownHolder } from "../domain/crown";
+import { awardedPoints } from "../domain/points";
 import { goalProgress } from "../domain/progress";
 import { defaultSeason, lastClosedSeason } from "../domain/seasons";
 import { withCounts } from "./localState";
@@ -33,6 +34,20 @@ describe("buildDemoState", () => {
     expect(crown?.member.name).toBe("Bruno");
     expect(crown?.member.crownTitle).toBe("Abelhão");
     expect(crown?.wonIn.name).toBe("Estação passada");
+  });
+
+  it("pays the lagartinha her multiplier all the way back through the history", () => {
+    const state = buildDemoState(now);
+    const duda = state.members.find((member) => member.name === "Duda");
+    if (!duda) throw new Error("the demo needs Duda");
+    const hers = state.completions.filter((completion) => completion.memberId === duda.id && completion.status === "approved");
+
+    expect(duda).toMatchObject({ kind: "lagartinha", pointsMultiplier: 1.5 });
+    expect(hers).not.toHaveLength(0);
+    hers.forEach((completion) => {
+      expect(completion.multiplier).toBe(duda.pointsMultiplier);
+      expect(completion.pointsAwarded).toBe(awardedPoints(completion.taskPoints, completion.rating, completion.multiplier));
+    });
   });
 
   it("still leaves the running estação's goal to play for", () => {

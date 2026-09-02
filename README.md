@@ -15,6 +15,7 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 - **Prioridade**: baixa, normal, alta ou urgente. As vencidas e urgentes aparecem primeiro.
 - **Lista de compras** compartilhada, com quem pediu e quem comprou.
 - **Metas da estação**: uma coletiva, com o favo de progresso e o ranking de quem mais contribuiu, e quantas individuais quiserem (só os pontos daquela pessoa contam).
+- **Lagartinhas**: crianças na colmeia. Cada pessoa é abelha ou lagartinha, e a lagartinha ganha os pontos multiplicados (1,5× por padrão, ajustável de 0,5× a 3×) para conseguir acompanhar os adultos. O multiplicador aparece na cara, ao lado do nome. Há um ranking só das lagartinhas, e as tarefas podem ser marcadas "boa para lagartinhas", com filtro na lista. O raciocínio está em [docs/lagartinhas.md](docs/lagartinhas.md).
 - **Filtro por integrante** presente em todas as telas: escolha uma pessoa e o app mostra só as tarefas, compras, metas e conquistas dela.
 
 ## Estações

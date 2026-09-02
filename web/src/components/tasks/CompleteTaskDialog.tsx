@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { formatPoints } from "../../domain/points";
+import { awardedPoints, formatPoints } from "../../domain/points";
 import type { Task } from "../../domain/types";
 import { useSession } from "../../hooks/useSession";
 import { useTaskMutations } from "../../hooks/useTasks";
 import { useToast } from "../../hooks/useToast";
 import { cn } from "../../lib/cn";
+import { LagartinhaMark } from "../members/LagartinhaMark";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
@@ -28,6 +29,7 @@ function CompleteTaskForm({ task, onDone }: { task: Task; onDone(): void }) {
   const { complete } = useTaskMutations();
   const { notify } = useToast();
   const doer = members.find((member) => member.id === memberId);
+  const payout = awardedPoints(task.points, null, doer?.pointsMultiplier ?? 1);
 
   const confirm = () => {
     if (memberId === null || !doer) return;
@@ -59,7 +61,8 @@ function CompleteTaskForm({ task, onDone }: { task: Task; onDone(): void }) {
               )}
             >
               <Avatar member={member} size="sm" />
-              {member.name}
+              <span className="min-w-0 flex-1 truncate">{member.name}</span>
+              <LagartinhaMark member={member} compact />
             </button>
           );
         })}
@@ -67,7 +70,7 @@ function CompleteTaskForm({ task, onDone }: { task: Task; onDone(): void }) {
       <div className="flex justify-end gap-2">
         <Button variant="secondary" onClick={onDone}>Cancelar</Button>
         <Button onClick={confirm} loading={complete.isPending} disabled={memberId === null}>
-          {task.requiresReview ? "Enviar para avaliação" : `Concluir e ganhar ${task.points}`}
+          {task.requiresReview ? "Enviar para avaliação" : `Concluir e ganhar ${payout}`}
         </Button>
       </div>
     </div>

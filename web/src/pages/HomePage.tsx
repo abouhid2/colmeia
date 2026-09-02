@@ -19,6 +19,7 @@ import { IN_SEASON_HINT } from "../components/goal/goalCopy";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ActivityFeed } from "../components/home/ActivityFeed";
 import { Greeting } from "../components/home/Greeting";
+import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
 import { MemberFilter } from "../components/members/MemberFilter";
 import { NoSeasonState } from "../components/season/NoSeasonState";
@@ -113,6 +114,8 @@ export function HomePage() {
         <SectionHeading title="Quem mais contribuiu" hint={IN_SEASON_HINT} />
         <Leaderboard standings={standings} crownedMemberId={crown?.member.id ?? null} />
       </section>
+
+      <LagartinhaLeague standings={standings} />
 
       <ActivityFeed completions={recent} lookup={lookup} />
 

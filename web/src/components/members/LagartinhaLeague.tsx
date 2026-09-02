@@ -1,0 +1,21 @@
+import { lagartinhaStandings, type Standing } from "../../domain/leaderboard";
+import { SectionHeading } from "../ui/SectionHeading";
+import { Leaderboard } from "./Leaderboard";
+
+interface LagartinhaLeagueProps {
+  standings: Standing[];
+}
+
+/** The kids' own table, so a lagartinha can also come first somewhere. Absent
+ *  from colmeias with no children. */
+export function LagartinhaLeague({ standings }: LagartinhaLeagueProps) {
+  const league = lagartinhaStandings(standings);
+  if (league.length === 0) return null;
+
+  return (
+    <section>
+      <SectionHeading title="Lagartinhas" hint="A disputa das crianças, entre elas." />
+      <Leaderboard standings={league} />
+    </section>
+  );
+}

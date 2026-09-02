@@ -16,6 +16,23 @@ RSpec.describe Completion do
     end
   end
 
+  describe "#points_for_rating" do
+    it "scales by the rating first and by the multiplier after" do
+      household = Household.create!(name: "Casa")
+      completion = household.completions.build(task_title: "Banheiro", task_points: 20, completed_at: Time.current, multiplier: 1.5)
+
+      expect(completion.points_for_rating(4)).to eq(24)
+      expect(completion.points_for_rating(5)).to eq(30)
+    end
+
+    it "pays a bee exactly what the rating says" do
+      household = Household.create!(name: "Casa")
+      completion = household.completions.build(task_title: "Banheiro", task_points: 20, completed_at: Time.current)
+
+      expect(completion.points_for_rating(3)).to eq(12)
+    end
+  end
+
   it "rejects ratings outside 1..5" do
     household = Household.create!(name: "Casa")
     season = household.seasons.create!(name: "Estação", starts_on: Date.current)

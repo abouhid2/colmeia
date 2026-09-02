@@ -3,7 +3,8 @@ import { crownHolder } from "./crown";
 import type { Completion, Goal, Member, Season } from "./types";
 
 const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member => ({
-  id, name, avatar: "🐝", color: "honey", crownTitle, claimedAt: null, createdAt: "2026-01-01T00:00:00.000Z",
+  id, name, avatar: "🐝", color: "honey", crownTitle, kind: "bee", pointsMultiplier: 1,
+  claimedAt: null, createdAt: "2026-01-01T00:00:00.000Z",
 });
 
 const members = [member(1, "Ana"), member(2, "Bruno"), member(3, "Clara")];
@@ -20,7 +21,7 @@ const seasons = [past, current];
 
 const completion = (overrides: Partial<Completion>): Completion => ({
   id: 1, seasonId: past.id, taskId: null, memberId: 1, reviewerId: null, status: "approved", rating: null,
-  pointsAwarded: 10, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-04T10:00:00.000Z", reviewedAt: null, ...overrides,
+  pointsAwarded: 10, multiplier: 1, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-04T10:00:00.000Z", reviewedAt: null, ...overrides,
 });
 
 const goal: Goal = { id: 9, seasonId: past.id, title: "Pizza", targetPoints: 100, memberId: null };

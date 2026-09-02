@@ -5,6 +5,7 @@ import type { Member } from "../../domain/types";
 import { Avatar } from "../ui/Avatar";
 import { IconButton } from "../ui/IconButton";
 import { CrownMark } from "./CrownMark";
+import { LagartinhaMark } from "./LagartinhaMark";
 
 interface MemberCardProps {
   member: Member;
@@ -25,8 +26,9 @@ export function MemberCard({ member, seasonStanding, allTimeStanding, crowned, o
       >
         <Avatar member={member} size="md" />
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1.5 truncate font-semibold">
-            {member.name}
+          <p className="flex min-w-0 items-center gap-1.5 font-semibold">
+            <span className="truncate">{member.name}</span>
+            <LagartinhaMark member={member} compact />
             {crowned && <CrownMark member={member} />}
           </p>
           <p className="text-sm text-ink-soft">
