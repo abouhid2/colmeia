@@ -1,5 +1,5 @@
 require "rails_helper"
-require Rails.root.join("db/migrate/20260903000002_downcase_invite_codes")
+require Rails.root.join("db/migrate/20260903000011_downcase_invite_codes")
 
 RSpec.describe DowncaseInviteCodes do
   it "lowercases the codes an older install handed out" do

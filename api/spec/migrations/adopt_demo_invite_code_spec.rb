@@ -1,5 +1,5 @@
 require "rails_helper"
-require Rails.root.join("db/migrate/20260903000001_adopt_demo_invite_code")
+require Rails.root.join("db/migrate/20260903000010_adopt_demo_invite_code")
 
 RSpec.describe AdoptDemoInviteCode do
   it "hands the demo code to the oldest colmeia of an upgraded install" do
