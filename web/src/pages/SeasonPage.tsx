@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { GoalDialog } from "../components/goal/GoalDialog";
 import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
+import { SeasonRoadmap } from "../components/goal/SeasonRoadmap";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { Leaderboard } from "../components/members/Leaderboard";
 import { CloseSeasonDialog } from "../components/season/CloseSeasonDialog";
@@ -14,6 +15,7 @@ import { crownVerdict } from "../components/season/titleCopy";
 import { useSeasonDialog } from "../components/season/useSeasonDialog";
 import { EmptyState } from "../components/ui/EmptyState";
 import { SectionHeading } from "../components/ui/SectionHeading";
+import { useNow } from "../hooks/useNow";
 import { useSeason } from "../hooks/useSeasonContext";
 import { useSeasonDetail } from "../hooks/useSeasonDetail";
 import { useSeasonMutations } from "../hooks/useSeasons";
@@ -44,6 +46,7 @@ function UnknownSeason({ search }: { search: string }) {
 }
 
 export function SeasonPage() {
+  const now = useNow();
   const { search } = useLocation();
   const navigate = useNavigate();
   const detail = useSeasonDetail(parseSeasonId(useParams().seasonId));
@@ -97,11 +100,14 @@ export function SeasonPage() {
         {detail.goals.length === 0 ? (
           <EmptyState icon={<Target className="size-6" />} title="Nenhuma meta nesta estação" />
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {detail.goals.map((item) => (
-              <GoalSummaryCard key={item.goal.id} item={item} readOnly={closed} onEdit={() => goalDialog.openEdit(item.goal)} />
-            ))}
-          </ul>
+          <>
+            <SeasonRoadmap goals={detail.goals} now={now} onSelect={closed ? undefined : goalDialog.openEdit} />
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {detail.goals.map((item) => (
+                <GoalSummaryCard key={item.goal.id} item={item} readOnly={closed} onEdit={() => goalDialog.openEdit(item.goal)} />
+              ))}
+            </ul>
+          </>
         )}
       </section>
 
