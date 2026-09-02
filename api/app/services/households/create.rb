@@ -17,6 +17,7 @@ module Households
         reject_crowd(household)
         household.save!
         household.seasons.create!(name: FIRST_SEASON_NAME, starts_on: Date.current)
+        SeasonTitles::Seed.new(household).call
         member_names.each_with_index { |member_name, index| household.members.create!(placeholder(member_name, index)) }
         household
       end

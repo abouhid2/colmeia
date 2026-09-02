@@ -194,6 +194,80 @@ describe("LocalApi households", () => {
     expect(store.getItem(HOUSEHOLD_INDEX_KEY)).not.toBeNull();
   });
 
+  it("answers the lagartinhas question for a colmeia stored before it was asked", async () => {
+    const store = new MemoryStore();
+    const older = buildApi(store);
+    const created = await older.households.create({ name: "Casa antiga", memberNames: [ "Ana", "Duda" ] });
+    const key = `${HOUSEHOLD_KEY_PREFIX}${created.inviteCode}`;
+    const stored = JSON.parse(store.getItem(key) ?? "{}") as {
+      household: Record<string, unknown>;
+      members: Record<string, unknown>[];
+    };
+    // A store written before the switch existed carries no answer at all.
+    delete stored.household.lagartinhasEnabled;
+    stored.members[1].kind = "lagartinha";
+    store.setItem(key, JSON.stringify(stored));
+
+    older.setInviteCode(created.inviteCode);
+
+    // Somebody in it is a lagartinha, so this colmeia was using them.
+    expect((await older.household.get()).lagartinhasEnabled).toBe(true);
+  });
+
+  it("leaves a colmeia of grown-ups with the lagartinhas off", async () => {
+    const store = new MemoryStore();
+    const older = buildApi(store);
+    const created = await older.households.create({ name: "Casa antiga", memberNames: [ "Ana", "Bruno" ] });
+    const key = `${HOUSEHOLD_KEY_PREFIX}${created.inviteCode}`;
+    const stored = JSON.parse(store.getItem(key) ?? "{}") as { household: Record<string, unknown> };
+    delete stored.household.lagartinhasEnabled;
+    store.setItem(key, JSON.stringify(stored));
+
+    older.setInviteCode(created.inviteCode);
+
+    expect((await older.household.get()).lagartinhasEnabled).toBe(false);
+  });
+
+  it("opens a colmeia somebody starts with the lagartinhas off", async () => {
+    const created = await api.households.create({ name: "Casa nova", memberNames: [ "Ana" ] });
+
+    expect(created.lagartinhasEnabled).toBe(false);
+  });
+
+  it("hands out the example with the lagartinhas on, because Duda is one", async () => {
+    const { household } = await api.households.createDemo();
+
+    expect(household.lagartinhasEnabled).toBe(true);
+    expect(household.members.some((member) => member.kind === "lagartinha")).toBe(true);
+  });
+
+  it("turns the lagartinhas off without renaming the colmeia, and back on", async () => {
+    const { household } = await api.households.createDemo();
+    api.setInviteCode(household.inviteCode);
+
+    expect(await api.household.update({ lagartinhasEnabled: false })).toMatchObject({
+      name: EXAMPLE_HOUSEHOLD_NAME, lagartinhasEnabled: false,
+    });
+    expect(await api.household.update({ name: "Apê 42" })).toMatchObject({
+      name: "Apê 42", lagartinhasEnabled: false,
+    });
+    expect(await api.household.update({ lagartinhasEnabled: true })).toMatchObject({
+      name: "Apê 42", lagartinhasEnabled: true,
+    });
+  });
+
+  it("keeps whoever is a lagartinha exactly as they were when the switch goes off", async () => {
+    const { household } = await api.households.createDemo();
+    api.setInviteCode(household.inviteCode);
+    const before = (await api.members.list()).find((member) => member.name === "Duda");
+
+    await api.household.update({ lagartinhasEnabled: false });
+
+    const after = (await api.members.list()).find((member) => member.name === "Duda");
+    expect(after).toEqual(before);
+    expect(after).toMatchObject({ kind: "lagartinha", pointsMultiplier: 1.5 });
+  });
+
   it("rebuilds an index a browser left half written", async () => {
     const store = new MemoryStore();
     store.setItem(HOUSEHOLD_INDEX_KEY, "{\"demo\": ");

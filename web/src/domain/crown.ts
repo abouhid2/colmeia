@@ -54,16 +54,28 @@ export function decidingGoal(goals: Goal[], season: Season): Goal | null {
  */
 export function crownHolder({ members, completions, seasons, goals, now }: CrownInput): Crown | null {
   const wonIn = lastClosedSeason(seasons);
-  if (wonIn === null) return null;
+  return wonIn === null ? null : seasonCrown(wonIn, { members, completions, goals, now }).winner;
+}
 
-  const scored = approvedCompletions(completionsInSeason(completions, wonIn.id));
-  const goal = decidingGoal(goals, wonIn);
-  if (goal && !goalProgress(goal, completions, wonIn, now).reached) return null;
+export interface SeasonCrown {
+  /** Who won the estação, or null when nobody did. */
+  winner: Crown | null;
+  /** Whether the meta da colmeia that decides it was reached. null when it had none. */
+  goalReached: boolean | null;
+}
+
+/** The same rule, told about one estação: who won it, and whether the meta da
+ *  colmeia that gates the crown was reached at all. */
+export function seasonCrown(season: Season, { members, completions, goals, now }: Omit<CrownInput, "seasons">): SeasonCrown {
+  const scored = approvedCompletions(completionsInSeason(completions, season.id));
+  const goal = decidingGoal(goals, season);
+  const goalReached = goal === null ? null : goalProgress(goal, completions, season, now).reached;
+  if (goalReached === false) return { winner: null, goalReached };
 
   const [ winner, runnerUp ] = rankMembers(members, scored);
-  if (!winner || winner.points === 0) return null;
-  if (runnerUp && runnerUp.points === winner.points && runnerUp.tasksCount === winner.tasksCount) return null;
-  if (!wantsCrown(winner.member)) return null;
+  if (!winner || winner.points === 0) return { winner: null, goalReached };
+  if (runnerUp && runnerUp.points === winner.points && runnerUp.tasksCount === winner.tasksCount) return { winner: null, goalReached };
+  if (!wantsCrown(winner.member)) return { winner: null, goalReached };
 
-  return { member: winner.member, points: winner.points, tasksCount: winner.tasksCount, wonIn };
+  return { winner: { member: winner.member, points: winner.points, tasksCount: winner.tasksCount, wonIn: season }, goalReached };
 }

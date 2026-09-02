@@ -1,4 +1,4 @@
-import type { Household } from "../domain/types";
+import type { HouseholdUpdate } from "../domain/types";
 import { queryKeys } from "./queryKeys";
 import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
@@ -9,9 +9,9 @@ export function useHousehold() {
   return useScopedQuery(queryKeys.household, () => api.household.get());
 }
 
-export function useRenameHousehold() {
+export function useUpdateHousehold() {
   const api = useApi();
-  return useAppMutation((input: Pick<Household, "name">) => api.household.update(input), {
+  return useAppMutation((input: HouseholdUpdate) => api.household.update(input), {
     invalidates: [queryKeys.household],
   });
 }

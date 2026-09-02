@@ -28,11 +28,15 @@ module Households
     # Fills the colmeia and answers with the member to enter as.
     def call
       Household.transaction do
+        # Duda is a lagartinha, so the example shows what the switch turns on.
+        household.update!(lagartinhas_enabled: true)
         create_seasons
+        create_titles
         create_members
         create_tasks
         create_completions
         create_last_week
+        create_votes
         create_goals
         create_shopping_items
       end
@@ -50,6 +54,7 @@ module Households
         @members = nil
         @tasks = nil
         @seasons = nil
+        @titles = nil
         call
       end
     end
@@ -68,6 +73,10 @@ module Households
 
     def seasons
       @seasons ||= {}
+    end
+
+    def titles
+      @titles ||= {}
     end
 
     def season
@@ -98,6 +107,12 @@ module Households
     # A few days back, so today already sits inside the first window.
     def season_starts_on
       (now.beginning_of_week - 3.days).to_date
+    end
+
+    # The títulos belong to the colmeia and survive a reset, so this only fills
+    # them in the first time.
+    def create_titles
+      @titles = SeasonTitles::Seed.new(household).call.index_by(&:name)
     end
 
     def create_members
@@ -207,6 +222,24 @@ module Households
         { member: duda, title: "Lavar a louça do jantar", points: 5, awarded: 8, day: 5 },
         { member: duda, title: "Aspirar a sala e os quartos", points: 20, awarded: 30, day: 6 }
       ]
+    end
+
+    # The family voted on the estação that closed: Bruno took the Pernilongo,
+    # and the Lesma ended in a draw nobody wants to break.
+    def create_votes
+      ana, bruno, clara, duda = members.values_at(:ana, :bruno, :clara, :duda)
+
+      cast("Pernilongo", ana, bruno)
+      cast("Pernilongo", clara, bruno)
+      cast("Pernilongo", duda, ana)
+      cast("Lesma", ana, duda)
+      cast("Lesma", bruno, clara)
+    end
+
+    def cast(title_name, voter, votee)
+      household.season_title_votes.create!(
+        season: seasons.fetch(:past), season_title: titles.fetch(title_name), voter: voter, votee: votee
+      )
     end
 
     # The running estação carries three metas da colmeia spread across its three

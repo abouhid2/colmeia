@@ -5,6 +5,8 @@ import { awardedPoints } from "../domain/points";
 import { goalsWithProgress, runningGoal } from "../domain/goalBoard";
 import { goalProgress } from "../domain/progress";
 import { defaultSeason, lastClosedSeason } from "../domain/seasons";
+import { votedTitles, votesInSeason } from "../domain/seasonTitles";
+import { titleResults } from "../domain/titleResults";
 import { EXAMPLE_HOUSEHOLD_NAME, withCounts } from "./localState";
 import { buildDemoState } from "./seed";
 
@@ -40,6 +42,21 @@ describe("buildDemoState", () => {
     expect(crown?.member.name).toBe("Bruno");
     expect(crown?.member.crownTitle).toBe("Abelhão");
     expect(crown?.wonIn.name).toBe("Estação passada");
+  });
+
+  it("leaves the closed estação already voted, with a winner and a draw", () => {
+    const state = buildDemoState(now);
+    const past = state.seasons.find((season) => season.name === "Estação passada");
+    if (!past) throw new Error("the demo needs the closed estação");
+    const cast = votesInSeason(state.titleVotes, past.id);
+
+    const results = titleResults(votedTitles(state.seasonTitles), cast, state.members);
+    const pernilongo = results.find((result) => result.title.name === "Pernilongo");
+    const lesma = results.find((result) => result.title.name === "Lesma");
+
+    expect(pernilongo).toMatchObject({ winner: expect.objectContaining({ name: "Bruno" }), totalVotes: 3, tie: false });
+    expect(pernilongo?.tallies[0].votes).toBe(2);
+    expect(lesma).toMatchObject({ winner: null, tie: true, totalVotes: 2 });
   });
 
   it("pays the lagartinha her multiplier all the way back through the history", () => {

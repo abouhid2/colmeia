@@ -49,7 +49,10 @@ RSpec.describe "Household scoping", type: :request do
     it "returns the colmeia behind the code" do
       get "/api/v1/household", headers: headers
 
-      expect(json_body).to eq("id" => house.id, "name" => "Nossa casa", "invite_code" => house.invite_code, "demo" => false)
+      expect(json_body).to eq(
+        "id" => house.id, "name" => "Nossa casa", "invite_code" => house.invite_code,
+        "demo" => false, "lagartinhas_enabled" => false
+      )
     end
 
     it "renames it" do
@@ -57,6 +60,22 @@ RSpec.describe "Household scoping", type: :request do
 
       expect(json_body["name"]).to eq("Apê 42")
       expect(other.reload.name).to eq("Casa alheia")
+    end
+
+    it "says whether this colmeia has lagartinhas" do
+      patch "/api/v1/household", params: { household: { lagartinhas_enabled: true } }, headers: headers
+
+      expect(json_body["lagartinhas_enabled"]).to be(true)
+      expect(house.reload.lagartinhas_enabled).to be(true)
+      expect(other.reload.lagartinhas_enabled).to be(false)
+    end
+
+    it "turns them off again without touching the name" do
+      house.update!(lagartinhas_enabled: true)
+
+      patch "/api/v1/household", params: { household: { lagartinhas_enabled: false } }, headers: headers
+
+      expect(json_body).to include("name" => "Nossa casa", "lagartinhas_enabled" => false)
     end
   end
 

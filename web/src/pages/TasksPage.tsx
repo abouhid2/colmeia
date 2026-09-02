@@ -4,6 +4,7 @@ import { canReopen, completionsForMember } from "../domain/history";
 import { completionsInSeason, isClosed } from "../domain/seasons";
 import { sortOpenTasks } from "../domain/taskSort";
 import { useCompletions } from "../hooks/useCompletions";
+import { useLagartinhasEnabled } from "../hooks/useLagartinhas";
 import { useMemberFilter } from "../hooks/useMemberFilter";
 import { useMemberLookup } from "../hooks/useMembers";
 import { useNow } from "../hooks/useNow";
@@ -32,15 +33,21 @@ export function TasksPage() {
   const { completions } = useCompletions();
   const { reopen } = useTaskMutations();
   const { memberId, member: filtered } = useMemberFilter();
+  const lagartinhasEnabled = useLagartinhasEnabled();
   const lookup = useMemberLookup();
   const dialogs = useTaskDialogs();
   const [status, setStatus] = useState<Status>("open");
   const [shown, setShown] = useState(HISTORY_PAGE);
-  const [kidOnly, setKidOnly] = useState(false);
+  const [wantsKidOnly, setWantsKidOnly] = useState(false);
 
   if (currentSeason === null) return loadingSeasons ? null : <NoSeasonState />;
 
   const closed = isClosed(currentSeason);
+  // Nothing to filter by until an adult has marked a task for the children,
+  // and nothing at all in a colmeia that says it has none.
+  const canFilterKid = lagartinhasEnabled && tasks.some((task) => task.kidFriendly);
+  // A chip nobody can see must not keep filtering the list behind their back.
+  const kidOnly = canFilterKid && wantsKidOnly;
   const open = sortOpenTasks(
     tasks.filter((task) =>
       task.status === "open"
@@ -50,8 +57,6 @@ export function TasksPage() {
   );
   const done = completionsForMember(completionsInSeason(completions, currentSeason.id), memberId);
   const history = done.slice(0, shown);
-  // Nothing to filter by until an adult has marked a task for the children.
-  const hasKidFriendly = tasks.some((task) => task.kidFriendly);
 
   const options = [
     { value: "open" as const, label: `Abertas · ${open.length}` },
@@ -75,8 +80,8 @@ export function TasksPage() {
       <MemberFilter />
       <div className="flex flex-wrap items-center gap-2">
         <Segmented label="Situação" options={options} value={status} onChange={setStatus} />
-        {status === "open" && hasKidFriendly && (
-          <FilterChip selected={kidOnly} aria-pressed={kidOnly} onClick={() => setKidOnly((current) => !current)}>
+        {status === "open" && canFilterKid && (
+          <FilterChip selected={kidOnly} aria-pressed={kidOnly} onClick={() => setWantsKidOnly((current) => !current)}>
             <span aria-hidden>🐛</span> Para lagartinhas
           </FilterChip>
         )}

@@ -1,8 +1,10 @@
 import { addDays, addHours, startOfWeek, subHours, subWeeks } from "date-fns";
 import type { AchievementId } from "../domain/achievements";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
+import { emptyNavPreferences } from "../domain/navigation";
+import { DEFAULT_SEASON_TITLES, defaultSeasonTitles } from "../domain/seasonTitles";
 import { toIsoDate } from "../lib/dates";
-import type { Completion, Member, ShoppingItem, Task } from "../domain/types";
+import type { Completion, Member, SeasonTitleVote, ShoppingItem, Task } from "../domain/types";
 import {
   DEMO_INVITE_CODE, EXAMPLE_ENTRY_MEMBER, EXAMPLE_HOUSEHOLD_NAME,
   type LocalState, type StoredSeason,
@@ -13,6 +15,8 @@ const PAST_SEASON_ID = 70;
 const SEASON_ID = 71;
 /** Three months of championship, long enough to hold metas with windows. */
 const SEASON_LENGTH_DAYS = 90;
+/** The colmeia's títulos, numbered in the order the default list has them. */
+const FIRST_TITLE_ID = 80;
 
 type TaskSeed = Partial<Task> & Pick<Task, "id" | "title" | "points">;
 type CompletionSeed = Partial<Completion> & Pick<Completion, "id" | "taskId" | "memberId" | "taskTitle" | "taskPoints">;
@@ -51,6 +55,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
     crownTitle = DEFAULT_CROWN_TITLE, kind: Member["kind"] = "bee", favoriteAchievements: AchievementId[] = [],
   ): Member => ({
     id, name, avatar, color, crownTitle, kind, favoriteAchievements,
+    navPreferences: emptyNavPreferences(),
     pointsMultiplier: kind === "lagartinha" ? 1.5 : 1, claimedAt: null, createdAt: iso(240),
   });
   // Duda is the child of the house: everything she does is worth 1,5x. Ana and
@@ -109,6 +114,21 @@ export function buildDemoState(now: Date = new Date()): LocalState {
     completion({ id: 69, seasonId: PAST_SEASON_ID, taskId: null, memberId: 4, taskTitle: "Aspirar a sala e os quartos", taskPoints: 20, pointsAwarded: 30, multiplier: 1.5, completedAt: lastWeek(6) }),
   ];
 
+  // The family also voted on the estação that closed: Bruno took the
+  // Pernilongo, and the Lesma ended in a draw nobody wants to break.
+  const seasonTitles = defaultSeasonTitles(FIRST_TITLE_ID);
+  const titleId = (name: string) => FIRST_TITLE_ID + DEFAULT_SEASON_TITLES.findIndex((title) => title.name === name);
+  const vote = (id: number, title: string, voterId: number, voteeId: number): SeasonTitleVote => ({
+    id, seasonId: PAST_SEASON_ID, seasonTitleId: titleId(title), voterId, voteeId,
+  });
+  const titleVotes = [
+    vote(90, "Pernilongo", 1, 2),
+    vote(91, "Pernilongo", 3, 2),
+    vote(92, "Pernilongo", 4, 1),
+    vote(93, "Lesma", 1, 4),
+    vote(94, "Lesma", 2, 3),
+  ];
+
   const item = (seed: ItemSeed): ShoppingItem => ({
     quantity: null, purchased: false, purchasedById: null, purchasedAt: null, createdAt: iso(30), ...seed,
   });
@@ -122,12 +142,15 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   ];
 
   return {
-    household: { id: 1, name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: DEMO_INVITE_CODE, demo: true },
+    // Duda is a lagartinha, so the example shows what the switch turns on.
+    household: { id: 1, name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: DEMO_INVITE_CODE, demo: true, lagartinhasEnabled: true },
     members,
     seasons,
     tasks,
     completions,
     shoppingItems,
+    seasonTitles,
+    titleVotes,
     awards: [],
     // The running estação carries three metas da colmeia spread across its three
     // months, so the roteiro shows one em andamento, one adiante and one no fim.

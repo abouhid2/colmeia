@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { crownHolder, decidingGoal } from "./crown";
+import { crownHolder, decidingGoal, seasonCrown } from "./crown";
+import { emptyNavPreferences } from "./navigation";
 import type { Completion, Goal, Member, Season } from "./types";
 
 const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member => ({
   id, name, avatar: "🐝", color: "honey", crownTitle, kind: "bee", pointsMultiplier: 1,
-  favoriteAchievements: [], claimedAt: null, createdAt: "2026-01-01T00:00:00.000Z",
+  favoriteAchievements: [], navPreferences: emptyNavPreferences(), claimedAt: null,
+  createdAt: "2026-01-01T00:00:00.000Z",
 });
 
 const members = [member(1, "Ana"), member(2, "Bruno"), member(3, "Clara")];
@@ -285,5 +287,52 @@ describe("crownHolder with several metas da colmeia", () => {
     });
 
     expect(crown).toBeNull();
+  });
+});
+
+describe("seasonCrown", () => {
+  const scored = [
+    completion({ id: 1, memberId: 1, pointsAwarded: 60 }),
+    completion({ id: 2, memberId: 2, pointsAwarded: 40 }),
+  ];
+
+  it("answers about the estação it is handed, not the last one closed", () => {
+    const inCurrent = [ completion({ id: 3, memberId: 3, pointsAwarded: 500, seasonId: current.id }) ];
+
+    expect(seasonCrown(current, { now, members, completions: [ ...scored, ...inCurrent ], goals: [] }).winner?.member.id).toBe(3);
+    expect(seasonCrown(past, { now, members, completions: [ ...scored, ...inCurrent ], goals: [] }).winner?.member.id).toBe(1);
+  });
+
+  it("says the colmeia goal was reached, and crowns the winner" , () => {
+    const crown = seasonCrown(past, { now, members, completions: scored, goals: [ goal ] });
+
+    expect(crown.goalReached).toBe(true);
+    expect(crown.winner?.member.id).toBe(1);
+  });
+
+  it("says the colmeia goal was missed, and crowns nobody", () => {
+    const crown = seasonCrown(past, { now, members, completions: [ completion({ memberId: 2, pointsAwarded: 30 }) ], goals: [ goal ] });
+
+    expect(crown.goalReached).toBe(false);
+    expect(crown.winner).toBeNull();
+  });
+
+  it("has no goal to talk about when the estação had none", () => {
+    const crown = seasonCrown(past, { now, members, completions: scored, goals: [] });
+
+    expect(crown.goalReached).toBeNull();
+    expect(crown.winner?.member.id).toBe(1);
+  });
+
+  it("keeps the goal met while a draw leaves the crown unworn", () => {
+    const crown = seasonCrown(past, {
+      now,
+      members,
+      completions: [ completion({ id: 1, memberId: 1, pointsAwarded: 60 }), completion({ id: 2, memberId: 2, pointsAwarded: 60 }) ],
+      goals: [ goal ],
+    });
+
+    expect(crown.goalReached).toBe(true);
+    expect(crown.winner).toBeNull();
   });
 });

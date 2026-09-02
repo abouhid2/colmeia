@@ -29,6 +29,16 @@ RSpec.describe Household do
     expect(described_class.demos.to_a).to eq([ sandbox ])
   end
 
+  it "opens without lagartinhas, because most colmeias have none" do
+    expect(described_class.create!(name: "Casa").lagartinhas_enabled).to be(false)
+  end
+
+  it "refuses to hold no answer at all about lagartinhas" do
+    household = described_class.create!(name: "Casa")
+
+    expect { household.update_column(:lagartinhas_enabled, nil) }.to raise_error(ActiveRecord::NotNullViolation)
+  end
+
   it "takes its records down with it" do
     household = described_class.create!(name: "Casa")
     season = household.seasons.create!(name: "Estação", starts_on: Date.current)

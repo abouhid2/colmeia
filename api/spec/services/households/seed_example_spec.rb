@@ -14,6 +14,18 @@ RSpec.describe Households::SeedExample do
     expect(household.shopping_items.count).to eq(6)
   end
 
+  it "leaves the closed estação already voted, with a winner and a draw" do
+    described_class.new(household, now: now).call
+    past = household.seasons.find_by(name: "Estação passada")
+    bruno, clara, duda = household.members.where(name: %w[ Bruno Clara Duda ]).order(:id).to_a
+
+    tally = ->(title) { past.season_title_votes.joins(:season_title).where(season_titles: { name: title }).pluck(:votee_id).tally }
+
+    expect(tally.call("Pernilongo")).to include(bruno.id => 2)
+    expect(tally.call("Lesma").values).to eq([ 1, 1 ])
+    expect(tally.call("Lesma").keys).to contain_exactly(clara.id, duda.id)
+  end
+
   it "hands back Ana, already claimed, so the visitor walks straight in" do
     member = described_class.new(household, now: now).call
 
@@ -36,6 +48,7 @@ RSpec.describe Households::SeedExample do
     duda = household.members.find_by!(name: "Duda")
 
     expect(duda).to have_attributes(kind: "lagartinha", points_multiplier: 1.5)
+    expect(household.reload.lagartinhas_enabled).to be(true)
     hers = household.completions.where(member: duda)
     expect(hers.count).to be > 0
     expect(hers.pluck(:multiplier).uniq).to eq([ 1.5 ])
@@ -66,6 +79,7 @@ RSpec.describe Households::SeedExample do
     seeded = Household.find_by!(invite_code: "demo")
     expect(seeded.name).to eq(described_class::NAME)
     expect(seeded.members.pluck(:name)).to eq(%w[ Ana Bruno Clara Duda ])
+    expect(seeded).to have_attributes(demo: true, lagartinhas_enabled: true)
     expect(Household.where(invite_code: "demo").count).to eq(1)
   end
 end

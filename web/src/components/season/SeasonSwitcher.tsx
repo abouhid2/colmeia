@@ -1,4 +1,4 @@
-import { CalendarRange, Check, Settings2 } from "lucide-react";
+import { CalendarRange, Check, ChevronRight, Settings2 } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { isClosed } from "../../domain/seasons";
 import type { Season } from "../../domain/types";
@@ -65,13 +65,22 @@ export function SeasonSwitcher({ compact = false }: { compact?: boolean }) {
             </li>
           ))}
         </ul>
-        <Link
-          to={{ pathname: "/estacoes", search }}
-          onClick={picker.close}
-          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-honey-700 hover:underline"
-        >
-          <Settings2 className="size-4" aria-hidden /> Gerenciar estações
-        </Link>
+        <div className="mt-4 flex flex-wrap gap-4">
+          <Link
+            to={{ pathname: `/estacoes/${currentSeason.id}`, search }}
+            onClick={picker.close}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-honey-700 hover:underline"
+          >
+            <ChevronRight className="size-4" aria-hidden /> Ver esta estação
+          </Link>
+          <Link
+            to={{ pathname: "/estacoes", search }}
+            onClick={picker.close}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-honey-700 hover:underline"
+          >
+            <Settings2 className="size-4" aria-hidden /> Gerenciar estações
+          </Link>
+        </div>
       </Dialog>
     </>
   );

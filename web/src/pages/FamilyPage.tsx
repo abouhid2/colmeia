@@ -1,4 +1,4 @@
-import { CalendarRange, Plus, Target } from "lucide-react";
+import { CalendarRange, Plus, Settings2, Target } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { CROWN_EXPLANATION } from "../domain/crownTitles";
@@ -15,8 +15,9 @@ import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
 import { ALL_TIME_SCOPE_LABEL, SEASON_SCOPE_LABEL } from "../components/goal/goalCopy";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ColmeiaCard } from "../components/household/ColmeiaCard";
+import { HouseholdSettingsCard } from "../components/household/HouseholdSettingsCard";
+import { SETTINGS_LABEL, SETTINGS_PATH } from "../components/layout/navItems";
 import { ExampleResetCard } from "../components/members/ExampleResetCard";
-import { HouseholdNameForm } from "../components/members/HouseholdNameForm";
 import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
 import { MemberCard } from "../components/members/MemberCard";
@@ -56,10 +57,7 @@ export function FamilyPage() {
 
   return (
     <div className="space-y-8 animate-rise">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Família</h1>
-        <div className="mt-3"><HouseholdNameForm /></div>
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight">Família</h1>
       {closed && <SeasonClosedNotice name={currentSeason.name} />}
       <MemberFilter />
 
@@ -109,6 +107,17 @@ export function FamilyPage() {
             <span className="block font-semibold">Gerenciar estações</span>
             <span className="block text-sm text-ink-soft">Agora em {currentSeason.name}.</span>
           </span>
+        </Link>
+      </section>
+
+      <section>
+        <SectionHeading title="Ajustes da colmeia" />
+        <HouseholdSettingsCard />
+        <Link
+          to={{ pathname: SETTINGS_PATH, search }}
+          className="mt-3 flex w-fit items-center gap-1.5 text-sm font-semibold text-honey-700 hover:underline"
+        >
+          <Settings2 className="size-4" aria-hidden /> {SETTINGS_LABEL}
         </Link>
       </section>
 

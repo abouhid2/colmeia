@@ -22,7 +22,7 @@ module Api
       private
 
       def household_params
-        params.require(:household).permit(:name)
+        params.require(:household).permit(:name, :lagartinhas_enabled)
       end
     end
   end

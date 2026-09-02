@@ -8,6 +8,7 @@ class Season < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :goals, dependent: :destroy
   has_many :completions, dependent: :destroy
+  has_many :season_title_votes, dependent: :destroy
 
   validates :name, presence: true, length: { maximum: NAME_LIMIT }
   validates :starts_on, presence: true
