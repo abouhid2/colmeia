@@ -9,6 +9,13 @@ const EMPTY: Task[] = [];
 
 export type TaskUpdate = Partial<TaskInput>;
 
+export interface CompleteTaskVariables {
+  id: number;
+  memberId: number;
+  /** When the work happened, ISO 8601. Absent means right now. */
+  completedAt?: string;
+}
+
 /** The tasks of the estação the app is showing. */
 export function useTasks() {
   const api = useApi();
@@ -39,7 +46,7 @@ export function useTaskMutations() {
     invalidates: [queryKeys.tasks, queryKeys.completions, queryKeys.seasons],
   });
   const complete = useAppMutation(
-    ({ id, memberId }: { id: number; memberId: number }) => api.tasks.complete(id, memberId),
+    ({ id, memberId, completedAt }: CompleteTaskVariables) => api.tasks.complete(id, memberId, { completedAt }),
     { invalidates: [queryKeys.tasks, queryKeys.completions, queryKeys.seasons] },
   );
   const reopen = useAppMutation((id: number) => api.tasks.reopen(id), {

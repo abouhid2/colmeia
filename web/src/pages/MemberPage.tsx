@@ -131,7 +131,7 @@ export function MemberPage() {
         {profile.history.length === 0 ? (
           <EmptyState icon={<Sparkles className="size-6" />} title="Nada concluído ainda" />
         ) : (
-          <MemberHistory completions={profile.history} lookup={lookup} />
+          <MemberHistory completions={profile.history} now={now} lookup={lookup} />
         )}
       </section>
 

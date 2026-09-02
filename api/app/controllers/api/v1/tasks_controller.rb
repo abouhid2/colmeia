@@ -26,15 +26,19 @@ module Api
         head :no_content
       end
 
+      # completed_at is optional: without it the work counts as done now, with
+      # it as done whenever the person says they did it.
       def complete
         task = tasks.find(params[:id])
         return render_conflict(t_error(:season_closed)) if season_closed?(task.season)
 
         member = current_household.members.find(params.require(:member_id))
-        result = Tasks::Complete.new(task: task, member: member).call
+        result = Tasks::Complete.new(task: task, member: member, completed_at: params[:completed_at]).call
         render json: { task: TaskSerializer.call(result.task), completion: CompletionSerializer.call(result.completion) }
       rescue Tasks::Complete::AlreadyDone => e
         render_conflict(e.message)
+      rescue Tasks::Complete::InvalidMoment => e
+        render_unprocessable(e.message)
       end
 
       def reopen

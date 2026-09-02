@@ -33,6 +33,11 @@ export interface CompleteTaskResult {
   completion: Completion;
 }
 
+export interface CompleteTaskOptions {
+  /** When the work actually happened, ISO 8601. Absent means right now. */
+  completedAt?: string;
+}
+
 /** A colmeia this browser knows about, for the in-browser store only. */
 export interface StoredHousehold {
   inviteCode: string;
@@ -87,7 +92,7 @@ export interface ColmeiaApi {
     create(input: TaskInput): Promise<Task>;
     update(id: number, input: Partial<TaskInput>): Promise<Task>;
     remove(id: number): Promise<void>;
-    complete(id: number, memberId: number): Promise<CompleteTaskResult>;
+    complete(id: number, memberId: number, options?: CompleteTaskOptions): Promise<CompleteTaskResult>;
     reopen(id: number): Promise<Task>;
   };
   completions: {

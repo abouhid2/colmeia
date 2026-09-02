@@ -1,7 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import type { Completion, Member } from "../../domain/types";
-import { timeAgo } from "../../lib/dates";
+import { completedLabel } from "../../lib/dates";
 import { Avatar } from "../ui/Avatar";
 import { Card } from "../ui/Card";
 import { EmptyState } from "../ui/EmptyState";
@@ -9,10 +9,11 @@ import { SectionHeading } from "../ui/SectionHeading";
 
 interface ActivityFeedProps {
   completions: Completion[];
+  now: Date;
   lookup(id: number | null): Member | null;
 }
 
-export function ActivityFeed({ completions, lookup }: ActivityFeedProps) {
+export function ActivityFeed({ completions, now, lookup }: ActivityFeedProps) {
   const { search } = useLocation();
 
   return (
@@ -42,7 +43,7 @@ export function ActivityFeed({ completions, lookup }: ActivityFeedProps) {
                       </p>
                     </>
                   )}
-                  <span className="text-xs text-ink-faint">{timeAgo(completion.completedAt)}</span>
+                  <span className="text-xs text-ink-faint">{completedLabel(completion.completedAt, now)}</span>
                   <span className="font-display text-sm font-bold tabular-nums text-honey-700">+{completion.pointsAwarded}</span>
                 </li>
               );
