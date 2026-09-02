@@ -25,6 +25,7 @@ Rails.application.routes.draw do
         delete :purchased, on: :collection, action: :clear_purchased
       end
       resources :goals, only: %i[ index create update destroy ]
+      resources :achievement_awards, only: %i[ index create ]
     end
   end
 end
