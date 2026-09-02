@@ -6,6 +6,8 @@ pt-BR:
       season_already_closed: "Essa estação já estava encerrada"
       season_already_open: "Essa estação não está encerrada"
       season_has_completions: "Essa estação já tem tarefas concluídas, então não dá para apagá-la"
+      too_many_demos: "Tem muita gente conhecendo o app agora. Tente de novo daqui a pouco."
+      not_a_demo: "Só uma colmeia de exemplo pode ser recomeçada."
   activerecord:
     models:
       task: Tarefa

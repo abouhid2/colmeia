@@ -2,8 +2,13 @@ import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import type { Completion, Goal, Household, HouseholdWithMembers, Member, Season, ShoppingItem, Task } from "../domain/types";
 import { toIsoDate } from "../lib/dates";
 
-/** The colmeia the demo lives in, and the one older single-store data becomes. */
+/** The colmeia older single-store data becomes, and the one earlier versions
+ *  of this app seeded on first use. New sandboxes get a code of their own. */
 export const DEMO_INVITE_CODE = "demo";
+
+export const EXAMPLE_HOUSEHOLD_NAME = "Família de exemplo";
+/** Whoever opens the example walks in as Ana: her place is claimed for her. */
+export const EXAMPLE_ENTRY_MEMBER = "Ana";
 
 /** What a colmeia with no history opens with, so a task has somewhere to go. */
 export const FIRST_SEASON_NAME = "Primeira estação";
@@ -24,7 +29,7 @@ export interface LocalState {
 
 export function emptyState(inviteCode: string, name: string, now: Date): LocalState {
   return {
-    household: { id: 1, name, inviteCode },
+    household: { id: 1, name, inviteCode, demo: false },
     members: [],
     seasons: [ firstSeason(2, toIsoDate(now), now) ],
     tasks: [],
@@ -49,12 +54,13 @@ export function withCounts(state: LocalState, season: StoredSeason): Season {
 }
 
 /** A browser can hold a state written before crown titles, lagartinhas or estações existed. */
-type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier">;
 /** Goals used to carry a weekly or monthly period instead of belonging to an estação. */
 type StoredGoal = Older<Goal, "seasonId"> & { period?: string };
 
-export type StoredState = Omit<LocalState, "members" | "seasons" | "tasks" | "completions" | "goals"> & {
+export type StoredState = Omit<LocalState, "household" | "members" | "seasons" | "tasks" | "completions" | "goals"> & {
+  household: Older<Household, "demo">;
   members: StoredMember[];
   seasons?: StoredSeason[];
   tasks: Older<Task, "kidFriendly" | "seasonId">[];
@@ -63,13 +69,17 @@ export type StoredState = Omit<LocalState, "members" | "seasons" | "tasks" | "co
 };
 
 /** Fills in every field an older store can be missing, on read, so nothing
- *  downstream has to wonder whether it is there. */
+ *  downstream has to wonder whether it is there. Everything written before
+ *  estações existed belongs to the first one, which opens on the oldest day the
+ *  colmeia has and never ends. */
 export function normalizeState(state: StoredState, now: Date): LocalState {
   const seasons = state.seasons ?? [];
   const adopted = seasons.length > 0 ? seasons : [ firstSeason(state.nextId, firstDay(state, toIsoDate(now)), now) ];
   const [ first ] = adopted;
   return {
     ...state,
+    // Anything stored before sandboxes existed is somebody's real colmeia.
+    household: { ...state.household, demo: state.household.demo ?? false },
     seasons: adopted,
     nextId: seasons.length > 0 ? state.nextId : state.nextId + 1,
     members: state.members.map((member) => ({

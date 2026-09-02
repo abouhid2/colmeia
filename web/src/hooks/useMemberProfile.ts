@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { memberAchievements, type Achievement } from "../domain/achievements";
+import { completionsForMember } from "../domain/history";
 import { memberStats, type MemberStats } from "../domain/memberStats";
 import { sortOpenTasks } from "../domain/taskSort";
 import type { Completion, Member, Season, Task } from "../domain/types";
@@ -50,10 +51,6 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
     }
 
     const place = standings.findIndex((standing) => standing.member.id === member.id);
-    // The history spans every estação: what this person did is theirs for good.
-    const history = completions
-      .filter((completion) => completion.memberId === member.id)
-      .sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt));
 
     return {
       member,
@@ -65,7 +62,8 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
       rank: place === -1 ? null : place + 1,
       houseSize: standings.length,
       achievements: memberAchievements({ memberId: member.id, completions, tasks: allTasks }),
-      history,
+      // The history spans every estação: what this person did is theirs for good.
+      history: completionsForMember(completions, member.id),
       openTasks: sortOpenTasks(tasks.filter((task) => task.status === "open" && task.assigneeId === member.id), now),
       goals: personal.filter((item) => item.goal.memberId === member.id),
     };

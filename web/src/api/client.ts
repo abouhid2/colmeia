@@ -36,6 +36,13 @@ export interface StoredHousehold {
   inviteCode: string;
   name: string;
   createdAt: string;
+  demo: boolean;
+}
+
+/** A sandbox colmeia and the person whoever asked for it walks in as. */
+export interface DemoColmeia {
+  household: HouseholdWithMembers;
+  member: Member;
 }
 
 export interface ColmeiaApi {
@@ -45,6 +52,8 @@ export interface ColmeiaApi {
   /** Reachable with nothing but the code in the invite link. */
   households: {
     create(input: HouseholdInput): Promise<HouseholdWithMembers>;
+    /** A colmeia of one's own, filled with the example, already claimed. */
+    createDemo(): Promise<DemoColmeia>;
     lookup(code: string): Promise<HouseholdWithMembers>;
     claim(code: string, memberId: number): Promise<Member>;
     join(code: string, input: MemberInput): Promise<Member>;
@@ -52,6 +61,8 @@ export interface ColmeiaApi {
   household: {
     get(): Promise<Household>;
     update(input: Pick<Household, "name">): Promise<Household>;
+    /** Only for a sandbox: back to the example, with the member to carry on as. */
+    reseed(): Promise<Member>;
   };
   members: {
     list(): Promise<Member[]>;
@@ -98,6 +109,5 @@ export interface ColmeiaApi {
     remove(id: number): Promise<void>;
   };
   /** Only meaningful for the in-browser store. */
-  reset?(): Promise<void>;
   listStoredHouseholds?(): Promise<StoredHousehold[]>;
 }

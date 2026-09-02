@@ -5,6 +5,8 @@ Rails.application.routes.draw do
     namespace :v1 do
       # Public: everything reachable with nothing but the invite code.
       resources :households, only: %i[ create show ], param: :invite_code do
+        # A sandbox colmeia for whoever has no invite and no colmeia yet.
+        post :demo, on: :collection
         member do
           post :claim
           post :join
@@ -12,7 +14,9 @@ Rails.application.routes.draw do
       end
 
       # Scoped to the X-Household-Code header.
-      resource :household, only: %i[ show update ], controller: "current_household"
+      resource :household, only: %i[ show update ], controller: "current_household" do
+        post :reseed
+      end
       resources :members, only: %i[ index create update destroy ]
       resources :tasks, only: %i[ index create update destroy ] do
         post :complete, on: :member

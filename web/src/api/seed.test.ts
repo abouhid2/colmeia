@@ -3,7 +3,7 @@ import { crownHolder } from "../domain/crown";
 import { awardedPoints } from "../domain/points";
 import { goalProgress } from "../domain/progress";
 import { defaultSeason, lastClosedSeason } from "../domain/seasons";
-import { withCounts } from "./localState";
+import { EXAMPLE_HOUSEHOLD_NAME, withCounts } from "./localState";
 import { buildDemoState } from "./seed";
 
 const now = new Date(2026, 8, 1, 21);
@@ -16,6 +16,10 @@ function currentSeason(state: ReturnType<typeof buildDemoState>) {
 }
 
 describe("buildDemoState", () => {
+  it("is an example colmeia, and says so", () => {
+    expect(buildDemoState(now).household).toMatchObject({ name: EXAMPLE_HOUSEHOLD_NAME, demo: true });
+  });
+
   it("opens with one estação closed and another running", () => {
     const state = buildDemoState(now);
     const seasons = state.seasons.map((season) => withCounts(state, season));

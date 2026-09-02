@@ -1,5 +1,5 @@
 import type { Goal, Household } from "../domain/types";
-import { DEMO_INVITE_CODE, normalizeState, type LocalState, type StoredMember, type StoredState } from "./localState";
+import { DEMO_INVITE_CODE, normalizeState, type LocalState, type Older, type StoredMember, type StoredState } from "./localState";
 import { parseJson, type KeyValueStore } from "./storage";
 
 export const HOUSEHOLD_INDEX_KEY = "colmeia.households.v4";
@@ -12,16 +12,20 @@ const LEGACY_V1_KEY = "colmeia.db.v1";
 export interface HouseholdEntry {
   name: string;
   createdAt: string;
+  /** A sandbox: it can be restarted, and the app says nothing in it is real. */
+  demo: boolean;
 }
 
 export type HouseholdIndex = Record<string, HouseholdEntry>;
+
+type StoredIndex = Record<string, Older<HouseholdEntry, "demo">>;
 
 type LegacyMember = Omit<StoredMember, "claimedAt">;
 type StoredGoal = StoredState["goals"][number];
 
 /** v2 held one colmeia per browser, with no invite code and nobody to claim. */
 interface LegacyV2State extends Omit<StoredState, "household" | "members"> {
-  household: Omit<Household, "inviteCode">;
+  household: Omit<Household, "inviteCode" | "demo">;
   members: LegacyMember[];
 }
 
@@ -32,6 +36,13 @@ interface LegacyV1State extends Omit<LegacyV2State, "goals"> {
 
 function storageKey(inviteCode: string): string {
   return `${HOUSEHOLD_KEY_PREFIX}${inviteCode}`;
+}
+
+/** An index written before sandboxes existed holds real colmeias only. */
+function normalizeIndex(stored: StoredIndex): HouseholdIndex {
+  return Object.fromEntries(
+    Object.entries(stored).map(([ inviteCode, entry ]) => [ inviteCode, { ...entry, demo: entry.demo ?? false } ]),
+  );
 }
 
 function fromV1({ goal, ...rest }: LegacyV1State): LegacyV2State {
@@ -62,18 +73,18 @@ export class LocalStore {
 
   /** Built on first use: colmeias written before estações carry over with a
    *  first estação holding what they already had, an older single-colmeia store
-   *  becomes the demo colmeia, and a browser that never saw the app gets the
-   *  demo family. */
+   *  keeps its data under the demo code, and a browser that never saw the app
+   *  starts with nothing at all. Colmeias appear when somebody asks for one. */
   index(): HouseholdIndex {
-    const stored = parseJson<HouseholdIndex>(this.store.getItem(HOUSEHOLD_INDEX_KEY));
-    if (stored !== null && typeof stored === "object") return stored;
+    const stored = parseJson<StoredIndex>(this.store.getItem(HOUSEHOLD_INDEX_KEY));
+    if (stored !== null && typeof stored === "object") return normalizeIndex(stored);
 
     const carried = this.takeSeasonlessColmeias();
     if (carried !== null) return this.rewrite(carried);
 
-    const state = normalizeState(this.takeLegacyState() ?? this.seed(), this.clock());
-    state.household.inviteCode = DEMO_INVITE_CODE;
-    return this.rewrite([ [ state, undefined ] ]);
+    const legacy = this.takeLegacyState();
+    const state = legacy === null ? null : normalizeState(legacy, this.clock());
+    return this.rewrite(state === null ? [] : [ [ state, undefined ] ]);
   }
 
   read(inviteCode: string): LocalState | null {
@@ -98,11 +109,11 @@ export class LocalStore {
     this.saveIndex({ ...index, [inviteCode]: this.entry(state, index[inviteCode]?.createdAt) });
   }
 
-  /** "Restaurar exemplo": the demo colmeia goes back to its seed. */
-  resetDemo(): LocalState {
-    const state = this.seed();
-    state.household.inviteCode = DEMO_INVITE_CODE;
-    this.save(state);
+  /** The example family under a code of its own, unsaved. Whatever the seed
+   *  says, a colmeia handed out this way is a sandbox. */
+  example(inviteCode: string): LocalState {
+    const state = normalizeState(this.seed(), this.clock());
+    state.household = { ...state.household, inviteCode, demo: true };
     return state;
   }
 
@@ -116,7 +127,7 @@ export class LocalStore {
   }
 
   private entry(state: LocalState, createdAt?: string): HouseholdEntry {
-    return { name: state.household.name, createdAt: createdAt ?? this.clock().toISOString() };
+    return { name: state.household.name, createdAt: createdAt ?? this.clock().toISOString(), demo: state.household.demo };
   }
 
   private writeState(state: LocalState): void {
@@ -129,7 +140,7 @@ export class LocalStore {
 
   /** The colmeias of a browser that stopped using the app before estações. */
   private takeSeasonlessColmeias(): [ LocalState, string | undefined ][] | null {
-    const index = parseJson<HouseholdIndex>(this.store.getItem(LEGACY_V3_INDEX_KEY));
+    const index = parseJson<StoredIndex>(this.store.getItem(LEGACY_V3_INDEX_KEY));
     if (index === null || typeof index !== "object") return null;
 
     this.store.removeItem(LEGACY_V3_INDEX_KEY);

@@ -11,6 +11,8 @@ export interface Household {
   name: string;
   /** The code in the invite link. Everything else is scoped to it. */
   inviteCode: string;
+  /** A sandbox filled with the example family: nothing in it is real. */
+  demo: boolean;
 }
 
 /** A championship the colmeia runs: its own tasks, goals, points and ranking. */
