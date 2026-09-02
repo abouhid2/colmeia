@@ -6,6 +6,7 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 
 ## O que dá para fazer
 
+- **Uma colmeia por casa**: cada colmeia tem o seu link de convite, e ninguém vê os dados da outra.
 - **Tarefas com pontos**: cada tarefa vale o que a família decidir (uma resistência de chuveiro queimada pode valer 50 pontos).
 - **Avaliação opcional**: tarefas marcadas "com avaliação" só liberam os pontos depois que outra pessoa dá uma nota de 1 a 5. Os pontos saem proporcionais à nota. Ninguém avalia o próprio trabalho.
 - **Recorrência**: diária, semanal, mensal ou a cada N dias. A próxima data conta a partir do dia em que a tarefa foi feita. Tarefas pontuais fecham ao concluir.
@@ -14,6 +15,33 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 - **Lista de compras** compartilhada, com quem pediu e quem comprou.
 - **Metas** por semana ou mês: uma coletiva, com o favo de progresso e o ranking de quem mais contribuiu, e quantas individuais quiserem (só os pontos daquela pessoa contam).
 - **Filtro por integrante** presente em todas as telas: escolha uma pessoa e o app mostra só as tarefas, compras, metas e conquistas dela.
+
+## Colmeias e convites
+
+Uma colmeia é uma casa. Quem cria dá um nome e escreve quem mora lá: cada nome
+vira um espantalho, uma pessoa que existe na lista mas que ninguém ocupou
+ainda.
+
+A colmeia ganha um código de convite e o link `/entrar/<código>`. Quem abre o
+link vê o nome da colmeia e a lista, e escolhe:
+
+- **"Sou essa pessoa"** ocupa um espantalho. Quem já entrou aparece apagado e
+  não pode ser escolhido de novo.
+- **"Sou outra pessoa"** cria uma pessoa nova, já ocupada.
+
+A partir daí o navegador fica preso àquela colmeia e àquela pessoa
+(`colmeia.session` no `localStorage`). O seletor no topo continua trocando de
+pessoa dentro da mesma colmeia, que é o caso do tablet da cozinha. Sem sessão,
+o app abre numa tela com dois caminhos: criar uma colmeia ou colar um link de
+convite.
+
+O botão **Convidar**, na barra lateral e no cabeçalho, copia o link. Na página
+Família ele fica sempre à vista, junto de quem ainda não entrou e da saída da
+colmeia.
+
+**Sem API o link só funciona no mesmo navegador**: não há servidor para o outro
+lado do link alcançar. O app diz isso na cara, e é por isso que o modo
+demonstração serve para experimentar, não para a família inteira usar.
 
 ## Estrutura
 
@@ -24,8 +52,8 @@ web/   React 19 + Vite + Tailwind 4: a interface, com dois modos de dados
 
 O front funciona de dois jeitos, escolhidos pela variável `VITE_API_URL`:
 
-- **Sem API** (o que roda no GitHub Pages): tudo fica no `localStorage` do navegador, com dados de exemplo. Bom para experimentar.
-- **Com API**: aponta para o Rails e a família inteira compartilha os mesmos dados.
+- **Sem API** (o que roda no GitHub Pages): tudo fica no `localStorage` do navegador, uma chave por colmeia, com dados de exemplo na colmeia `demo`. Bom para experimentar, mas os convites não saem daquele navegador.
+- **Com API**: aponta para o Rails e a família inteira compartilha os mesmos dados. Cada requisição leva o código da colmeia no cabeçalho `X-Household-Code`.
 
 As regras (pontos por nota, avanço de recorrência, quem pode avaliar) existem nos dois lados e são testadas nos dois.
 
