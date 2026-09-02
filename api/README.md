@@ -8,8 +8,10 @@ bin/rails db:prepare db:seed
 bin/rails server
 ```
 
-As seeds criam uma colmeia de demonstração com o código de convite `demo` e
-podem rodar mais de uma vez sem duplicar nada.
+As seeds criam uma colmeia de exemplo com o código de convite `demo` e podem
+rodar mais de uma vez sem duplicar nada. Ela é marcada como colmeia de exemplo
+(`demo`), a mesma coisa que o endpoint público entrega, então o
+desenvolvimento vê o mesmo aviso e o mesmo "recomeçar" que o visitante vê.
 
 ## Colmeias
 
@@ -25,6 +27,30 @@ Endpoints públicos, alcançáveis só com o código:
 | `GET`  | `/api/v1/households/:invite_code`      | A colmeia e a sua lista, com `claimed` em cada membro. 404 para código desconhecido. |
 | `POST` | `/api/v1/households/:invite_code/claim`| Ocupa um membro da lista. Corpo `{ member_id }`. 409 se alguém já ocupou. |
 | `POST` | `/api/v1/households/:invite_code/join` | Cria uma pessoa que não estava na lista, já ocupada. Corpo `{ member: { name, avatar, color } }`. |
+| `POST` | `/api/v1/households/demo`              | Cria uma colmeia de exemplo, já cheia, e responde 201 com `{ household, member }`. Sem corpo e sem cabeçalho. |
+
+## Colmeias de exemplo
+
+Quem não tem convite nem colmeia pede uma em `POST /api/v1/households/demo`. A
+resposta traz a colmeia e o membro por onde entrar (a Ana, já ocupada), então
+não há nada a preencher antes de mexer no app.
+
+Uma colmeia de exemplo é uma colmeia como as outras, com o seu próprio código
+de convite, marcada com `demo: true`. Todo mundo pode ser ocupado, o convite
+funciona, e nada ali é dado de ninguém:
+
+- **Limite**: a API para de entregar exemplos quando já saíram
+  `Api::V1::HouseholdsController::DEMO_LIMIT_PER_HOUR` (30) na última hora, e
+  responde `429` com a explicação em `details`.
+- **Recomeçar**: `POST /api/v1/household/reseed` (com o cabeçalho da colmeia)
+  apaga o que foi feito ali e enche a colmeia de novo, respondendo com o membro
+  por onde continuar, já que os ids antigos morreram. `409` se a colmeia não for
+  de exemplo.
+- **Limpeza**: `bin/rails demo:cleanup` apaga as colmeias de exemplo com mais de
+  uma semana, com tudo dentro delas. Rode por cron em qualquer deploy público.
+
+Os dados do exemplo vivem em `Households::SeedExample`, usado tanto pelo
+endpoint quanto por `db/seeds.rb`.
 
 ## Endpoints com escopo
 
@@ -33,7 +59,8 @@ colmeia daquele código. Sem cabeçalho, ou com um código que ninguém tem, a
 resposta é `401 { "error": "unauthorized" }`. Um id de outra colmeia responde
 404: não dá para completar uma tarefa com alguém de fora, nem avaliar por ela.
 
-`household` (`GET` devolve `{ id, name, invite_code }`, `PATCH` renomeia),
+`household` (`GET` devolve `{ id, name, invite_code, demo }`, `PATCH` renomeia,
+`POST /household/reseed` recomeça uma colmeia de exemplo),
 `members`, `tasks` (+ `POST /tasks/:id/complete`), `completions`
 (+ `POST /completions/:id/review`), `shopping_items`
 (+ `DELETE /shopping_items/purchased`), `goals`.

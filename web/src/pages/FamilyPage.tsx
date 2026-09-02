@@ -12,7 +12,7 @@ import { crownExplanation } from "../domain/crownTitles";
 import { periodScopeLabel } from "../components/goal/goalCopy";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ColmeiaCard } from "../components/household/ColmeiaCard";
-import { DemoResetCard } from "../components/members/DemoResetCard";
+import { ExampleResetCard } from "../components/members/ExampleResetCard";
 import { HouseholdNameForm } from "../components/members/HouseholdNameForm";
 import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
@@ -90,7 +90,7 @@ export function FamilyPage() {
         <ColmeiaCard />
       </section>
 
-      <DemoResetCard />
+      <ExampleResetCard />
 
       <MemberDialog open={memberDialog.isOpen} member={editing} onClose={memberDialog.close} />
       <GoalDialog dialog={goalDialog} />

@@ -2,6 +2,8 @@ pt-BR:
   api:
     errors:
       missing_reference: "Alguém ou alguma coisa daqui não existe mais. Atualize a página."
+      too_many_demos: "Tem muita gente conhecendo o app agora. Tente de novo daqui a pouco."
+      not_a_demo: "Só uma colmeia de exemplo pode ser recomeçada."
   activerecord:
     models:
       task: Tarefa
