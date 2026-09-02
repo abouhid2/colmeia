@@ -1,4 +1,4 @@
-import { Award, CalendarRange, House, ListChecks, ShoppingBasket, Users, type LucideIcon } from "lucide-react";
+import { Award, CalendarRange, House, ListChecks, ShoppingBasket, Target, Users, type LucideIcon } from "lucide-react";
 import type { NavKey } from "../../domain/navigation";
 
 export interface NavItem {
@@ -24,6 +24,7 @@ export const SETTINGS_LABEL = "Meus ajustes";
 export const NAV_ITEMS: Partial<Record<NavKey, NavItem>> = {
   home: { key: "home", to: "/", label: "Início", icon: House, end: true },
   tasks: { key: "tasks", to: "/tarefas", label: "Tarefas", icon: ListChecks },
+  goals: { key: "goals", to: "/metas", label: "Metas", icon: Target },
   shopping: { key: "shopping", to: "/compras", label: "Compras", icon: ShoppingBasket },
   family: { key: "family", to: "/familia", label: "Família", icon: Users },
   achievements: { key: "achievements", to: "/conquistas", label: "Conquistas", icon: Award },

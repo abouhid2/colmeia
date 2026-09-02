@@ -104,6 +104,9 @@ export function HomePage() {
             ))}
           </ul>
         )}
+        <Link to={{ pathname: "/metas", search }} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-honey-700 hover:underline">
+          Ver todas as metas <ArrowRight className="size-4" />
+        </Link>
       </section>
 
       <PendingReviews />

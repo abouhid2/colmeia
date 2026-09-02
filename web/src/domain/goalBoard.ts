@@ -1,5 +1,5 @@
 import { rankMembers, type Standing } from "./leaderboard";
-import { goalProgress, type GoalProgress } from "./progress";
+import { goalProgress, type GoalProgress, type GoalStatus } from "./progress";
 import { completionsInSeason } from "./seasons";
 import type { Completion, Goal, Member, Season } from "./types";
 
@@ -61,6 +61,25 @@ export function goalsWithPeople(items: GoalWithProgress[]): GoalWithProgress[] {
 /** The goals one person is in, or all of them when nobody is filtered. */
 export function goalsOf(items: GoalWithProgress[], memberId: number | null): GoalWithProgress[] {
   return memberId === null ? items : items.filter((item) => item.goal.memberIds.includes(memberId));
+}
+
+/** What filtering by one person leaves: their own goals, and the colmeia's,
+ *  which are theirs too. */
+export function goalsSeenBy(items: GoalWithProgress[], memberId: number | null): GoalWithProgress[] {
+  if (memberId === null) return items;
+  return items.filter((item) => item.goal.memberIds.length === 0 || item.goal.memberIds.includes(memberId));
+}
+
+/** A window already behind us: whatever the goal did, it is done doing it. */
+export function isOver(item: GoalWithProgress, now: Date): boolean {
+  return now > item.progress.window.end;
+}
+
+/** "Todas", or one situation a goal can be in. */
+export type GoalStatusFilter = "all" | GoalStatus;
+
+export function byStatus(items: GoalWithProgress[], filter: GoalStatusFilter): GoalWithProgress[] {
+  return filter === "all" ? items : items.filter((item) => item.progress.status === filter);
 }
 
 /** The one running today. Several at once means the one closing first. */

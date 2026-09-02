@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { emptyNavPreferences } from "./navigation";
 import {
-  byWindowStart, finishedGoal, goalAudience, goalsOf, goalsWithPeople, goalsWithProgress,
-  householdGoals, participantsOf, runningGoal, upcomingGoal,
+  byStatus, byWindowStart, finishedGoal, goalAudience, goalsOf, goalsSeenBy, goalsWithPeople,
+  goalsWithProgress, householdGoals, isOver, participantsOf, runningGoal, upcomingGoal,
 } from "./goalBoard";
 import type { Completion, Goal, Member, Season } from "./types";
 
@@ -113,5 +113,30 @@ describe("which goal leads the page", () => {
 
   it("falls back to the last window that closed", () => {
     expect(finishedGoal(board([ finished, later ]), now)?.goal.id).toBe(1);
+  });
+});
+
+describe("what a screen shows of a list", () => {
+  const finished = goal({ id: 1, startsOn: "2026-09-01", endsOn: "2026-09-10" });
+  const running = goal({ id: 2, startsOn: "2026-09-11", endsOn: "2026-09-30" });
+  const later = goal({ id: 3, startsOn: "2026-10-01", endsOn: "2026-10-31", memberIds: [ 2 ] });
+  const items = goalsWithProgress([ finished, running, later ], [], members, season, now);
+
+  it("tells the windows already behind us from the ones that are not", () => {
+    expect(items.filter((item) => isOver(item, now)).map((item) => item.goal.id)).toEqual([ 1 ]);
+  });
+
+  it("keeps the metas da colmeia when one person is filtered", () => {
+    expect(goalsSeenBy(items, 1).map((item) => item.goal.id)).toEqual([ 1, 2 ]);
+    expect(goalsSeenBy(items, 2).map((item) => item.goal.id)).toEqual([ 1, 2, 3 ]);
+    expect(goalsSeenBy(items, null)).toHaveLength(3);
+  });
+
+  it("narrows to one situation, or to none at all", () => {
+    expect(byStatus(items, "all")).toHaveLength(3);
+    expect(byStatus(items, "active").map((item) => item.goal.id)).toEqual([ 2 ]);
+    expect(byStatus(items, "upcoming").map((item) => item.goal.id)).toEqual([ 3 ]);
+    expect(byStatus(items, "missed").map((item) => item.goal.id)).toEqual([ 1 ]);
+    expect(byStatus(items, "reached")).toEqual([]);
   });
 });
