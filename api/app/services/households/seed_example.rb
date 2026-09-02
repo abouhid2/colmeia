@@ -26,6 +26,8 @@ module Households
     # Fills the colmeia and answers with the member to enter as.
     def call
       Household.transaction do
+        # Duda is a lagartinha, so the example shows what the switch turns on.
+        household.update!(lagartinhas_enabled: true)
         create_seasons
         create_members
         create_tasks

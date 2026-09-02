@@ -65,6 +65,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
     t.datetime "created_at", null: false
     t.boolean "demo", default: false, null: false
     t.string "invite_code", null: false
+    t.boolean "lagartinhas_enabled", default: false, null: false
     t.string "name", default: "Nossa casa", null: false
     t.datetime "updated_at", null: false
     t.index ["demo"], name: "index_households_on_demo"
