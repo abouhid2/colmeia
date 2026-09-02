@@ -1,7 +1,7 @@
 import { addDays, subHours } from "date-fns";
 import { toIsoDate } from "../lib/dates";
 import type { Completion, Member, ShoppingItem, Task } from "../domain/types";
-import type { LocalState } from "./localState";
+import { DEMO_INVITE_CODE, type LocalState } from "./localState";
 
 type TaskSeed = Partial<Task> & Pick<Task, "id" | "title" | "points">;
 type CompletionSeed = Partial<Completion> & Pick<Completion, "id" | "taskId" | "memberId" | "taskTitle" | "taskPoints">;
@@ -13,8 +13,9 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   const iso = (hoursAgo: number) => subHours(now, hoursAgo).toISOString();
   const inDays = (days: number) => toIsoDate(addDays(now, days));
 
+  // Nobody has claimed a place yet: the invite link is what lets a browser in.
   const member = (id: number, name: string, avatar: string, color: Member["color"]): Member => ({
-    id, name, avatar, color, createdAt: iso(240),
+    id, name, avatar, color, claimedAt: null, createdAt: iso(240),
   });
   const members = [member(1, "Ana", "🦊", "pollen"), member(2, "Bruno", "🐻", "sky"), member(3, "Clara", "🐼", "plum"), member(4, "Duda", "🦉", "leaf")];
 
@@ -64,7 +65,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   ];
 
   return {
-    household: { id: 1, name: "Família Colmeia" },
+    household: { id: 1, name: "Família Colmeia", inviteCode: DEMO_INVITE_CODE },
     members,
     tasks,
     completions,

@@ -1,6 +1,6 @@
 import type {
-  Completion, Goal, GoalInput, Household, Member, MemberInput, ReviewInput,
-  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
+  Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
+  ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
 import type { ColmeiaApi, CompleteTaskResult } from "./client";
 import { ApiError } from "./errors";
@@ -13,13 +13,28 @@ interface ErrorBody {
   details?: string[];
 }
 
+const HOUSEHOLD_HEADER = "X-Household-Code";
+
 /** Talks to the Rails API in api/. Keys travel as snake_case and come back camelCase. */
 export class HttpApi implements ColmeiaApi {
   readonly mode = "http" as const;
   private readonly baseUrl: string;
+  private inviteCode: string | null = null;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
+  }
+
+  setInviteCode(inviteCode: string | null): void {
+    this.inviteCode = inviteCode;
+  }
+
+  /** Every scoped endpoint answers only for the colmeia named in the header. */
+  private headers(hasBody: boolean): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (hasBody) headers["Content-Type"] = "application/json";
+    if (this.inviteCode !== null) headers[HOUSEHOLD_HEADER] = this.inviteCode;
+    return headers;
   }
 
   private async request<T>(method: Method, path: string, body?: unknown): Promise<T> {
@@ -27,7 +42,7 @@ export class HttpApi implements ColmeiaApi {
     try {
       response = await fetch(`${this.baseUrl}/api/v1${path}`, {
         method,
-        headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+        headers: this.headers(body !== undefined),
         body: body === undefined ? undefined : JSON.stringify(toSnakeKeys(body)),
       });
     } catch {
@@ -41,6 +56,15 @@ export class HttpApi implements ColmeiaApi {
     }
     return toCamelKeys<T>(json);
   }
+
+  households = {
+    create: (input: HouseholdInput): Promise<HouseholdWithMembers> => this.request("POST", "/households", { household: input }),
+    lookup: (inviteCode: string): Promise<HouseholdWithMembers> => this.request("GET", `/households/${encodeURIComponent(inviteCode)}`),
+    claim: (inviteCode: string, memberId: number): Promise<Member> =>
+      this.request("POST", `/households/${encodeURIComponent(inviteCode)}/claim`, { memberId }),
+    join: (inviteCode: string, input: MemberInput): Promise<Member> =>
+      this.request("POST", `/households/${encodeURIComponent(inviteCode)}/join`, { member: input }),
+  };
 
   household = {
     get: (): Promise<Household> => this.request("GET", "/household"),

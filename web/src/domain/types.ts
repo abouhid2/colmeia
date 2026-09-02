@@ -8,6 +8,8 @@ export type MemberColor = "honey" | "pollen" | "leaf" | "berry" | "sky" | "plum"
 export interface Household {
   id: number;
   name: string;
+  /** The code in the invite link. Everything else is scoped to it. */
+  inviteCode: string;
 }
 
 export interface Member {
@@ -15,6 +17,8 @@ export interface Member {
   name: string;
   avatar: string;
   color: MemberColor;
+  /** null while the member is still a placeholder nobody has claimed. */
+  claimedAt: string | null;
   createdAt: string;
 }
 
@@ -67,6 +71,16 @@ export interface Goal {
   period: GoalPeriod;
   /** null means the whole household works towards it. */
   memberId: number | null;
+}
+
+export interface HouseholdWithMembers extends Household {
+  members: Member[];
+}
+
+export interface HouseholdInput {
+  name: string;
+  /** Placeholder people, waiting for whoever opens the link to claim them. */
+  memberNames: string[];
 }
 
 export type MemberInput = Pick<Member, "name" | "avatar" | "color">;
