@@ -1,5 +1,5 @@
 class Household < ApplicationRecord
-  INVITE_CODE_LENGTH = 10
+  INVITE_CODE_LENGTH = 12
 
   has_many :members, dependent: :destroy
   has_many :tasks, dependent: :destroy
@@ -7,23 +7,26 @@ class Household < ApplicationRecord
   has_many :shopping_items, dependent: :destroy
   has_many :goals, dependent: :destroy
 
-  before_validation :assign_invite_code, on: :create
+  before_validation :normalize_invite_code
 
   validates :name, presence: true, length: { maximum: 60 }
   validates :invite_code, presence: true, uniqueness: true
 
   # The invite code is the address of a colmeia: whoever holds it can look the
-  # colmeia up and claim a place in it.
+  # colmeia up and claim a place in it. Lowercase because it gets typed by hand
+  # off somebody else's screen, and a longer code makes up for the smaller
+  # alphabet.
   def self.generate_invite_code
     loop do
-      code = SecureRandom.alphanumeric(INVITE_CODE_LENGTH)
+      code = SecureRandom.alphanumeric(INVITE_CODE_LENGTH).downcase
       return code unless exists?(invite_code: code)
     end
   end
 
   private
 
-  def assign_invite_code
-    self.invite_code = self.class.generate_invite_code if invite_code.blank?
+  # Stored lowercase so a lookup can downcase what it is given and still match.
+  def normalize_invite_code
+    self.invite_code = invite_code.blank? ? self.class.generate_invite_code : invite_code.to_s.downcase
   end
 end

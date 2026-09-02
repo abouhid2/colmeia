@@ -9,4 +9,8 @@ export const LIMITS = {
   shoppingItemName: 80,
   shoppingQuantity: 30,
   householdName: 60,
+  /** How many people a colmeia starts with, and how many it ever holds. The
+   *  invite link is public, so both have a ceiling. */
+  initialMembers: 20,
+  householdMembers: 30,
 } as const;
