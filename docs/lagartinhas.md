@@ -49,9 +49,9 @@ disponível: ela já existe e combina bem com o multiplicador.
 Uma colmeia só de adultos não tem o que fazer com multiplicador, liga separada
 nem tarefa marcada para criança: são três coisas na tela que não querem dizer
 nada ali. Por isso o assunto inteiro é um interruptor da colmeia,
-`lagartinhas_enabled`, em Família → Ajustes da colmeia. Ele nasce desligado,
-porque a maioria das casas não tem criança, e a família de exemplo nasce ligada,
-porque tem a Duda.
+`lagartinhas_enabled`, na página Família, em "Ajustes da colmeia". Ele nasce
+desligado, porque a maioria das casas não tem criança, e a família de exemplo
+nasce ligada, porque tem a Duda.
 
 Desligado, nenhuma tela fala em lagartinha: somem o tipo de pessoa e o
 multiplicador no cadastro, a marca ao lado do nome, o mini ranking, a marca
