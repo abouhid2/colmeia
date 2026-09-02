@@ -107,7 +107,8 @@ export class HttpApi implements ColmeiaApi {
   };
 
   completions = {
-    list: (): Promise<Completion[]> => this.request("GET", "/completions"),
+    list: (limit?: number): Promise<Completion[]> =>
+      this.request("GET", limit === undefined ? "/completions" : `/completions?limit=${limit}`),
     review: (id: number, input: ReviewInput): Promise<Completion> => this.request("POST", `/completions/${id}/review`, input),
   };
 

@@ -4,6 +4,17 @@ export interface KeyValueStore {
   removeItem(key: string): void;
 }
 
+/** Stored JSON is only as good as the browser that wrote it: a half-written or
+ *  hand-edited value reads as nothing rather than taking the app down. */
+export function parseJson<T>(raw: string | null): T | null {
+  if (raw === null) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
 const fallback = new Map<string, string>();
 
 /**

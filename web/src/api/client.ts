@@ -57,7 +57,8 @@ export interface ColmeiaApi {
     reopen(id: number): Promise<Task>;
   };
   completions: {
-    list(): Promise<Completion[]>;
+    /** Newest first. Without a limit the server answers with its own ceiling. */
+    list(limit?: number): Promise<Completion[]>;
     review(id: number, input: ReviewInput): Promise<Completion>;
   };
   shopping: {

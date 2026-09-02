@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { LIMITS } from "../domain/limits";
 import { ApiError } from "./errors";
 import { DEMO_INVITE_CODE, LocalApi, type KeyValueStore } from "./localApi";
 import { buildDemoState } from "./seed";
@@ -52,6 +53,40 @@ describe("LocalApi", () => {
     await expect(api.tasks.reopen(19)).rejects.toMatchObject({ status: 409 });
   });
 
+  it("takes back the completion that closed the task it reopens", async () => {
+    await api.tasks.reopen(19);
+
+    expect((await api.completions.list()).some((completion) => completion.id === 30)).toBe(false);
+  });
+
+  it("pays a reopened task once, not once per time it was finished", async () => {
+    const { completion: first } = await api.tasks.complete(13, 2);
+
+    await api.tasks.reopen(13);
+    const { completion: second } = await api.tasks.complete(13, 2);
+
+    const paid = (await api.completions.list()).filter((completion) => completion.taskId === 13);
+    expect(paid.map((completion) => completion.id)).toEqual([ second.id ]);
+    expect(paid[0].id).not.toBe(first.id);
+    expect(paid[0].pointsAwarded).toBe(15);
+  });
+
+  it("keeps the completions of the times before the one it undoes", async () => {
+    await api.tasks.complete(12, 1);
+    const { completion: newest } = await api.tasks.complete(13, 1);
+    await api.tasks.reopen(13);
+
+    expect((await api.completions.list()).some((completion) => completion.id === newest.id)).toBe(false);
+    expect((await api.completions.list()).some((completion) => completion.taskId === 12)).toBe(true);
+  });
+
+  it("answers the history in the slice it is asked for" , async () => {
+    const everything = await api.completions.list();
+
+    expect(await api.completions.list(2)).toEqual(everything.slice(0, 2));
+    expect(everything.length).toBeGreaterThan(2);
+  });
+
   it("keeps completions when a member leaves", async () => {
     await api.members.remove(1);
     const completions = await api.completions.list();
@@ -88,6 +123,13 @@ describe("LocalApi", () => {
     expect(bought.purchasedAt).toBe(now.toISOString());
     await api.shopping.clearPurchased();
     expect((await api.shopping.list()).every((item) => !item.purchased)).toBe(true);
+  });
+
+  it("holds an edited shopping item to the same lengths as a new one", async () => {
+    await expect(api.shopping.update(40, { name: "x".repeat(LIMITS.shoppingItemName + 1) })).rejects.toMatchObject({ status: 422 });
+    await expect(api.shopping.update(40, { name: "   " })).rejects.toMatchObject({ status: 422 });
+    await expect(api.shopping.update(40, { quantity: "x".repeat(LIMITS.shoppingQuantity + 1) })).rejects.toMatchObject({ status: 422 });
+    expect((await api.shopping.list()).find((item) => item.id === 40)?.name).toBe("Leite");
   });
 
   it("validates task input", async () => {

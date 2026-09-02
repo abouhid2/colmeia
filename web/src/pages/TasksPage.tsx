@@ -18,6 +18,8 @@ import { Segmented } from "../components/ui/Segmented";
 
 type Status = "open" | "done";
 
+const HISTORY_PAGE = 50;
+
 export function TasksPage() {
   const now = useNow();
   const { tasks } = useTasks();
@@ -27,12 +29,14 @@ export function TasksPage() {
   const lookup = useMemberLookup();
   const dialogs = useTaskDialogs();
   const [status, setStatus] = useState<Status>("open");
+  const [shown, setShown] = useState(HISTORY_PAGE);
 
   const open = sortOpenTasks(
     tasks.filter((task) => task.status === "open" && (memberId === null || task.assigneeId === memberId)),
     now,
   );
   const done = completionsForMember(completions, memberId);
+  const history = done.slice(0, shown);
 
   const options = [
     { value: "open" as const, label: `Abertas · ${open.length}` },
@@ -56,19 +60,26 @@ export function TasksPage() {
             hint={filtered ? undefined : "Toda tarefa concluída aparece aqui, inclusive as recorrentes."}
           />
         ) : (
-          <ul className="space-y-2">
-            {done.map((completion) => (
-              <CompletionRow
-                key={completion.id}
-                completion={completion}
-                doer={lookup(completion.memberId)}
-                canReopen={canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
-                onReopen={() => {
-                  if (completion.taskId !== null) reopen.mutate(completion.taskId);
-                }}
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-2">
+              {history.map((completion) => (
+                <CompletionRow
+                  key={completion.id}
+                  completion={completion}
+                  doer={lookup(completion.memberId)}
+                  canReopen={canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
+                  onReopen={() => {
+                    if (completion.taskId !== null) reopen.mutate(completion.taskId);
+                  }}
+                />
+              ))}
+            </ul>
+            {done.length > history.length && (
+              <Button variant="secondary" size="sm" className="mt-3" onClick={() => setShown((current) => current + HISTORY_PAGE)}>
+                Ver mais
+              </Button>
+            )}
+          </>
         )
       ) : open.length === 0 ? (
         <EmptyState

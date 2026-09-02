@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { LIMITS } from "../../domain/limits";
 import type { MemberColor, MemberInput } from "../../domain/types";
 import { AvatarPicker } from "../members/AvatarPicker";
 import { Avatar } from "../ui/Avatar";
@@ -21,7 +22,7 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    onSubmit({ name, avatar, color });
+    onSubmit({ name: name.trim(), avatar, color });
   };
 
   return (
@@ -30,7 +31,7 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
         <div className="flex items-center gap-4">
           <Avatar member={{ name: name || "Prévia", avatar, color }} size="lg" />
           <Field label="Seu nome" htmlFor="join-name">
-            <Input id="join-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Como te chamam" required autoFocus />
+            <Input id="join-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Como te chamam" maxLength={LIMITS.memberName} required autoFocus />
           </Field>
         </div>
         <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />
