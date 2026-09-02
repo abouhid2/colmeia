@@ -10,6 +10,7 @@ import { Dialog } from "../ui/Dialog";
 import { Field } from "../ui/Field";
 import { Input, Select } from "../ui/Input";
 import { Segmented } from "../ui/Segmented";
+import { goalPreviewSentence } from "./goalCopy";
 import type { GoalDialogState } from "./useGoalDialog";
 
 const PERIOD_OPTIONS: { value: GoalPeriod; label: string }[] = [
@@ -20,7 +21,7 @@ const PERIOD_OPTIONS: { value: GoalPeriod; label: string }[] = [
 export function GoalDialog({ dialog }: { dialog: GoalDialogState }) {
   const { isOpen, goal, defaultMemberId, close } = dialog;
   return (
-    <Dialog open={isOpen} onClose={close} title={goal ? "Ajustar a meta" : "Nova meta"} description="Uma recompensa para a colmeia inteira ou só para uma pessoa.">
+    <Dialog open={isOpen} onClose={close} title={goal ? "Ajustar a meta" : "Nova meta"} description="Combinem quantos pontos precisam juntar e o que ganham ao chegar lá.">
       <GoalForm key={`${goal?.id ?? "new"}-${defaultMemberId ?? "all"}`} goal={goal} defaultMemberId={defaultMemberId} onDone={close} />
     </Dialog>
   );
@@ -41,6 +42,9 @@ function GoalForm({ goal, defaultMemberId, onDone }: GoalFormProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const { create, update, remove } = useGoalMutations();
   const { notify } = useToast();
+
+  const ownerName = members.find((member) => String(member.id) === owner)?.name ?? null;
+  const preview = goalPreviewSentence({ ownerName, targetPoints: target, period, reward: title });
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -65,15 +69,19 @@ function GoalForm({ goal, defaultMemberId, onDone }: GoalFormProps) {
           ))}
         </Select>
       </Field>
-      <Field label="Recompensa" htmlFor="goal-title" hint="Ex.: pizza e filme no sábado, escolher o passeio do domingo.">
-        <Input id="goal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="O que se ganha" maxLength={LIMITS.goalTitle} required autoFocus />
-      </Field>
-      <Field label="Pontos para bater a meta" htmlFor="goal-target">
+      <Field label="Meta em pontos" htmlFor="goal-target" hint="Quantos pontos precisam juntar.">
         <Input id="goal-target" type="number" min={1} max={LIMITS.goalTarget} step={1} value={target} onChange={(event) => setTarget(Number(event.target.value))} required />
+      </Field>
+      <Field label="Recompensa" htmlFor="goal-title" hint="O que ganha quem bater a meta.">
+        <Input id="goal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ex.: pizza e filme no sábado" maxLength={LIMITS.goalTitle} required autoFocus />
       </Field>
       <Field label="Período">
         <Segmented label="Período" options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
       </Field>
+      <div className="rounded-card border border-line bg-paper p-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">Como fica</p>
+        <p className="mt-1 text-sm">{preview}</p>
+      </div>
       <div className="flex items-center justify-between gap-2 pt-2">
         {goal ? (
           <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? destroy() : setConfirmingDelete(true))} loading={remove.isPending}>

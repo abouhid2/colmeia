@@ -34,7 +34,7 @@ export function ExampleResetCard() {
     <Card className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h3 className="font-semibold">Recomeçar o exemplo</h3>
-        <p className="text-sm text-ink-soft">Apaga o que você fez aqui e devolve esta colmeia às tarefas, pessoas e pontos do começo.</p>
+        <p className="text-sm text-ink-soft">Apaga o que você fez aqui e devolve tudo ao começo.</p>
       </div>
       <Button variant="secondary" size="sm" icon={<RotateCcw className="size-4" />} loading={restart.isPending} onClick={() => restart.mutate()}>
         Recomeçar
