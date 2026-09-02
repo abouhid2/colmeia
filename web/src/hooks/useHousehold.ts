@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
 import type { Household } from "../domain/types";
 import { queryKeys } from "./queryKeys";
 import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
+import { useScopedQuery } from "./useScopedQuery";
 
 export function useHousehold() {
   const api = useApi();
-  return useQuery({ queryKey: queryKeys.household, queryFn: () => api.household.get() });
+  return useScopedQuery(queryKeys.household, () => api.household.get());
 }
 
 export function useRenameHousehold() {

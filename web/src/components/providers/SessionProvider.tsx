@@ -1,39 +1,45 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
-import { useMembers } from "../../hooks/useMembers";
-import { SessionContext } from "../../hooks/useSession";
+import { clearSession, readMemberships, readSession, writeSession, type Session } from "../../api/session";
+import { browserStore } from "../../api/storage";
+import { useApi } from "../../hooks/useApi";
+import { SessionContext } from "../../hooks/useSessionContext";
 
-const STORAGE_KEY = "colmeia.currentMemberId";
+const store = browserStore();
 
-function readStoredId(): number | null {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw === null ? null : Number(raw);
-  } catch {
-    return null;
-  }
-}
-
+/**
+ * Binds this browser to one colmeia and one person inside it. Changing the
+ * person is a local switch; changing the colmeia drops the cache, because none
+ * of it belongs to the new one.
+ */
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const { members, isLoading } = useMembers();
-  const [storedId, setStoredId] = useState<number | null>(readStoredId);
+  const api = useApi();
+  const queryClient = useQueryClient();
+  const [ session, setSession ] = useState<Session | null>(() => readSession(store));
+  const [ memberships, setMemberships ] = useState(() => readMemberships(store));
 
-  const currentMember = useMemo(
-    () => members.find((member) => member.id === storedId) ?? members[0] ?? null,
-    [members, storedId],
-  );
+  const apply = useCallback((next: Session | null) => {
+    const changedColmeia = (next?.inviteCode ?? null) !== (session?.inviteCode ?? null);
+    api.setInviteCode(next?.inviteCode ?? null);
+    if (next === null) clearSession(store);
+    else writeSession(store, next);
+    setSession(next);
+    setMemberships(readMemberships(store));
+    if (changedColmeia) queryClient.clear();
+  }, [ api, queryClient, session ]);
 
-  const setCurrentMemberId = useCallback((id: number) => {
-    setStoredId(id);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, String(id));
-    } catch {
-      // Private mode or blocked storage: the choice just will not survive a reload.
-    }
+  const setCurrentMemberId = useCallback((memberId: number) => {
+    setSession((current) => {
+      if (current === null) return current;
+      const next = { ...current, memberId };
+      writeSession(store, next);
+      return next;
+    });
   }, []);
 
   const value = useMemo(
-    () => ({ currentMember, members, isLoading, setCurrentMemberId }),
-    [currentMember, members, isLoading, setCurrentMemberId],
+    () => ({ session, memberships, enter: apply, leave: () => apply(null), setCurrentMemberId }),
+    [ session, memberships, apply, setCurrentMemberId ],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
