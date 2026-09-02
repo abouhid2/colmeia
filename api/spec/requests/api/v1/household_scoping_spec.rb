@@ -89,7 +89,7 @@ RSpec.describe "Household scoping", type: :request do
       post "/api/v1/household/reseed", headers: headers
 
       expect(response).to have_http_status(:conflict)
-      expect(json_body["details"]).to eq([ "Só uma colmeia de exemplo pode ser recomeçada." ])
+      expect(json_body["details"]).to eq([ "Só dá para recomeçar uma colmeia de exemplo." ])
       expect(house.tasks.count).to eq(1)
     end
 

@@ -1,4 +1,5 @@
-import { PartyPopper, Pencil, Trophy } from "lucide-react";
+import { Gift, PartyPopper, Pencil, Trophy } from "lucide-react";
+import { formatPoints } from "../../domain/points";
 import type { GoalWithProgress } from "../../hooks/useGoalOverview";
 import { cn } from "../../lib/cn";
 import { Avatar } from "../ui/Avatar";
@@ -11,9 +12,10 @@ interface GoalSummaryCardProps {
   readOnly?: boolean;
 }
 
-/** Compact goal: who it belongs to, what it pays, how close it is. */
+/** Compact goal: who it belongs to, how many points it takes, what it pays. */
 export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryCardProps) {
   const { goal, progress, season, member } = item;
+  const progressLabel = member ? `Meta de ${member.name}` : "Meta da colmeia";
   return (
     <li className="flex items-start gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
       {member ? (
@@ -25,8 +27,12 @@ export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryC
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
           {member ? member.name : "A colmeia inteira"} · {season.name}
         </p>
-        <p className="truncate font-semibold">{goal.title}</p>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-honey-100" role="progressbar" aria-valuemin={0} aria-valuemax={progress.target} aria-valuenow={progress.earned} aria-label={`${goal.title}: ${progress.earned} de ${progress.target} pontos`}>
+        <p className="font-semibold">Meta: <span className="tabular-nums">{formatPoints(goal.targetPoints)}</span></p>
+        <p className="flex items-start gap-1.5 text-sm text-ink-soft">
+          <Gift className="mt-0.5 size-3.5 shrink-0 text-honey-700" aria-hidden />
+          <span className="min-w-0">Recompensa: {goal.title}</span>
+        </p>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-honey-100" role="progressbar" aria-valuemin={0} aria-valuemax={progress.target} aria-valuenow={progress.earned} aria-label={`${progressLabel}: ${progress.earned} de ${progress.target} pontos`}>
           <div className={cn("h-full rounded-full transition-[width] duration-500", progress.reached ? "bg-leaf-500" : "bg-honey-500")} style={{ width: `${progress.ratio * 100}%` }} />
         </div>
         <p className="mt-1 text-sm text-ink-soft">

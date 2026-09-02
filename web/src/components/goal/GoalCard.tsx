@@ -1,10 +1,11 @@
-import { PartyPopper, Pencil } from "lucide-react";
+import { Gift, PartyPopper, Pencil } from "lucide-react";
+import { formatPoints } from "../../domain/points";
 import type { GoalWithProgress } from "../../hooks/useGoalOverview";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Honeycomb } from "./Honeycomb";
-import { SEASON_GOAL_TITLE, seasonEnding } from "./goalCopy";
+import { seasonEnding } from "./goalCopy";
 
 interface GoalCardProps {
   item: GoalWithProgress;
@@ -13,6 +14,7 @@ interface GoalCardProps {
   readOnly?: boolean;
 }
 
+/** The colmeia's goal: how many points to reach, then what reaching it pays. */
 export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
   const { goal, progress, season, standings } = item;
   const contributors = standings.filter((standing) => standing.points > 0);
@@ -23,11 +25,24 @@ export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-            {SEASON_GOAL_TITLE} · {season.name} · {seasonEnding(season)}
+            Meta da estação · {season.name} · {seasonEnding(season)}
           </p>
-          <h2 className="mt-1 text-2xl font-bold leading-tight tracking-tight md:text-3xl">{goal.title}</h2>
+          <h2 className="mt-1 text-4xl font-bold leading-tight tracking-tight tabular-nums md:text-5xl">
+            {formatPoints(progress.target)}
+          </h2>
+          <p className="text-ink-soft">para juntar nesta estação</p>
         </div>
         {!readOnly && <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar meta</Button>}
+      </div>
+
+      <div className="mt-4 flex items-start gap-3 rounded-card border border-line bg-paper p-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-honey-100 text-honey-700">
+          <Gift className="size-5" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">Recompensa</p>
+          <p className="font-display text-lg font-bold leading-snug md:text-xl">{goal.title}</p>
+        </div>
       </div>
 
       <div className="my-6">
@@ -36,12 +51,13 @@ export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
 
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
         <p>
-          <span className="font-display text-4xl font-bold tabular-nums">{progress.earned}</span>
+          <span className="font-display text-3xl font-bold tabular-nums md:text-4xl">{progress.earned}</span>
           <span className="text-ink-soft"> de {progress.target} pontos</span>
         </p>
         {progress.reached ? (
-          <p className="inline-flex items-center gap-1.5 font-semibold text-leaf-700">
-            <PartyPopper className="size-4" aria-hidden /> Meta batida. A recompensa é de vocês.
+          <p className="flex items-start gap-1.5 font-semibold text-leaf-700">
+            <PartyPopper className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>Meta batida. A recompensa é de vocês: {goal.title}.</span>
           </p>
         ) : (
           <p className="text-ink-soft">Faltam <span className="font-semibold text-ink">{progress.remaining}</span> pontos</p>

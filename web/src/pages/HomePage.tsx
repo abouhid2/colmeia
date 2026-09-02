@@ -76,7 +76,7 @@ export function HomePage() {
       <section>
         <SectionHeading
           title="Metas individuais"
-          hint={filtered ? `Só as de ${filtered.name}.` : "Cada um com a sua recompensa."}
+          hint={filtered ? `Só as de ${filtered.name}.` : "Cada um com a sua meta e a sua recompensa."}
           action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(memberId ?? currentMember?.id ?? null)}>Nova meta</Button>}
         />
         {personalShown.length === 0 ? (

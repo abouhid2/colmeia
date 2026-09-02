@@ -123,7 +123,7 @@ RSpec.describe "Households API", type: :request do
       post "/api/v1/households/demo"
 
       expect(response).to have_http_status(:too_many_requests)
-      expect(json_body["details"]).to eq([ "Tem muita gente conhecendo o app agora. Tente de novo daqui a pouco." ])
+      expect(json_body["details"]).to eq([ "Tem muita gente experimentando o exemplo agora. Tente de novo daqui a pouco." ])
       expect(Household.demos.count).to eq(limit)
     end
 
