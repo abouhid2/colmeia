@@ -59,6 +59,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_000001) do
     t.datetime "claimed_at"
     t.string "color", default: "honey", null: false
     t.datetime "created_at", null: false
+    t.string "crown_title", default: "Abelha Rainha", null: false
     t.integer "household_id", null: false
     t.string "kind", default: "bee", null: false
     t.string "name", null: false

@@ -1,5 +1,5 @@
-import type { Goal, Household, Member } from "../domain/types";
-import { DEMO_INVITE_CODE, normalizeState, type LocalState } from "./localState";
+import type { Goal, Household } from "../domain/types";
+import { DEMO_INVITE_CODE, normalizeState, type LocalState, type StoredMember, type StoredState } from "./localState";
 import type { KeyValueStore } from "./storage";
 
 export const HOUSEHOLD_INDEX_KEY = "colmeia.households.v3";
@@ -14,10 +14,10 @@ export interface HouseholdEntry {
 
 export type HouseholdIndex = Record<string, HouseholdEntry>;
 
-type LegacyMember = Omit<Member, "claimedAt">;
+type LegacyMember = Omit<StoredMember, "claimedAt">;
 
 /** v2 held one colmeia per browser, with no invite code and nobody to claim. */
-interface LegacyV2State extends Omit<LocalState, "household" | "members"> {
+interface LegacyV2State extends Omit<StoredState, "household" | "members"> {
   household: Omit<Household, "inviteCode">;
   members: LegacyMember[];
 }
@@ -37,7 +37,7 @@ function fromV1({ goal, ...rest }: LegacyV1State): LegacyV2State {
 
 /** Whoever was already using the app is in it; only new colmeias start out
  *  with placeholders waiting to be claimed. */
-function fromV2(state: LegacyV2State): LocalState {
+function fromV2(state: LegacyV2State): StoredState {
   return {
     ...state,
     household: { ...state.household, inviteCode: DEMO_INVITE_CODE },
@@ -74,7 +74,7 @@ export class LocalStore {
   read(inviteCode: string): LocalState | null {
     if (!(inviteCode in this.index())) return null;
     const raw = this.store.getItem(storageKey(inviteCode));
-    return raw === null ? null : normalizeState(JSON.parse(raw) as LocalState);
+    return raw === null ? null : normalizeState(JSON.parse(raw) as StoredState);
   }
 
   save(state: LocalState): void {
@@ -104,7 +104,7 @@ export class LocalStore {
     this.store.setItem(HOUSEHOLD_INDEX_KEY, JSON.stringify(index));
   }
 
-  private takeLegacyState(): LocalState | null {
+  private takeLegacyState(): StoredState | null {
     const v2 = this.store.getItem(LEGACY_V2_KEY);
     const v1 = this.store.getItem(LEGACY_V1_KEY);
     this.store.removeItem(LEGACY_V2_KEY);

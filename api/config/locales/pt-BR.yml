@@ -27,6 +27,7 @@ pt-BR:
         color: Cor
         kind: Tipo
         points_multiplier: Multiplicador de pontos
+        crown_title: Título de vencedor
       completion:
         rating: Nota
         status: Situação

@@ -67,9 +67,9 @@ describe("LocalApi households", () => {
   it("lets someone the list did not have join, already claimed", async () => {
     const created = await api.households.create({ name: "Casa", memberNames: [ "Ana" ] });
 
-    const duda = await api.households.join(created.inviteCode, { name: " Duda ", avatar: "🦉", color: "leaf" });
+    const duda = await api.households.join(created.inviteCode, { name: " Duda ", avatar: "🦉", color: "leaf", crownTitle: "Abelhão" });
 
-    expect(duda).toMatchObject({ name: "Duda", avatar: "🦉", color: "leaf" });
+    expect(duda).toMatchObject({ name: "Duda", avatar: "🦉", color: "leaf", crownTitle: "Abelhão" });
     expect(duda.claimedAt).toBe(now.toISOString());
     expect((await api.households.lookup(created.inviteCode)).members).toHaveLength(2);
   });

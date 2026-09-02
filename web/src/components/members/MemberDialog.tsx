@@ -13,6 +13,7 @@ import { Field } from "../ui/Field";
 import { Input } from "../ui/Input";
 import { Segmented } from "../ui/Segmented";
 import { AvatarPicker } from "./AvatarPicker";
+import { CrownTitleField } from "./CrownTitleField";
 import { useMemberForm } from "./useMemberForm";
 
 const KIND_SEGMENTS = MEMBER_KIND_OPTIONS.map((kind) => ({ value: kind, label: MEMBER_KINDS[kind].label }));
@@ -33,7 +34,7 @@ export function MemberDialog({ open, member, onClose }: MemberDialogProps) {
 
 function MemberForm({ member, onDone }: { member: Member | null; onDone(): void }) {
   const form = useMemberForm(member);
-  const { name, avatar, color, kind, multiplier } = form.values;
+  const { name, avatar, color, kind, multiplier, crownTitle } = form.values;
   const [ confirmingDelete, setConfirmingDelete ] = useState(false);
   const advanced = useDisclosure();
   const { create, update, remove } = useMemberMutations();
@@ -73,6 +74,7 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
       ) : (
         <Button variant="ghost" size="sm" onClick={advanced.open}>Ajustes avançados</Button>
       )}
+      <CrownTitleField id="member-crown-title" value={crownTitle} onChange={form.setCrownTitle} />
       <div className="flex items-center justify-between gap-2 pt-2">
         {member ? (
           <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? destroy() : setConfirmingDelete(true))} loading={remove.isPending}>

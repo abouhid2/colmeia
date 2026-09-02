@@ -2,6 +2,7 @@ import { ArrowRight, Plus, Sun, Target } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { sortOpenTasks } from "../domain/taskSort";
 import { useCompletions } from "../hooks/useCompletions";
+import { useCrown } from "../hooks/useCrown";
 import { useGoalOverview } from "../hooks/useGoalOverview";
 import { useMemberFilter } from "../hooks/useMemberFilter";
 import { useMemberLookup } from "../hooks/useMembers";
@@ -38,6 +39,7 @@ export function HomePage() {
   const { tasks } = useTasks();
   const { completions } = useCompletions();
   const lookup = useMemberLookup();
+  const crown = useCrown();
   const dialogs = useTaskDialogs();
   const goalDialog = useGoalDialog();
 
@@ -50,7 +52,7 @@ export function HomePage() {
 
   return (
     <div className="space-y-8 animate-rise">
-      <Greeting member={currentMember} now={now} />
+      <Greeting member={currentMember} now={now} crowned={crown !== null && crown.member.id === currentMember?.id} period={period} />
       <MemberFilter />
 
       {household.length === 0 ? (
@@ -100,7 +102,7 @@ export function HomePage() {
 
       <section>
         <SectionHeading title="Quem mais contribuiu" hint={period === "month" ? "Neste mês" : "Nesta semana"} />
-        <Leaderboard standings={standings} />
+        <Leaderboard standings={standings} crownedMemberId={crown?.member.id ?? null} period={period} />
       </section>
 
       <LagartinhaLeague standings={standings} />

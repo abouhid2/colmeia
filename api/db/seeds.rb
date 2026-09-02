@@ -9,8 +9,9 @@ today = Date.current
 # Ana already claimed her place; the other three are still invitations waiting
 # to be opened, which is what the invite link demonstrates.
 ana = household.members.create!(name: "Ana", avatar: "🦊", color: "pollen", claimed_at: now)
-bruno = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky")
-clara = household.members.create!(name: "Clara", avatar: "🐼", color: "plum")
+bruno = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky", crown_title: "Abelhão")
+clara = household.members.create!(name: "Clara", avatar: "🐼", color: "plum", crown_title: "Rainha da Louça")
+# Duda is the child of the house: everything she does is worth 1,5x.
 duda = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf", kind: "lagartinha")
 
 household.tasks.create!(
@@ -52,6 +53,31 @@ household.completions.create!(task: trash, member: ana, status: "approved", poin
   task_title: trash.title, task_points: 5, completed_at: now - 2.hours)
 household.completions.create!(task: bathroom, member: bruno, status: "pending", points_awarded: 0,
   task_title: bathroom.title, task_points: 20, completed_at: now - 1.hour)
+
+# Last week the house beat the goal and Bruno pulled ahead, so he wears the crown this week.
+last_week = now.beginning_of_week - 1.week
+weekday = ->(offset) { last_week + offset.days + 10.hours }
+
+[
+  { member: bruno, title: "Montar o armário do quarto", points: 90, awarded: 90, rating: 5, reviewer: ana, day: 1 },
+  { member: bruno, title: "Lavar o carro", points: 40, awarded: 40, day: 4 },
+  { member: ana, title: "Fazer a feira do mês", points: 50, awarded: 50, day: 0 },
+  { member: ana, title: "Limpar o quintal", points: 30, awarded: 30, day: 3 },
+  { member: ana, title: "Trocar as lâmpadas", points: 20, awarded: 20, day: 5 },
+  { member: clara, title: "Passar as roupas", points: 20, awarded: 16, rating: 4, reviewer: bruno, day: 2 },
+  { member: clara, title: "Organizar a despensa", points: 30, awarded: 30, day: 5 },
+  { member: duda, title: "Regar as plantas", points: 5, awarded: 8, day: 2 },
+  { member: duda, title: "Lavar a louça do jantar", points: 5, awarded: 8, day: 5 },
+  { member: duda, title: "Aspirar a sala e os quartos", points: 20, awarded: 30, day: 6 }
+].each do |row|
+  done_at = weekday.call(row[:day])
+  household.completions.create!(
+    member: row[:member], reviewer: row[:reviewer], status: "approved", rating: row[:rating],
+    points_awarded: row[:awarded], multiplier: row[:member].points_multiplier,
+    task_title: row[:title], task_points: row[:points],
+    completed_at: done_at, reviewed_at: (done_at if row[:rating])
+  )
+end
 
 household.goals.create!(title: "Pizza e filme no sábado", target_points: 300, period: "week")
 household.goals.create!(title: "Sorvete na sexta", target_points: 30, period: "week", member: duda)

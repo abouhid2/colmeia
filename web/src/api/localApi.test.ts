@@ -65,7 +65,7 @@ describe("LocalApi", () => {
     const demoted = await api.members.update(2, { kind: "bee" });
     expect(demoted.pointsMultiplier).toBe(1.5);
 
-    const created = await api.members.create({ name: "Tino", avatar: "🐢", color: "leaf", kind: "lagartinha", pointsMultiplier: 2 });
+    const created = await api.members.create({ name: "Tino", avatar: "🐢", color: "leaf", crownTitle: "Tartaruga-mor", kind: "lagartinha", pointsMultiplier: 2 });
     expect(created.pointsMultiplier).toBe(2);
   });
 
@@ -112,6 +112,40 @@ describe("LocalApi", () => {
     migrated.setInviteCode(DEMO_INVITE_CODE);
     expect(await migrated.goals.list()).toEqual([{ id: 9, title: "Antiga", targetPoints: 50, period: "week", memberId: null }]);
     expect(store.getItem("colmeia.db.v1")).toBeNull();
+  });
+
+  it("reads members stored before crown titles existed with the default title", async () => {
+    const store = new MemoryStore();
+    const stored = buildDemoState(now);
+    const bare = stored.members.map(({ crownTitle: _crownTitle, ...member }) => member);
+    store.setItem("colmeia.db.v2", JSON.stringify({ ...stored, members: bare }));
+
+    const upgraded = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
+    upgraded.setInviteCode(DEMO_INVITE_CODE);
+
+    expect((await upgraded.members.list()).map((member) => member.crownTitle)).toEqual(
+      ["Abelha Rainha", "Abelha Rainha", "Abelha Rainha", "Abelha Rainha"],
+    );
+  });
+
+  it("keeps the crown title a member chose, trimmed", async () => {
+    expect((await api.members.list()).find((member) => member.id === 2)?.crownTitle).toBe("Abelhão");
+
+    const changed = await api.members.update(2, { crownTitle: "  Rei da Louça  " });
+    expect(changed.crownTitle).toBe("Rei da Louça");
+  });
+
+  it("takes a blank crown title as opting out of the crown", async () => {
+    const changed = await api.members.update(2, { crownTitle: "   " });
+
+    expect(changed.crownTitle).toBe("");
+  });
+
+  it("refuses a crown title too long to sit next to a name", async () => {
+    await expect(api.members.update(2, { crownTitle: "a".repeat(31) })).rejects.toMatchObject({ status: 422 });
+    await expect(
+      api.members.create({ name: "Novo", avatar: "🐝", color: "honey", crownTitle: "a".repeat(31) }),
+    ).rejects.toMatchObject({ status: 422 });
   });
 
   it("stamps purchases and clears bought items", async () => {

@@ -24,6 +24,8 @@ export interface Member {
   pointsMultiplier: number;
   /** null while the member is still a placeholder nobody has claimed. */
   claimedAt: string | null;
+  /** What they want to be called when they win a period. Blank means they never wear the crown. */
+  crownTitle: string;
   createdAt: string;
 }
 
@@ -92,7 +94,7 @@ export interface HouseholdInput {
   memberNames: string[];
 }
 
-export interface MemberInput extends Pick<Member, "name" | "avatar" | "color"> {
+export interface MemberInput extends Pick<Member, "name" | "avatar" | "color" | "crownTitle"> {
   kind?: MemberKind;
   pointsMultiplier?: number;
 }

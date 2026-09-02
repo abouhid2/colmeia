@@ -20,7 +20,7 @@ export function LagartinhaMark({ member, compact = false, className }: Lagartinh
       className={cn("inline-flex shrink-0 items-center gap-1 rounded-full bg-leaf-100 px-2 py-0.5 text-xs font-semibold text-leaf-700", className)}
     >
       <span aria-hidden>🐛</span>
-      <span aria-hidden>{compact ? multiplier : `Lagartinha ${multiplier}`}</span>
+      <span aria-hidden>{compact ? multiplier : `Lagartinha · ${multiplier}`}</span>
     </span>
   );
 }

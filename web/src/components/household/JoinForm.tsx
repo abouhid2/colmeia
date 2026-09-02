@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { DEFAULT_CROWN_TITLE } from "../../domain/crownTitles";
 import { MEMBER_KIND_OPTIONS, MEMBER_KINDS } from "../../domain/memberKinds";
 import type { MemberColor, MemberInput, MemberKind } from "../../domain/types";
 import { AvatarPicker } from "../members/AvatarPicker";
@@ -26,7 +27,7 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    onSubmit({ name, avatar, color, kind });
+    onSubmit({ name, avatar, color, kind, crownTitle: DEFAULT_CROWN_TITLE });
   };
 
   return (

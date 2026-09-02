@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DEFAULT_CROWN_TITLE } from "../../domain/crownTitles";
 import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } from "../../domain/memberKinds";
 import type { Member, MemberColor, MemberInput, MemberKind } from "../../domain/types";
 
@@ -20,6 +21,7 @@ export function useMemberForm(member: Member | null) {
   const [ color, setColor ] = useState<MemberColor>(member?.color ?? "honey");
   const [ kind, setKindValue ] = useState<MemberKind>(member?.kind ?? "bee");
   const [ multiplier, setMultiplier ] = useState(String(member?.pointsMultiplier ?? 1));
+  const [ crownTitle, setCrownTitle ] = useState(member?.crownTitle ?? DEFAULT_CROWN_TITLE);
 
   // Turning someone into a lagartinha offers the default handicap; turning the
   // switch back leaves it, because an adult may want one too.
@@ -29,11 +31,11 @@ export function useMemberForm(member: Member | null) {
   };
 
   const error = multiplierError(multiplier);
-  const toInput = (): MemberInput => ({ name, avatar, color, kind, pointsMultiplier: parseMultiplier(multiplier) });
+  const toInput = (): MemberInput => ({ name, avatar, color, kind, pointsMultiplier: parseMultiplier(multiplier), crownTitle });
 
   return {
-    values: { name, avatar, color, kind, multiplier },
-    setName, setAvatar, setColor, setKind, setMultiplier,
+    values: { name, avatar, color, kind, multiplier, crownTitle },
+    setName, setAvatar, setColor, setKind, setMultiplier, setCrownTitle,
     multiplierError: error,
     isValid: name.trim() !== "" && error === undefined,
     toInput,

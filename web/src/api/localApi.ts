@@ -1,3 +1,4 @@
+import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { generateInviteCode } from "../domain/inviteCode";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
@@ -45,6 +46,10 @@ function validateName(value: string | undefined, max: number, blankMessage: stri
 
 function validateMember(input: Partial<MemberInput>): void {
   validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
+  // A blank crown title is allowed on purpose: it is how someone says they want no crown.
+  if (input.crownTitle !== undefined && input.crownTitle.trim().length > LIMITS.crownTitle) {
+    invalid(`O título cabe em ${LIMITS.crownTitle} caracteres`);
+  }
   const multiplier = input.pointsMultiplier;
   if (multiplier === undefined) return;
   if (!(multiplier >= MIN_MULTIPLIER && multiplier <= MAX_MULTIPLIER)) {
@@ -66,14 +71,15 @@ function validateTask(input: Partial<TaskInput>): void {
 }
 
 /** Defaults a new person the way the Rails model does, handicap included. */
-function newMember(input: MemberInput): Pick<Member, "avatar" | "color" | "kind" | "name" | "pointsMultiplier"> {
+function newMember(input: MemberInput): Omit<Member, "claimedAt" | "createdAt" | "id"> {
   const kind = input.kind ?? "bee";
   return {
-    name: input.name,
+    name: input.name.trim(),
     avatar: input.avatar,
     color: input.color,
     kind,
     pointsMultiplier: multiplierForKind(kind, input.pointsMultiplier ?? 1),
+    crownTitle: input.crownTitle.trim(),
   };
 }
 
@@ -174,6 +180,7 @@ export class LocalApi implements ColmeiaApi {
       color: MEMBER_COLOR_OPTIONS[position % MEMBER_COLOR_OPTIONS.length],
       kind: "bee",
       pointsMultiplier: 1,
+      crownTitle: DEFAULT_CROWN_TITLE,
       claimedAt: null,
       createdAt: now.toISOString(),
     };
@@ -205,8 +212,9 @@ export class LocalApi implements ColmeiaApi {
     join: (inviteCode: string, input: MemberInput): Promise<Member> =>
       this.mutateInvited(inviteCode, (state, now) => {
         if (input.name.trim() === "") invalid("Dê um nome à pessoa");
+        validateMember(input);
         const member: Member = {
-          ...newMember(input), name: input.name.trim(), id: this.nextId(state),
+          ...newMember(input), id: this.nextId(state),
           claimedAt: now.toISOString(), createdAt: now.toISOString(),
         };
         state.members.push(member);
@@ -230,7 +238,7 @@ export class LocalApi implements ColmeiaApi {
       this.mutate((state, now) => {
         validateMember(input);
         const member: Member = {
-          ...newMember(input), name: input.name.trim(), id: this.nextId(state), claimedAt: null, createdAt: now.toISOString(),
+          ...newMember(input), id: this.nextId(state), claimedAt: null, createdAt: now.toISOString(),
         };
         state.members.push(member);
         return member;
@@ -241,6 +249,7 @@ export class LocalApi implements ColmeiaApi {
         validateMember(input);
         const wasLagartinha = member.kind === "lagartinha";
         Object.assign(member, input);
+        if (input.crownTitle !== undefined) member.crownTitle = input.crownTitle.trim();
         if (!wasLagartinha) member.pointsMultiplier = multiplierForKind(member.kind, member.pointsMultiplier);
         return member;
       }),
