@@ -10,6 +10,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Chrome's "Desktop site" toggle keeps the hardware touch screen but reports a
+      // ~980px viewport, so width-only breakpoints hand a phone the desktop shell.
+      // The touch flag survives the toggle; the breakpoints in index.css read it.
+      if (navigator.maxTouchPoints > 0) document.documentElement.dataset.touch = "";
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

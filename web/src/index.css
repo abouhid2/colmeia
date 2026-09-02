@@ -2,6 +2,34 @@
 @import "@fontsource-variable/bricolage-grotesque";
 @import "@fontsource-variable/figtree";
 
+/* Chrome's "Desktop site" toggle keeps the hardware touch screen but reports a
+   ~980px viewport, so width-only breakpoints hand a phone the desktop shell.
+   index.html marks touch devices with data-touch; a desktop breakpoint needs a
+   wide viewport on a non-touch device, or a viewport too wide to be a phone. */
+@custom-variant sm {
+  @media (min-width: 40rem) { html:not([data-touch]) & { @slot; } }
+  @media (min-width: 90rem) { @slot; }
+}
+@custom-variant md {
+  @media (min-width: 48rem) { html:not([data-touch]) & { @slot; } }
+  @media (min-width: 90rem) { @slot; }
+}
+@custom-variant lg {
+  @media (min-width: 64rem) { html:not([data-touch]) & { @slot; } }
+  @media (min-width: 90rem) { @slot; }
+}
+@custom-variant xl {
+  @media (min-width: 80rem) { html:not([data-touch]) & { @slot; } }
+  @media (min-width: 90rem) { @slot; }
+}
+/* The exact inverse of sm, so a phone keeps the sheet-style dialog. */
+@custom-variant max-sm {
+  @media not (min-width: 90rem) {
+    @media (min-width: 40rem) { html[data-touch] & { @slot; } }
+    @media not (min-width: 40rem) { @slot; }
+  }
+}
+
 @theme {
   --color-*: initial;
   --color-white: #ffffff;
