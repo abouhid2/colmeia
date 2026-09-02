@@ -3,7 +3,7 @@ import { buildInviteUrl } from "../domain/inviteCode";
 import { useApi } from "./useApi";
 import { useToast } from "./useToast";
 
-const LOCAL_WARNING = "Sem a API, o link só funciona neste navegador.";
+const LOCAL_WARNING = "No modo demonstração o link só abre neste navegador.";
 
 /** The address of a colmeia, ready to be pasted into a family group chat. */
 export function useInviteLink(inviteCode: string | undefined) {

@@ -22,5 +22,5 @@ export function crownedTitle(crownTitle: string, period: GoalPeriod): string {
 
 export function crownExplanation(period: GoalPeriod): string {
   const won = period === "week" ? "na semana passada" : "no mês passado";
-  return `Quem mais pontuou ${won} com a meta batida ganha o título que escolheu (Abelha Rainha, Abelhão ou o que quiser) até o fim ${THIS_PERIOD[period]}.`;
+  return `Quem mais pontuou ${won} e bateu a meta usa o título que escolheu até o fim ${THIS_PERIOD[period]}.`;
 }

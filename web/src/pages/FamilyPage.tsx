@@ -60,7 +60,7 @@ export function FamilyPage() {
       <LagartinhaLeague standings={scope === "period" ? standings : allTimeStandings} />
 
       <section>
-        <SectionHeading title="Quem mora aqui" hint={crownExplanation(period)} action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => openMember(null)}>Adicionar</Button>} />
+        <SectionHeading title="Quem mora aqui" hint={crownExplanation(period)} action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => openMember(null)}>Adicionar pessoa</Button>} />
         <ul className="grid gap-3 sm:grid-cols-2">
           {shownMembers.map((member) => (
             <MemberCard key={member.id} member={member} periodStanding={findStanding(standings, member)} allTimeStanding={findStanding(allTimeStandings, member)} crowned={crown?.member.id === member.id} period={period} onEdit={openMember} />
@@ -71,11 +71,11 @@ export function FamilyPage() {
       <section>
         <SectionHeading
           title="Recompensas"
-          hint="Uma meta para a casa e quantas individuais quiserem."
+          hint="Uma meta para a colmeia inteira e quantas individuais quiserem."
           action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(memberId)}>Nova meta</Button>}
         />
         {shownGoals.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title="Nenhuma meta ainda" hint={filtered ? `Crie uma recompensa para ${filtered.name}.` : "Combinem uma recompensa e uma quantidade de pontos."} />
+          <EmptyState icon={<Target className="size-6" />} title="Nenhuma meta ainda" hint={filtered ? `Combinem uma recompensa para ${filtered.name}.` : "Combinem uma recompensa e quantos pontos ela custa."} />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {shownGoals.map((item) => (

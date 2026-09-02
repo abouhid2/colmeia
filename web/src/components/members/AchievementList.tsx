@@ -71,7 +71,7 @@ function UnlockedMedallion({ achievement }: { achievement: Achievement }) {
  * the unlocked badges. Expanding reveals every card, locked ones included with
  * their progress. The whole header is the toggle, sized for a thumb at 390px.
  */
-export function AchievementList({ achievements }: { achievements: Achievement[] }) {
+export function AchievementList({ achievements, memberName }: { achievements: Achievement[]; memberName: string }) {
   const [expanded, setExpanded] = useState(false);
   const contentId = useId();
   const unlocked = achievements.filter((achievement) => achievement.unlocked);
@@ -98,10 +98,11 @@ export function AchievementList({ achievements }: { achievements: Achievement[] 
           />
         </button>
       </h2>
+      <p className="text-sm text-ink-soft">O que {memberName} já ganhou, e o que falta.</p>
 
       <div hidden={expanded} className="mt-3">
         {unlocked.length === 0 ? (
-          <p className="text-sm text-ink-faint">Nenhuma conquistada ainda.</p>
+          <p className="text-sm text-ink-faint">{memberName} ainda não tem conquista nenhuma.</p>
         ) : (
           <ul className="flex flex-wrap gap-2">
             {unlocked.map((achievement) => (

@@ -36,7 +36,7 @@ function CompleteTaskForm({ task, onDone }: { task: Task; onDone(): void }) {
     complete.mutate({ id: task.id, memberId }, {
       onSuccess: ({ completion }) => {
         notify(completion.status === "pending"
-          ? { message: `Enviado. Outra pessoa avalia e libera os ${task.points} pontos.` }
+          ? { message: `Feito. Agora outra pessoa dá a nota e libera os ${task.points} pontos.` }
           : { tone: "success", message: `${formatPoints(completion.pointsAwarded)} para ${doer.name}` });
         onDone();
       },
