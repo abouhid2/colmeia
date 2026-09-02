@@ -1,6 +1,6 @@
 module HouseholdSerializer
   def self.call(household)
-    { id: household.id, name: household.name, invite_code: household.invite_code }
+    { id: household.id, name: household.name, invite_code: household.invite_code, demo: household.demo }
   end
 
   # What the invite page needs: the colmeia and who is already in it.

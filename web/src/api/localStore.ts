@@ -1,5 +1,5 @@
 import type { Goal, Household } from "../domain/types";
-import { DEMO_INVITE_CODE, normalizeState, type LocalState, type StoredMember, type StoredState } from "./localState";
+import { DEMO_INVITE_CODE, normalizeState, type LocalState, type Older, type StoredMember, type StoredState } from "./localState";
 import { parseJson, type KeyValueStore } from "./storage";
 
 export const HOUSEHOLD_INDEX_KEY = "colmeia.households.v3";
@@ -10,15 +10,19 @@ const LEGACY_V1_KEY = "colmeia.db.v1";
 export interface HouseholdEntry {
   name: string;
   createdAt: string;
+  /** A sandbox: it can be restarted, and the app says nothing in it is real. */
+  demo: boolean;
 }
 
 export type HouseholdIndex = Record<string, HouseholdEntry>;
+
+type StoredIndex = Record<string, Older<HouseholdEntry, "demo">>;
 
 type LegacyMember = Omit<StoredMember, "claimedAt">;
 
 /** v2 held one colmeia per browser, with no invite code and nobody to claim. */
 interface LegacyV2State extends Omit<StoredState, "household" | "members"> {
-  household: Omit<Household, "inviteCode">;
+  household: Omit<Household, "inviteCode" | "demo">;
   members: LegacyMember[];
 }
 
@@ -29,6 +33,13 @@ interface LegacyV1State extends Omit<LegacyV2State, "goals"> {
 
 function storageKey(inviteCode: string): string {
   return `${HOUSEHOLD_KEY_PREFIX}${inviteCode}`;
+}
+
+/** An index written before sandboxes existed holds real colmeias only. */
+function normalizeIndex(stored: StoredIndex): HouseholdIndex {
+  return Object.fromEntries(
+    Object.entries(stored).map(([ inviteCode, entry ]) => [ inviteCode, { ...entry, demo: entry.demo ?? false } ]),
+  );
 }
 
 function fromV1({ goal, ...rest }: LegacyV1State): LegacyV2State {
@@ -57,16 +68,20 @@ export class LocalStore {
     this.clock = clock;
   }
 
-  /** Built on first use: an older single-colmeia store becomes the demo
-   *  colmeia, and a browser that never saw the app gets the demo family. */
+  /** Built on first use: an older single-colmeia store keeps its data under the
+   *  demo code, and a browser that never saw the app starts with nothing at
+   *  all. Colmeias appear when somebody asks for one. */
   index(): HouseholdIndex {
-    const stored = parseJson<HouseholdIndex>(this.store.getItem(HOUSEHOLD_INDEX_KEY));
-    if (stored !== null && typeof stored === "object") return stored;
+    const stored = parseJson<StoredIndex>(this.store.getItem(HOUSEHOLD_INDEX_KEY));
+    if (stored !== null && typeof stored === "object") return normalizeIndex(stored);
 
-    const state = normalizeState(this.takeLegacyState() ?? this.seed());
-    state.household.inviteCode = DEMO_INVITE_CODE;
-    this.writeState(state);
-    const index: HouseholdIndex = { [DEMO_INVITE_CODE]: this.entry(state) };
+    const legacy = this.takeLegacyState();
+    const index: HouseholdIndex = {};
+    if (legacy !== null) {
+      const state = normalizeState(legacy);
+      this.writeState(state);
+      index[state.household.inviteCode] = this.entry(state);
+    }
     this.saveIndex(index);
     return index;
   }
@@ -93,16 +108,16 @@ export class LocalStore {
     this.saveIndex({ ...index, [inviteCode]: this.entry(state, index[inviteCode]?.createdAt) });
   }
 
-  /** "Restaurar exemplo": the demo colmeia goes back to its seed. */
-  resetDemo(): LocalState {
-    const state = this.seed();
-    state.household.inviteCode = DEMO_INVITE_CODE;
-    this.save(state);
+  /** The example family under a code of its own, unsaved. Whatever the seed
+   *  says, a colmeia handed out this way is a sandbox. */
+  example(inviteCode: string): LocalState {
+    const state = normalizeState(this.seed());
+    state.household = { ...state.household, inviteCode, demo: true };
     return state;
   }
 
   private entry(state: LocalState, createdAt?: string): HouseholdEntry {
-    return { name: state.household.name, createdAt: createdAt ?? this.clock().toISOString() };
+    return { name: state.household.name, createdAt: createdAt ?? this.clock().toISOString(), demo: state.household.demo };
   }
 
   private writeState(state: LocalState): void {

@@ -9,9 +9,9 @@ import type {
   Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
   ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskResult, StoredHousehold } from "./client";
+import type { ColmeiaApi, CompleteTaskResult, DemoColmeia, StoredHousehold } from "./client";
 import { ApiError } from "./errors";
-import { DEMO_INVITE_CODE, emptyState, withMembers, type LocalState } from "./localState";
+import { DEMO_INVITE_CODE, EXAMPLE_ENTRY_MEMBER, emptyState, withMembers, type LocalState } from "./localState";
 import { LocalStore } from "./localStore";
 import type { KeyValueStore } from "./storage";
 
@@ -123,11 +123,6 @@ export class LocalApi implements ColmeiaApi {
     this.inviteCode = inviteCode;
   }
 
-  reset(): Promise<void> {
-    this.store.resetDemo();
-    return Promise.resolve();
-  }
-
   listStoredHouseholds(): Promise<StoredHousehold[]> {
     const index = this.store.index();
     return Promise.resolve(
@@ -183,6 +178,15 @@ export class LocalApi implements ColmeiaApi {
     return state.nextId++;
   }
 
+  /** The example opens with Ana already in it, so nobody has to claim a place
+   *  before touching anything. */
+  private claimExampleMember(state: LocalState): Member {
+    const member = state.members.find((person) => person.name === EXAMPLE_ENTRY_MEMBER) ?? state.members[0];
+    if (member === undefined) invalid("O exemplo está vazio");
+    member.claimedAt = this.clock().toISOString();
+    return member;
+  }
+
   private freshInviteCode(): string {
     let candidate = this.newCode();
     while (this.store.resolve(candidate) !== null) candidate = this.newCode();
@@ -216,6 +220,13 @@ export class LocalApi implements ColmeiaApi {
         this.store.save(state);
         return structuredClone(withMembers(state));
       }),
+    createDemo: (): Promise<DemoColmeia> =>
+      this.attempt(() => {
+        const state = this.store.example(this.freshInviteCode());
+        const member = this.claimExampleMember(state);
+        this.store.save(state);
+        return structuredClone({ household: withMembers(state), member });
+      }),
     lookup: (inviteCode: string): Promise<HouseholdWithMembers> =>
       this.attempt(() => structuredClone(withMembers(this.invitedState(inviteCode)))),
     claim: (inviteCode: string, memberId: number): Promise<Member> =>
@@ -245,6 +256,15 @@ export class LocalApi implements ColmeiaApi {
         validateName(input.name, LIMITS.householdName, "Dê um nome à colmeia");
         state.household = { ...state.household, name: input.name.trim() };
         return state.household;
+      }),
+    reseed: (): Promise<Member> =>
+      this.attempt(() => {
+        const current = this.currentState();
+        if (!current.household.demo) conflict("Só uma colmeia de exemplo pode ser recomeçada");
+        const state = this.store.example(current.household.inviteCode);
+        const member = this.claimExampleMember(state);
+        this.store.save(state);
+        return structuredClone(member);
       }),
   };
 
