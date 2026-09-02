@@ -34,7 +34,7 @@ module Api
 
       def reopen
         task = tasks.find(params[:id])
-        return render_conflict("task is already open") unless task.done?
+        return render_conflict("Essa tarefa já está aberta") unless task.done?
 
         task.update!(status: "open", completed_at: nil)
         render json: TaskSerializer.call(task)

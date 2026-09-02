@@ -13,8 +13,8 @@ module Completions
 
     def call
       raise ActiveRecord::RecordNotFound if completion.household_id != reviewer.household_id
-      raise AlreadyReviewed, "completion was already reviewed" unless completion.pending?
-      raise SelfReview, "you cannot review your own work" if completion.member_id == reviewer.id
+      raise AlreadyReviewed, "Essa tarefa já foi avaliada" unless completion.pending?
+      raise SelfReview, "Quem fez a tarefa não pode avaliar o próprio trabalho" if completion.member_id == reviewer.id
 
       completion.update!(
         status: "approved",

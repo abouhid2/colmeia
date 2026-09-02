@@ -17,10 +17,10 @@ const HOUSEHOLD_HEADER = "X-Household-Code";
 
 const ERROR_LABELS: Record<string, string> = {
   not_found: "Isso não existe mais. Atualize a página.",
-  unauthorized: "Sem acesso a esta colmeia.",
-  conflict: "Alguém mexeu nisso antes de você.",
-  invalid: "Dados inválidos.",
-  bad_request: "Pedido inválido.",
+  unauthorized: "Você não está nesta colmeia. Abra o link do convite de novo.",
+  conflict: "Alguém mexeu nisso antes de você. Atualize a página.",
+  invalid: "Faltou alguma coisa. Confira o que você escreveu.",
+  bad_request: "Não deu para entender o pedido. Tente de novo.",
 };
 
 function parseJson(text: string): unknown {
@@ -69,7 +69,7 @@ export class HttpApi implements ColmeiaApi {
     const json = parseJson(await response.text());
     if (!response.ok) {
       const { details, error } = (json ?? {}) as ErrorBody;
-      const fallback = error ? (ERROR_LABELS[error] ?? error) : `O servidor respondeu com erro ${response.status}`;
+      const fallback = error ? (ERROR_LABELS[error] ?? error) : `O servidor respondeu com erro ${response.status}. Tente de novo em instantes.`;
       throw new ApiError(response.status, details ?? [fallback]);
     }
     return toCamelKeys<T>(json);
