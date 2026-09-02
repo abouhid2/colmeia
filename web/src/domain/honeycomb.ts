@@ -22,17 +22,26 @@ export function honeycombCells(earned: number, target: number): number[] {
   });
 }
 
-/** What one person put into the goal. */
+/** What one person put into the goal. A null member is honey nobody is
+ *  credited with any more: the points of somebody who left the colmeia. */
 export interface Contribution {
-  memberId: number;
+  memberId: number | null;
   points: number;
 }
 
 /** A slice of one cell, as fractions of the cell's height, bottom to top. */
 export interface CellSegment {
-  memberId: number;
+  memberId: number | null;
   from: number;
   to: number;
+}
+
+/** The contributions plus whatever the goal earned that nobody is credited
+ *  with, so the comb fills exactly as far as the number under it says. */
+export function creditedContributions(contributions: Contribution[], earned: number): Contribution[] {
+  const attributed = contributions.reduce((sum, one) => sum + Math.max(one.points, 0), 0);
+  const orphaned = earned - attributed;
+  return orphaned > 0 ? [ ...contributions, { memberId: null, points: orphaned } ] : contributions;
 }
 
 /** Who filled each cell, left to right. Contributions arrive sorted, biggest

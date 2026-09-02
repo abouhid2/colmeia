@@ -1,6 +1,7 @@
 import { Gift, PartyPopper, Pencil } from "lucide-react";
 import { formatPoints } from "../../domain/points";
 import type { GoalWithProgress } from "../../hooks/useGoalOverview";
+import { MemberMark } from "../members/MemberMark";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
@@ -18,6 +19,7 @@ interface GoalCardProps {
 export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
   const { goal, progress, season, standings } = item;
   const contributors = standings.filter((standing) => standing.points > 0);
+  const contributions = contributors.map(({ member, points }) => ({ memberId: member.id, points }));
   const summary = `${progress.earned} de ${progress.target} pontos`;
 
   return (
@@ -46,7 +48,13 @@ export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
       </div>
 
       <div className="my-6">
-        <Honeycomb earned={progress.earned} target={progress.target} label={`Favo da meta: ${summary}`} />
+        <Honeycomb
+          earned={progress.earned}
+          target={progress.target}
+          label={`Favo da meta: ${summary}`}
+          contributions={contributions}
+          members={contributors.map(({ member }) => member)}
+        />
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
@@ -68,6 +76,7 @@ export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
         <ul className="mt-5 flex flex-wrap gap-2" aria-label="Quem já ajudou">
           {contributors.map(({ member, points }) => (
             <li key={member.id} className="flex items-center gap-1.5 rounded-full border border-line py-1 pl-1 pr-3 text-sm">
+              <MemberMark member={member} className="size-4" />
               <Avatar member={member} size="xs" />
               <span className="font-medium">{member.name}</span>
               <span className="tabular-nums text-ink-soft">{points}</span>
