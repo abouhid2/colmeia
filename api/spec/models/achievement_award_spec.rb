@@ -2,6 +2,7 @@ require "rails_helper"
 
 RSpec.describe AchievementAward do
   let(:household) { Household.create!(name: "Casa") }
+  let(:season) { household.seasons.create!(name: "Estação atual", starts_on: Date.current) }
   let(:member) { household.members.create!(name: "Ana") }
 
   def award(attributes = {})
@@ -26,7 +27,7 @@ RSpec.describe AchievementAward do
 
   it "outlives the completion that earned it" do
     completion = household.completions.create!(
-      member: member, task_title: "Louça", task_points: 5, points_awarded: 5, completed_at: Time.current
+      season: season, member: member, task_title: "Louça", task_points: 5, points_awarded: 5, completed_at: Time.current
     )
     written = award(key: "bigTask", completion_id: completion.id)
     written.save!
@@ -38,7 +39,8 @@ RSpec.describe AchievementAward do
 
   it "refuses a completion from another colmeia" do
     other = Household.create!(name: "Casa alheia")
-    alien = other.completions.create!(task_title: "Alheia", task_points: 5, points_awarded: 5, completed_at: Time.current)
+    other_season = other.seasons.create!(name: "Estação alheia", starts_on: Date.current)
+    alien = other.completions.create!(season: other_season, task_title: "Alheia", task_points: 5, points_awarded: 5, completed_at: Time.current)
 
     expect(award(completion_id: alien.id)).not_to be_valid
   end

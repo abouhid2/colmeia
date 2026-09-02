@@ -1,23 +1,22 @@
 import { Gift, PartyPopper, Pencil } from "lucide-react";
-import type { Standing } from "../../domain/leaderboard";
 import { formatPoints } from "../../domain/points";
-import type { GoalProgress } from "../../domain/progress";
-import type { Goal } from "../../domain/types";
+import type { GoalWithProgress } from "../../hooks/useGoalOverview";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Honeycomb } from "./Honeycomb";
-import { periodEnding, periodWhen } from "./goalCopy";
+import { seasonEnding } from "./goalCopy";
 
 interface GoalCardProps {
-  goal: Goal;
-  progress: GoalProgress;
-  standings: Standing[];
+  item: GoalWithProgress;
   onEdit(): void;
+  /** A closed estação is history: there is nothing left to adjust. */
+  readOnly?: boolean;
 }
 
 /** The colmeia's goal: how many points to reach, then what reaching it pays. */
-export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
+export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
+  const { goal, progress, season, standings } = item;
   const contributors = standings.filter((standing) => standing.points > 0);
   const summary = `${progress.earned} de ${progress.target} pontos`;
 
@@ -26,14 +25,14 @@ export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-            Meta da colmeia · {periodEnding(progress.bounds)}
+            Meta da estação · {season.name} · {seasonEnding(season)}
           </p>
           <h2 className="mt-1 text-4xl font-bold leading-tight tracking-tight tabular-nums md:text-5xl">
             {formatPoints(progress.target)}
           </h2>
-          <p className="text-ink-soft">para juntar {periodWhen(goal.period)}</p>
+          <p className="text-ink-soft">para juntar nesta estação</p>
         </div>
-        <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar meta</Button>
+        {!readOnly && <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar meta</Button>}
       </div>
 
       <div className="mt-4 flex items-start gap-3 rounded-card border border-line bg-paper p-3">

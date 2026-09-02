@@ -2,6 +2,7 @@ class Household < ApplicationRecord
   INVITE_CODE_LENGTH = 12
 
   has_many :members, dependent: :destroy
+  has_many :seasons, dependent: :destroy
   has_many :tasks, dependent: :destroy
   has_many :completions, dependent: :destroy
   has_many :shopping_items, dependent: :destroy

@@ -1,7 +1,8 @@
 module Tasks
   # Records that a member finished a task. One-off tasks close; recurring
   # tasks roll their due date forward. Tasks that require review create a
-  # pending completion worth nothing until someone rates it.
+  # pending completion worth nothing until someone rates it. The estação is
+  # stamped on the completion, so the history survives the task being deleted.
   class Complete
     class AlreadyDone < StandardError; end
 
@@ -31,6 +32,7 @@ module Tasks
     def completion_attributes
       {
         household_id: task.household_id,
+        season_id: task.season_id,
         member: member,
         status: task.requires_review? ? "pending" : "approved",
         points_awarded: task.requires_review? ? 0 : member.award(task.points),

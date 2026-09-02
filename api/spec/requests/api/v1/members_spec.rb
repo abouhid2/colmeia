@@ -12,7 +12,7 @@ RSpec.describe "Members API", type: :request do
     patch "/api/v1/members/#{id}", params: { member: { name: "Eduarda" } }, headers: headers
     expect(json_body["name"]).to eq("Eduarda")
 
-    household.completions.create!(member_id: id, task_title: "Louça", task_points: 5, points_awarded: 5, completed_at: Time.current)
+    household.completions.create!(season: season_of(household), member_id: id, task_title: "Louça", task_points: 5, points_awarded: 5, completed_at: Time.current)
     delete "/api/v1/members/#{id}", headers: headers
     expect(response).to have_http_status(:no_content)
     expect(Completion.count).to eq(1)

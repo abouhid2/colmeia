@@ -28,9 +28,10 @@ RSpec.describe Task do
 
   describe "validations" do
     let(:household) { Household.create!(name: "Casa") }
+    let(:season) { household.seasons.create!(name: "Estação", starts_on: Date.current) }
 
-    it "is valid inside a colmeia" do
-      expect(household.tasks.build(title: "Louça", points: 5)).to be_valid
+    it "is valid inside a colmeia and an estação" do
+      expect(household.tasks.build(season: season, title: "Louça", points: 5)).to be_valid
     end
 
     it "requires a colmeia" do
@@ -39,23 +40,37 @@ RSpec.describe Task do
       expect(task.errors[:household]).to be_present
     end
 
+    it "requires an estação" do
+      task = household.tasks.build(title: "Louça", points: 5)
+      expect(task).not_to be_valid
+      expect(task.errors[:season]).to be_present
+    end
+
+    it "rejects an estação from another colmeia" do
+      stranger = Household.create!(name: "Outra").seasons.create!(name: "Alheia", starts_on: Date.current)
+      task = household.tasks.build(season: stranger, title: "Louça", points: 5)
+
+      expect(task).not_to be_valid
+      expect(task.errors[:season]).to include("não é desta colmeia")
+    end
+
     it "requires interval_days for custom recurrence" do
-      task = household.tasks.build(title: "Regar", recurrence: "custom")
+      task = household.tasks.build(season: season, title: "Regar", recurrence: "custom")
       expect(task).not_to be_valid
       expect(task.errors[:interval_days]).to be_present
     end
 
     it "rejects zero points" do
-      expect(household.tasks.build(title: "x", points: 0)).not_to be_valid
+      expect(household.tasks.build(season: season, title: "x", points: 0)).not_to be_valid
     end
 
     it "rejects unknown priorities" do
-      expect(household.tasks.build(title: "x", priority: "meh")).not_to be_valid
+      expect(household.tasks.build(season: season, title: "x", priority: "meh")).not_to be_valid
     end
 
     it "rejects an assignee from another colmeia" do
       stranger = Household.create!(name: "Outra").members.create!(name: "Estranho")
-      task = household.tasks.build(title: "Louça", points: 5, assignee: stranger)
+      task = household.tasks.build(season: season, title: "Louça", points: 5, assignee: stranger)
 
       expect(task).not_to be_valid
       expect(task.errors[:assignee]).to include("não é desta colmeia")

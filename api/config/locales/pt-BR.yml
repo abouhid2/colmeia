@@ -2,6 +2,10 @@ pt-BR:
   api:
     errors:
       missing_reference: "Alguém ou alguma coisa daqui não existe mais. Atualize a página."
+      season_closed: "Essa estação já foi encerrada"
+      season_already_closed: "Essa estação já estava encerrada"
+      season_already_open: "Essa estação não está encerrada"
+      season_has_completions: "Essa estação já tem tarefas concluídas, então não dá para apagá-la"
       too_many_demos: "Tem muita gente experimentando o exemplo agora. Tente de novo daqui a pouco."
       not_a_demo: "Só dá para recomeçar uma colmeia de exemplo."
   activerecord:
@@ -12,6 +16,7 @@ pt-BR:
       shopping_item: Item
       goal: Meta
       household: Colmeia
+      season: Estação
       achievement_award: Conquista
     attributes:
       task:
@@ -46,7 +51,11 @@ pt-BR:
       goal:
         title: Recompensa
         target_points: Pontos da meta
-        period: Período
+      season:
+        name: Nome
+        starts_on: Começo
+        ends_on: Fim
+        closed_at: Encerrada em
       household:
         name: Nome da colmeia
       achievement_award:
@@ -55,6 +64,10 @@ pt-BR:
         awarded_at: Conquistada em
     errors:
       models:
+        season:
+          attributes:
+            ends_on:
+              on_or_after_start: "não pode ser antes do começo"
         member:
           attributes:
             favorite_achievements:

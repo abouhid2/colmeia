@@ -27,7 +27,7 @@ export function useEnterExample() {
   return useAppMutation((): Promise<DemoColmeia> => api.households.createDemo(), {
     invalidates: [ queryKeys.storedHouseholds ],
     onSuccess: ({ household, member }: DemoColmeia) => {
-      enter({ inviteCode: household.inviteCode, memberId: member.id });
+      enter({ inviteCode: household.inviteCode, memberId: member.id, seasonId: null });
       void navigate("/", { replace: true });
     },
   });
@@ -58,7 +58,7 @@ export function useColmeiaSwitcher() {
       void navigate(`/entrar/${inviteCode}`);
       return;
     }
-    enter({ inviteCode, memberId });
+    enter({ inviteCode, memberId, seasonId: null });
     void navigate("/");
   }, [ memberships, enter, navigate ]);
 }

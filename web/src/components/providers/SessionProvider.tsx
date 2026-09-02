@@ -28,17 +28,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (changedColmeia) queryClient.clear();
   }, [ api, queryClient, session ]);
 
-  const setCurrentMemberId = useCallback((memberId: number) => {
+  // Writing outside the state updater, so a double-invoked render never
+  // writes to storage twice.
+  const remember = useCallback((change: (current: Session) => Session) => {
     if (session === null) return;
-    const next = { ...session, memberId };
+    const next = change(session);
     writeSession(store, next);
     setSession(next);
     setMemberships(readMemberships(store));
   }, [session]);
 
+  const setCurrentMemberId = useCallback((memberId: number) => remember((current) => ({ ...current, memberId })), [ remember ]);
+  const setCurrentSeasonId = useCallback((seasonId: number) => remember((current) => ({ ...current, seasonId })), [ remember ]);
+
   const value = useMemo(
-    () => ({ session, memberships, enter: apply, leave: () => apply(null), setCurrentMemberId }),
-    [ session, memberships, apply, setCurrentMemberId ],
+    () => ({ session, memberships, enter: apply, leave: () => apply(null), setCurrentMemberId, setCurrentSeasonId }),
+    [ session, memberships, apply, setCurrentMemberId, setCurrentSeasonId ],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

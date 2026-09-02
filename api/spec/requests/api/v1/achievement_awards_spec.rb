@@ -42,7 +42,8 @@ RSpec.describe "Achievement awards API", type: :request do
 
   it "keeps the badge after the completion that earned it is deleted" do
     completion = household.completions.create!(
-      member: ana, task_title: "Trocar a resistência", task_points: 50, points_awarded: 50, completed_at: Time.current
+      season: season_of(household), member: ana, task_title: "Trocar a resistência", task_points: 50,
+      points_awarded: 50, completed_at: Time.current
     )
     record(ana, [ row("bigTask", completion_id: completion.id) ])
 

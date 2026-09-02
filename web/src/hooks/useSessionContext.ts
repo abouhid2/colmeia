@@ -11,6 +11,8 @@ export interface SessionContextValue {
   leave(): void;
   /** The shared kitchen tablet: same colmeia, another person. */
   setCurrentMemberId(id: number): void;
+  /** Which estação this browser is looking at inside the colmeia. */
+  setCurrentSeasonId(id: number): void;
 }
 
 export const SessionContext = createContext<SessionContextValue | null>(null);

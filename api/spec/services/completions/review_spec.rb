@@ -2,10 +2,11 @@ require "rails_helper"
 
 RSpec.describe Completions::Review do
   let(:household) { Household.create!(name: "Casa") }
+  let(:season) { household.seasons.create!(name: "Estação atual", starts_on: Date.current) }
   let(:worker) { household.members.create!(name: "Bruno") }
   let(:reviewer) { household.members.create!(name: "Ana") }
   let(:completion) do
-    household.completions.create!(member: worker, status: "pending", task_title: "Banheiro", task_points: 20, completed_at: Time.current)
+    household.completions.create!(season: season, member: worker, status: "pending", task_title: "Banheiro", task_points: 20, completed_at: Time.current)
   end
 
   it "approves the completion and awards points by rating" do
@@ -17,7 +18,7 @@ RSpec.describe Completions::Review do
 
   it "applies the doer's multiplier after the rating" do
     child_work = household.completions.create!(
-      member: worker, status: "pending", task_title: "Regar as plantas", task_points: 20,
+      season: season, member: worker, status: "pending", task_title: "Regar as plantas", task_points: 20,
       completed_at: Time.current, multiplier: 1.5
     )
 
@@ -28,7 +29,7 @@ RSpec.describe Completions::Review do
 
   it "pays the multiplier the work was done under, not the one in force today" do
     child_work = household.completions.create!(
-      member: worker, status: "pending", task_title: "Regar as plantas", task_points: 20,
+      season: season, member: worker, status: "pending", task_title: "Regar as plantas", task_points: 20,
       completed_at: Time.current, multiplier: 1.5
     )
     worker.update!(points_multiplier: 3)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { crownHolder, previousPeriodBounds } from "./crown";
-import type { Completion, Goal, Member } from "./types";
+import { crownHolder } from "./crown";
+import type { Completion, Goal, Member, Season } from "./types";
 
 const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member => ({
   id, name, avatar: "🐝", color: "honey", crownTitle, kind: "bee", pointsMultiplier: 1,
@@ -9,56 +9,49 @@ const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member 
 
 const members = [member(1, "Ana"), member(2, "Bruno"), member(3, "Clara")];
 
+const season = (overrides: Partial<Season> & Pick<Season, "id">): Season => ({
+  name: "Estação", startsOn: "2026-03-02", endsOn: null, closedAt: null,
+  createdAt: "2026-03-02T00:00:00.000Z", tasksCount: 0, completionsCount: 0, ...overrides,
+});
+
+/** The estação that closed, and the one running now. */
+const past = season({ id: 6, name: "Estação passada", startsOn: "2026-03-02", endsOn: "2026-03-08", closedAt: "2026-03-09T00:00:00.000Z" });
+const current = season({ id: 7, name: "Estação atual", startsOn: "2026-03-09" });
+const seasons = [past, current];
+
 const completion = (overrides: Partial<Completion>): Completion => ({
-  id: 1, taskId: null, memberId: 1, reviewerId: null, status: "approved", rating: null,
+  id: 1, seasonId: past.id, taskId: null, memberId: 1, reviewerId: null, status: "approved", rating: null,
   pointsAwarded: 10, multiplier: 1, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-04T10:00:00.000Z", reviewedAt: null, ...overrides,
 });
 
-/** A Wednesday. The week before it runs Mon 2 Mar to Sun 8 Mar. */
-const now = new Date(2026, 2, 11, 15);
-const goal: Goal = { id: 9, title: "Pizza", targetPoints: 100, period: "week", memberId: null };
-
-describe("previousPeriodBounds", () => {
-  it("steps back one week, still starting on Monday", () => {
-    expect(previousPeriodBounds("week", now)).toEqual({ start: new Date(2026, 2, 2), end: new Date(2026, 2, 9) });
-  });
-
-  it("steps back one calendar month", () => {
-    expect(previousPeriodBounds("month", now)).toEqual({ start: new Date(2026, 1, 1), end: new Date(2026, 2, 1) });
-  });
-
-  it("steps back from a long month into a short one without drifting", () => {
-    expect(previousPeriodBounds("month", new Date(2026, 2, 31))).toEqual({ start: new Date(2026, 1, 1), end: new Date(2026, 2, 1) });
-  });
-});
+const goal: Goal = { id: 9, seasonId: past.id, title: "Pizza", targetPoints: 100, memberId: null };
 
 describe("crownHolder", () => {
-  it("crowns whoever scored most in the period just gone", () => {
+  it("crowns whoever scored most in the estação that closed last", () => {
     const crown = crownHolder({
       members,
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 60 }),
         completion({ id: 2, memberId: 2, pointsAwarded: 40 }),
       ],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown?.member.id).toBe(1);
     expect(crown?.points).toBe(60);
-    expect(crown?.wonIn).toEqual({ start: new Date(2026, 2, 2), end: new Date(2026, 2, 9) });
-    expect(crown?.wearsUntil).toEqual({ start: new Date(2026, 2, 9), end: new Date(2026, 2, 16) });
+    expect(crown?.wonIn.id).toBe(past.id);
   });
 
-  it("ignores points scored in the current period", () => {
+  it("ignores points scored in the estação that is still running", () => {
     const crown = crownHolder({
       members,
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 120 }),
-        completion({ id: 2, memberId: 2, pointsAwarded: 500, completedAt: "2026-03-10T10:00:00.000Z" }),
+        completion({ id: 2, memberId: 2, pointsAwarded: 500, seasonId: current.id }),
       ],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown?.member.id).toBe(1);
@@ -71,8 +64,8 @@ describe("crownHolder", () => {
         completion({ id: 1, memberId: 1, pointsAwarded: 120 }),
         completion({ id: 2, memberId: 2, pointsAwarded: 900, status: "pending" }),
       ],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown?.member.id).toBe(1);
@@ -82,33 +75,45 @@ describe("crownHolder", () => {
     const crown = crownHolder({
       members,
       completions: [completion({ memberId: 2, pointsAwarded: 900, status: "pending" })],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown).toBeNull();
   });
 
-  it("crowns nobody when the household goal was missed", () => {
-    const crown = crownHolder({
-      members,
-      completions: [completion({ memberId: 2, pointsAwarded: 99 })],
-      goal,
-      now,
-    });
+  it("crowns nobody when the household goal of that estação was missed", () => {
+    const crown = crownHolder({ members, completions: [completion({ memberId: 2, pointsAwarded: 99 })], seasons, goals: [goal] });
 
     expect(crown).toBeNull();
   });
 
-  it("crowns the top scorer when the house has no goal at all", () => {
+  it("ignores the goal of another estação", () => {
     const crown = crownHolder({
       members,
-      completions: [completion({ memberId: 3, pointsAwarded: 12 })],
-      goal: null,
-      now,
+      completions: [completion({ memberId: 2, pointsAwarded: 40 })],
+      seasons,
+      goals: [{ ...goal, seasonId: current.id, targetPoints: 10_000 }],
     });
+
+    expect(crown?.member.id).toBe(2);
+  });
+
+  it("crowns the top scorer when that estação had no household goal", () => {
+    const crown = crownHolder({ members, completions: [completion({ memberId: 3, pointsAwarded: 12 })], seasons, goals: [] });
 
     expect(crown?.member.id).toBe(3);
+  });
+
+  it("crowns nobody while no estação has been closed", () => {
+    const crown = crownHolder({
+      members,
+      completions: [completion({ memberId: 1, pointsAwarded: 500, seasonId: current.id })],
+      seasons: [current],
+      goals: [],
+    });
+
+    expect(crown).toBeNull();
   });
 
   it("breaks a points tie with the number of tasks", () => {
@@ -119,8 +124,8 @@ describe("crownHolder", () => {
         completion({ id: 2, memberId: 2, pointsAwarded: 30 }),
         completion({ id: 3, memberId: 2, pointsAwarded: 30 }),
       ],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown?.member.id).toBe(2);
@@ -134,15 +139,15 @@ describe("crownHolder", () => {
         completion({ id: 1, memberId: 1, pointsAwarded: 60 }),
         completion({ id: 2, memberId: 2, pointsAwarded: 60 }),
       ],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown).toBeNull();
   });
 
-  it("crowns nobody when the period was empty", () => {
-    expect(crownHolder({ members, completions: [], goal: null, now })).toBeNull();
+  it("crowns nobody when the estação was empty", () => {
+    expect(crownHolder({ members, completions: [], seasons, goals: [] })).toBeNull();
   });
 
   it("leaves the crown unworn when the winner wants none, instead of passing it down", () => {
@@ -152,8 +157,8 @@ describe("crownHolder", () => {
         completion({ id: 1, memberId: 1, pointsAwarded: 200 }),
         completion({ id: 2, memberId: 2, pointsAwarded: 120 }),
       ],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown).toBeNull();
@@ -166,8 +171,8 @@ describe("crownHolder", () => {
         completion({ id: 1, memberId: 1, pointsAwarded: 200 }),
         completion({ id: 2, memberId: 2, pointsAwarded: 120 }),
       ],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown).toBeNull();
@@ -180,28 +185,28 @@ describe("crownHolder", () => {
         completion({ id: 1, memberId: 1, pointsAwarded: 40 }),
         completion({ id: 2, memberId: 2, pointsAwarded: 280 }),
       ],
-      goal,
-      now,
+      seasons,
+      goals: [goal],
     });
 
     expect(crown?.member.name).toBe("Bruno");
     expect(crown?.member.crownTitle).toBe("Rei da Louça");
   });
 
-  it("follows a monthly goal into the month before", () => {
-    const monthly: Goal = { ...goal, period: "month", targetPoints: 50 };
+  it("follows the most recently closed estação when several are closed", () => {
+    const older = season({ id: 5, name: "Mais antiga", startsOn: "2026-02-01", endsOn: "2026-02-28", closedAt: "2026-03-01T00:00:00.000Z" });
+
     const crown = crownHolder({
       members,
       completions: [
-        completion({ id: 1, memberId: 3, pointsAwarded: 70, completedAt: "2026-02-20T10:00:00.000Z" }),
-        completion({ id: 2, memberId: 1, pointsAwarded: 900, completedAt: "2026-03-02T10:00:00.000Z" }),
+        completion({ id: 1, memberId: 3, pointsAwarded: 900, seasonId: older.id }),
+        completion({ id: 2, memberId: 1, pointsAwarded: 120 }),
       ],
-      goal: monthly,
-      now,
+      seasons: [older, past, current],
+      goals: [goal],
     });
 
-    expect(crown?.member.id).toBe(3);
-    expect(crown?.period).toBe("month");
-    expect(crown?.wonIn).toEqual({ start: new Date(2026, 1, 1), end: new Date(2026, 2, 1) });
+    expect(crown?.member.id).toBe(1);
+    expect(crown?.wonIn.id).toBe(past.id);
   });
 });

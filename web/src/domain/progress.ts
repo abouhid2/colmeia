@@ -1,9 +1,11 @@
-import { addMonths, addWeeks, parseISO, startOfMonth, startOfWeek } from "date-fns";
-import type { Completion, Goal, GoalPeriod } from "./types";
+import { endOfDay, parseISO, startOfDay } from "date-fns";
+import { fromIsoDate } from "../lib/dates";
+import { completionsInSeason } from "./seasons";
+import type { Completion, Goal, Season } from "./types";
 
-export interface PeriodBounds {
+export interface SeasonBounds {
   start: Date;
-  /** Exclusive. */
+  /** Inclusive: the last moment that still counts for the estação. */
   end: Date;
 }
 
@@ -13,32 +15,27 @@ export interface GoalProgress {
   ratio: number;
   remaining: number;
   reached: boolean;
-  bounds: PeriodBounds;
+  bounds: SeasonBounds;
 }
 
-/** Weeks start on Monday, the way a Brazilian family counts them. */
-export function periodBounds(period: GoalPeriod, now: Date): PeriodBounds {
-  if (period === "month") {
-    const start = startOfMonth(now);
-    return { start, end: addMonths(start, 1) };
-  }
-  const start = startOfWeek(now, { weekStartsOn: 1 });
-  return { start, end: addWeeks(start, 1) };
+/** An estação runs from its first day to its last, or to right now while it has no end. */
+export function seasonBounds(season: Season, now: Date): SeasonBounds {
+  const start = startOfDay(fromIsoDate(season.startsOn));
+  return { start, end: season.endsOn === null ? now : endOfDay(fromIsoDate(season.endsOn)) };
 }
 
-export function isWithin(iso: string, bounds: PeriodBounds): boolean {
+export function isWithin(iso: string, bounds: SeasonBounds): boolean {
   const moment = parseISO(iso);
-  return moment >= bounds.start && moment < bounds.end;
+  return moment >= bounds.start && moment <= bounds.end;
 }
 
-export function approvedInPeriod(completions: Completion[], bounds: PeriodBounds): Completion[] {
-  return completions.filter((completion) => completion.status === "approved" && isWithin(completion.completedAt, bounds));
+export function approvedCompletions(completions: Completion[]): Completion[] {
+  return completions.filter((completion) => completion.status === "approved");
 }
 
 /** Household goals count everyone; personal goals count only their member. */
-export function goalProgress(goal: Goal, completions: Completion[], now: Date): GoalProgress {
-  const bounds = periodBounds(goal.period, now);
-  const counted = approvedInPeriod(completions, bounds).filter(
+export function goalProgress(goal: Goal, completions: Completion[], season: Season, now: Date): GoalProgress {
+  const counted = approvedCompletions(completionsInSeason(completions, goal.seasonId)).filter(
     (completion) => goal.memberId === null || completion.memberId === goal.memberId,
   );
   const earned = counted.reduce((sum, completion) => sum + completion.pointsAwarded, 0);
@@ -49,6 +46,6 @@ export function goalProgress(goal: Goal, completions: Completion[], now: Date): 
     ratio,
     remaining: Math.max(goal.targetPoints - earned, 0),
     reached: earned >= goal.targetPoints,
-    bounds,
+    bounds: seasonBounds(season, now),
   };
 }

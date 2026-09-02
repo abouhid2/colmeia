@@ -7,17 +7,38 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 ## O que dá para fazer
 
 - **Uma colmeia por casa**: cada colmeia tem o seu link de convite, e ninguém vê os dados da outra.
+- **Estações**: campeonatos que a família cria e nomeia. Cada estação tem as suas tarefas, as suas metas, os seus pontos e o seu ranking.
 - **Tarefas com pontos**: cada tarefa vale o que a família decidir (uma resistência de chuveiro queimada pode valer 50 pontos).
 - **Avaliação opcional**: tarefas marcadas "com avaliação" só liberam os pontos depois que outra pessoa dá uma nota de 1 a 5. Os pontos saem conforme a nota. Ninguém avalia o próprio trabalho.
 - **Recorrência**: diária, semanal, mensal ou a cada N dias. A próxima data conta a partir do dia em que a tarefa foi feita. Tarefas pontuais fecham ao concluir.
 - **Responsável**: qualquer tarefa pode ser atribuída a alguém ou deixada para "quem pegar primeiro".
 - **Prioridade**: baixa, normal, alta ou urgente. As vencidas e urgentes aparecem primeiro.
 - **Lista de compras** compartilhada, com quem pediu e quem comprou.
-- **Metas** por semana ou mês: uma da colmeia inteira, com o favo enchendo e o ranking de quem mais ajudou, e quantas individuais quiserem (só os pontos daquela pessoa contam).
+- **Metas da estação**: uma da colmeia inteira, com o favo enchendo e o ranking de quem mais ajudou, e quantas individuais quiserem (só os pontos daquela pessoa contam).
 - **Lagartinhas**: crianças na colmeia. Cada pessoa é abelha ou lagartinha, e a lagartinha ganha os pontos multiplicados (1,5× por padrão, ajustável de 0,5× a 3×) para conseguir acompanhar os adultos. O multiplicador fica à vista, ao lado do nome. Há um ranking só das lagartinhas, e as tarefas podem ser marcadas "boa para lagartinhas", com filtro na lista. O raciocínio está em [docs/lagartinhas.md](docs/lagartinhas.md).
 - **Conquistas**: dez medalhas que saem sozinhas do que cada pessoa já fez, na aba Conquistas. Três delas caem de novo toda vez que acontecem (nota 5 recebida, tarefa de 50 pontos ou mais, tarefa urgente) e contam quantas vezes. Cada medalha ganha fica anotada, então a contagem e as datas continuam ali mesmo que a tarefa ou a conclusão seja apagada. Cada pessoa fixa até três no próprio perfil.
 - **Filtro por integrante** presente em todas as telas: escolha uma pessoa e o app mostra só as tarefas, compras, metas e conquistas dela.
 - **Família de exemplo**: quem chega sem convite e sem colmeia clica em "Experimentar com uma família de exemplo" e cai numa colmeia só dele, já cheia de tarefas, pessoas e histórico de mentira. Dá para mexer em tudo, recomeçar do zero e sair quando quiser.
+
+## Estações
+
+Uma estação é um campeonato da casa. A família abre quantas quiser e dá o nome
+que quiser: "Estação do verão", "Setembro", "Férias". Cada estação tem as suas
+tarefas, as suas metas, os seus pontos e o seu ranking; pessoas e lista de
+compras ficam na colmeia, fora das estações.
+
+Abrir uma estação nova pode **reaproveitar as tarefas abertas** de outra: as
+mesmas tarefas de casa voltam, com o placar zerado e sem prazo. Uma estação
+começa num dia e pode ficar **sem data de fim**, correndo até alguém encerrar.
+
+**Encerrar congela o ranking**: a estação encerrada vira histórico e não aceita
+tarefa nova, meta nova nem conclusão. Quem mais pontuou na última estação
+encerrada, com a meta batida, usa a coroa e o título que escolheu enquanto a
+estação seguinte corre. Dá para reabrir uma estação encerrada, e apagar uma que
+ainda não tem nenhuma conclusão.
+
+O seletor de estação fica na barra lateral e no cabeçalho, e a página
+`/estacoes` é onde se cria, ajusta, encerra e reabre.
 
 ## Colmeias e convites
 
@@ -60,7 +81,7 @@ web/   React 19 + Vite + Tailwind 4: a interface, com dois modos de dados
 
 O front funciona de dois jeitos, escolhidos pela variável `VITE_API_URL`:
 
-- **Sem API** (o que roda no GitHub Pages): tudo fica no `localStorage` do navegador, uma chave por colmeia. Um navegador novo não guarda nada até alguém criar uma colmeia, entrar por um convite ou pedir a família de exemplo. Bom para experimentar, mas os convites não saem daquele navegador.
+- **Sem API** (o que roda no GitHub Pages): tudo fica no `localStorage` do navegador, uma chave por colmeia. Um navegador novo não guarda nada até alguém criar uma colmeia, entrar por um convite ou pedir a família de exemplo (que abre com uma estação encerrada e outra em andamento). Bom para experimentar, mas os convites não saem daquele navegador.
 - **Com API**: aponta para o Rails e a família inteira compartilha os mesmos dados. Cada requisição leva o código da colmeia no cabeçalho `X-Household-Code`.
 
 As regras (pontos por nota, avanço de recorrência, quem pode avaliar) existem nos dois lados e são testadas nos dois.

@@ -10,7 +10,7 @@ RSpec.describe Households::SeedExample do
     expect(household.members.pluck(:name)).to eq(%w[ Ana Bruno Clara Duda ])
     expect(household.tasks.count).to eq(12)
     expect(household.completions.count).to eq(16)
-    expect(household.goals.count).to eq(3)
+    expect(household.goals.count).to eq(4)
     expect(household.shopping_items.count).to eq(6)
   end
 
@@ -26,9 +26,9 @@ RSpec.describe Households::SeedExample do
     described_class.new(household, now: now).call
 
     expect(household.completions.where(status: "pending").count).to eq(1)
-    goal = household.goals.find_by(member_id: nil)
-    earned = household.completions.where(completed_at: now.beginning_of_week..).sum(:points_awarded)
-    expect(earned).to be < goal.target_points
+    running = household.seasons.find_by!(closed_at: nil)
+    goal = household.goals.find_by!(member_id: nil, season: running)
+    expect(running.completions.sum(:points_awarded)).to be < goal.target_points
   end
 
   it "pays the lagartinha her multiplier all the way back through the history" do

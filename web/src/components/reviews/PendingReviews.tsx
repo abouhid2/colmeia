@@ -1,18 +1,23 @@
 import { formatPoints } from "../../domain/points";
+import { completionsInSeason } from "../../domain/seasons";
 import { useReviewCompletion, useCompletions } from "../../hooks/useCompletions";
 import { useMemberLookup } from "../../hooks/useMembers";
+import { useSeason } from "../../hooks/useSeasonContext";
 import { useSession } from "../../hooks/useSession";
 import { useToast } from "../../hooks/useToast";
 import { SectionHeading } from "../ui/SectionHeading";
 import { ReviewCard } from "./ReviewCard";
 
 export function PendingReviews() {
-  const { pending } = useCompletions();
+  const { pending: everything } = useCompletions();
+  const { currentSeason } = useSeason();
   const lookup = useMemberLookup();
   const { currentMember } = useSession();
   const review = useReviewCompletion();
   const { notify } = useToast();
 
+  // What is waiting for a note in the estação on screen, not in another one.
+  const pending = completionsInSeason(everything, currentSeason?.id ?? null);
   if (pending.length === 0 || !currentMember) return null;
 
   const submit = (completionId: number, doerName: string, rating: number) => {

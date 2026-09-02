@@ -1,6 +1,7 @@
 export const queryKeys = {
   household: ["household"],
   members: ["members"],
+  seasons: ["seasons"],
   tasks: ["tasks"],
   completions: ["completions"],
   awards: ["awards"],

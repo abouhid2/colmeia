@@ -1,7 +1,9 @@
 module Households
   # Someone starts a colmeia by naming it and listing who lives there. Everyone
   # on that list is a placeholder until they claim themselves through the link.
+  # The colmeia opens with one estação, so there is somewhere to put a task.
   class Create
+    FIRST_SEASON_NAME = "Primeira estação".freeze
     MAX_MEMBER_NAMES = 20
 
     def initialize(name:, member_names: [])
@@ -14,6 +16,7 @@ module Households
         household = Household.new(name: name)
         reject_crowd(household)
         household.save!
+        household.seasons.create!(name: FIRST_SEASON_NAME, starts_on: Date.current)
         member_names.each_with_index { |member_name, index| household.members.create!(placeholder(member_name, index)) }
         household
       end

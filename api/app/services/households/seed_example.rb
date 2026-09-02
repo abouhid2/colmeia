@@ -26,6 +26,7 @@ module Households
     # Fills the colmeia and answers with the member to enter as.
     def call
       Household.transaction do
+        create_seasons
         create_members
         create_tasks
         create_completions
@@ -43,8 +44,10 @@ module Households
       Household.transaction do
         household.members.destroy_all
         [ household.tasks, household.completions, household.shopping_items, household.goals ].each(&:destroy_all)
+        household.seasons.destroy_all
         @members = nil
         @tasks = nil
+        @seasons = nil
         call
       end
     end
@@ -61,8 +64,29 @@ module Households
       @tasks ||= {}
     end
 
+    def seasons
+      @seasons ||= {}
+    end
+
+    def season
+      seasons.fetch(:current)
+    end
+
     def today
       now.to_date
+    end
+
+    # Two estações, so the example opens with a championship already decided
+    # and another one running: the crown comes from the closed one. The example
+    # replaces whatever the colmeia opened with, so no empty estação is left over.
+    def create_seasons
+      household.seasons.destroy_all
+      week_start = now.beginning_of_week
+      seasons[:past] = household.seasons.create!(
+        name: "Estação passada", starts_on: (week_start - 1.week).to_date,
+        ends_on: (week_start - 1.day).to_date, closed_at: week_start
+      )
+      seasons[:current] = household.seasons.create!(name: "Estação atual", starts_on: week_start.to_date)
     end
 
     def create_members
@@ -82,41 +106,41 @@ module Households
       ana, bruno, clara, duda = members.values_at(:ana, :bruno, :clara, :duda)
 
       household.tasks.create!(
-        title: "Trocar a resistência do chuveiro",
+        season: season, title: "Trocar a resistência do chuveiro",
         description: "A resistência queimou. Comprar uma de 220V e trocar com o disjuntor desligado.",
         points: 50, priority: "urgent", requires_review: true, created_by: ana
       )
       tasks[:bathroom] = household.tasks.create!(
-        title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly",
+        season: season, title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly",
         due_on: today + 7, requires_review: true, assignee: bruno
       )
       tasks[:dishes] = household.tasks.create!(
-        title: "Lavar a louça do jantar", points: 5, priority: "medium",
+        season: season, title: "Lavar a louça do jantar", points: 5, priority: "medium",
         recurrence: "daily", due_on: today + 1, kid_friendly: true
       )
-      household.tasks.create!(title: "Pendurar o quadro da sala", points: 15, priority: "low", assignee: bruno, created_by: clara)
+      household.tasks.create!(season: season, title: "Pendurar o quadro da sala", points: 15, priority: "low", assignee: bruno, created_by: clara)
       tasks[:trash] = household.tasks.create!(
-        title: "Levar o lixo para fora", points: 5, priority: "medium",
+        season: season, title: "Levar o lixo para fora", points: 5, priority: "medium",
         recurrence: "daily", due_on: today + 1, kid_friendly: true
       )
       household.tasks.create!(
-        title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom",
+        season: season, title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom",
         interval_days: 3, due_on: today + 1, assignee: duda, kid_friendly: true
       )
-      household.tasks.create!(title: "Aspirar a sala e os quartos", points: 15, priority: "medium", recurrence: "weekly", due_on: today + 2)
+      household.tasks.create!(season: season, title: "Aspirar a sala e os quartos", points: 15, priority: "medium", recurrence: "weekly", due_on: today + 2)
       household.tasks.create!(
-        title: "Trocar a roupa de cama", points: 10, priority: "medium", recurrence: "weekly",
+        season: season, title: "Trocar a roupa de cama", points: 10, priority: "medium", recurrence: "weekly",
         due_on: today + 3, requires_review: true
       )
-      household.tasks.create!(title: "Organizar a despensa", points: 30, priority: "low", recurrence: "monthly", due_on: today + 12)
+      household.tasks.create!(season: season, title: "Organizar a despensa", points: 30, priority: "low", recurrence: "monthly", due_on: today + 12)
 
       tasks[:car] = household.tasks.create!(
-        title: "Lavar o carro", points: 40, priority: "medium",
+        season: season, title: "Lavar o carro", points: 40, priority: "medium",
         requires_review: true, status: "done", completed_at: now - 9.hours
       )
-      tasks[:lunch] = household.tasks.create!(title: "Fazer o almoço de domingo", points: 30, priority: "medium", status: "done", completed_at: now - 7.hours)
+      tasks[:lunch] = household.tasks.create!(season: season, title: "Fazer o almoço de domingo", points: 30, priority: "medium", status: "done", completed_at: now - 7.hours)
       tasks[:ironing] = household.tasks.create!(
-        title: "Passar as roupas", points: 20, priority: "low",
+        season: season, title: "Passar as roupas", points: 20, priority: "low",
         requires_review: true, status: "done", completed_at: now - 5.hours
       )
     end
@@ -125,17 +149,17 @@ module Households
       ana, bruno, clara, duda = members.values_at(:ana, :bruno, :clara, :duda)
       car, lunch, ironing, dishes, trash, bathroom = tasks.values_at(:car, :lunch, :ironing, :dishes, :trash, :bathroom)
 
-      household.completions.create!(task: car, member: ana, reviewer: bruno, status: "approved", rating: 4, points_awarded: 32,
+      household.completions.create!(season: season, task: car, member: ana, reviewer: bruno, status: "approved", rating: 4, points_awarded: 32,
         task_title: car.title, task_points: 40, completed_at: now - 9.hours, reviewed_at: now - 8.hours)
-      household.completions.create!(task: lunch, member: bruno, status: "approved", points_awarded: 30,
+      household.completions.create!(season: season, task: lunch, member: bruno, status: "approved", points_awarded: 30,
         task_title: lunch.title, task_points: 30, completed_at: now - 7.hours)
-      household.completions.create!(task: ironing, member: clara, reviewer: ana, status: "approved", rating: 5, points_awarded: 20,
+      household.completions.create!(season: season, task: ironing, member: clara, reviewer: ana, status: "approved", rating: 5, points_awarded: 20,
         task_title: ironing.title, task_points: 20, completed_at: now - 5.hours)
-      household.completions.create!(task: dishes, member: duda, status: "approved", points_awarded: 8, multiplier: 1.5,
+      household.completions.create!(season: season, task: dishes, member: duda, status: "approved", points_awarded: 8, multiplier: 1.5,
         task_title: dishes.title, task_points: 5, completed_at: now - 3.hours)
-      household.completions.create!(task: trash, member: ana, status: "approved", points_awarded: 5,
+      household.completions.create!(season: season, task: trash, member: ana, status: "approved", points_awarded: 5,
         task_title: trash.title, task_points: 5, completed_at: now - 2.hours)
-      household.completions.create!(task: bathroom, member: bruno, status: "pending", points_awarded: 0,
+      household.completions.create!(season: season, task: bathroom, member: bruno, status: "pending", points_awarded: 0,
         task_title: bathroom.title, task_points: 20, completed_at: now - 1.hour)
     end
 
@@ -148,6 +172,7 @@ module Households
       last_week_rows.each do |row|
         done_at = weekday.call(row[:day])
         household.completions.create!(
+          season: seasons.fetch(:past),
           member: row[:member], reviewer: row[:reviewer], status: "approved", rating: row[:rating],
           points_awarded: row[:awarded], multiplier: row[:member].points_multiplier,
           task_title: row[:title], task_points: row[:points],
@@ -174,9 +199,11 @@ module Households
     end
 
     def create_goals
-      household.goals.create!(title: "Pizza e filme no sábado", target_points: 300, period: "week")
-      household.goals.create!(title: "Sorvete na sexta", target_points: 30, period: "week", member: members.fetch(:duda))
-      household.goals.create!(title: "Escolher o filme do sábado", target_points: 60, period: "week", member: members.fetch(:bruno))
+      # The closed estação kept its own reward, so the crown has a target to beat.
+      household.goals.create!(season: seasons.fetch(:past), title: "Pizza e filme no sábado", target_points: 300)
+      household.goals.create!(season: season, title: "Pizza e filme no sábado", target_points: 300)
+      household.goals.create!(season: season, title: "Sorvete na sexta", target_points: 30, member: members.fetch(:duda))
+      household.goals.create!(season: season, title: "Escolher o filme do sábado", target_points: 60, member: members.fetch(:bruno))
     end
 
     def create_shopping_items
