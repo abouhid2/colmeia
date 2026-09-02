@@ -24,6 +24,7 @@ pt-BR:
         name: Nome
         avatar: Bichinho
         color: Cor
+        crown_title: Título de vencedor
       completion:
         rating: Nota
         status: Situação

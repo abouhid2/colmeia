@@ -4,8 +4,8 @@ return if Member.exists?
 Household.current.update!(name: "Família Colmeia")
 
 ana = Member.create!(name: "Ana", avatar: "🦊", color: "pollen")
-bruno = Member.create!(name: "Bruno", avatar: "🐻", color: "sky")
-clara = Member.create!(name: "Clara", avatar: "🐼", color: "plum")
+bruno = Member.create!(name: "Bruno", avatar: "🐻", color: "sky", crown_title: "Abelhão")
+clara = Member.create!(name: "Clara", avatar: "🐼", color: "plum", crown_title: "Rainha da Louça")
 duda = Member.create!(name: "Duda", avatar: "🦉", color: "leaf")
 
 today = Date.current
@@ -50,6 +50,30 @@ Completion.create!(task: trash, member: ana, status: "approved", points_awarded:
   task_title: trash.title, task_points: 5, completed_at: now - 2.hours)
 Completion.create!(task: bathroom, member: bruno, status: "pending", points_awarded: 0,
   task_title: bathroom.title, task_points: 20, completed_at: now - 1.hour)
+
+# Last week the house beat the goal and Bruno pulled ahead, so he wears the crown this week.
+last_week = Time.current.beginning_of_week - 1.week
+weekday = ->(offset) { last_week + offset.days + 10.hours }
+
+[
+  { member: bruno, title: "Montar o armário do quarto", points: 90, awarded: 90, rating: 5, reviewer: ana, day: 1 },
+  { member: bruno, title: "Lavar o carro", points: 40, awarded: 40, day: 4 },
+  { member: ana, title: "Fazer a feira do mês", points: 50, awarded: 50, day: 0 },
+  { member: ana, title: "Limpar o quintal", points: 30, awarded: 30, day: 3 },
+  { member: ana, title: "Trocar as lâmpadas", points: 20, awarded: 20, day: 5 },
+  { member: clara, title: "Passar as roupas", points: 20, awarded: 16, rating: 4, reviewer: bruno, day: 2 },
+  { member: clara, title: "Organizar a despensa", points: 30, awarded: 30, day: 5 },
+  { member: duda, title: "Regar as plantas", points: 5, awarded: 5, day: 2 },
+  { member: duda, title: "Lavar a louça do jantar", points: 5, awarded: 5, day: 5 },
+  { member: duda, title: "Aspirar a sala e os quartos", points: 20, awarded: 20, day: 6 }
+].each do |row|
+  done_at = weekday.call(row[:day])
+  Completion.create!(
+    member: row[:member], reviewer: row[:reviewer], status: "approved", rating: row[:rating],
+    points_awarded: row[:awarded], task_title: row[:title], task_points: row[:points],
+    completed_at: done_at, reviewed_at: (done_at if row[:rating])
+  )
+end
 
 Goal.create!(title: "Pizza e filme no sábado", target_points: 300, period: "week")
 Goal.create!(title: "Sorvete na sexta", target_points: 30, period: "week", member: duda)
