@@ -260,7 +260,7 @@ export class LocalApi implements ColmeiaApi {
     reseed: (): Promise<Member> =>
       this.attempt(() => {
         const current = this.currentState();
-        if (!current.household.demo) conflict("Só uma colmeia de exemplo pode ser recomeçada");
+        if (!current.household.demo) conflict("Só dá para recomeçar uma colmeia de exemplo");
         const state = this.store.example(current.household.inviteCode);
         const member = this.claimExampleMember(state);
         this.store.save(state);
