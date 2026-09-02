@@ -33,11 +33,10 @@ module Api
       end
 
       def reopen
-        task = tasks.find(params[:id])
-        return render_conflict("task is already open") unless task.done?
-
-        task.update!(status: "open", completed_at: nil)
+        task = Tasks::Reopen.new(task: tasks.find(params[:id])).call
         render json: TaskSerializer.call(task)
+      rescue Tasks::Reopen::AlreadyOpen => e
+        render_conflict(e.message)
       end
 
       private
