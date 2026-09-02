@@ -18,6 +18,13 @@ RSpec.describe Household do
     expect { described_class.create!(name: "Outra", invite_code: "demo") }.to raise_error(ActiveRecord::RecordInvalid)
   end
 
+  it "tells sandbox colmeias apart from the ones people live in" do
+    sandbox = described_class.create!(name: "Exemplo", demo: true)
+    described_class.create!(name: "Casa de verdade")
+
+    expect(described_class.demos.to_a).to eq([ sandbox ])
+  end
+
   it "takes its records down with it" do
     household = described_class.create!(name: "Casa")
     household.tasks.create!(title: "Louça", points: 5)

@@ -9,6 +9,15 @@ module Households
     # so there is nothing to sign up for before touching the app.
     ENTRY_MEMBER_NAME = "Ana".freeze
 
+    # A colmeia of its own for one visitor, filled with the example. Answers
+    # with the colmeia and the member to enter as.
+    def self.create_household(now: Time.current)
+      Household.transaction do
+        household = Household.create!(name: NAME, demo: true)
+        [ household, new(household, now: now).call ]
+      end
+    end
+
     def initialize(household, now: Time.current)
       @household = household
       @now = now
@@ -25,6 +34,19 @@ module Households
         create_shopping_items
       end
       members.fetch(:ana)
+    end
+
+    # Back to the beginning: the sandbox drops whatever was done to it and is
+    # filled again. Everybody comes back with a new id, so whoever is inside has
+    # to be pointed at the new Ana.
+    def reset
+      Household.transaction do
+        household.members.destroy_all
+        [ household.tasks, household.completions, household.shopping_items, household.goals ].each(&:destroy_all)
+        @members = nil
+        @tasks = nil
+        call
+      end
     end
 
     private
