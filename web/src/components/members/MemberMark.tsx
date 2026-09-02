@@ -1,10 +1,13 @@
 import { useId } from "react";
+import type { Member } from "../../domain/types";
 import { cn } from "../../lib/cn";
-import { MemberPatternDefs, memberPatternId, type MarkedMember } from "./MemberPatternDefs";
+import { MemberPatternDefs, memberPatternId } from "./MemberPatternDefs";
 
 /** Big enough for two repeats of a texture, small enough to sit beside a name. */
 const SPAN = 12;
 const UNIT = 5;
+/** One mark holds one texture, so the id only has to be unique inside it. */
+const ONLY = 0;
 
 function hexagon(span: number): string {
   const radius = span / 2;
@@ -16,7 +19,8 @@ function hexagon(span: number): string {
 }
 
 interface MemberMarkProps {
-  member: MarkedMember;
+  /** A person, or the colour and texture somebody is trying on. */
+  member: Pick<Member, "color" | "pattern">;
   className?: string;
 }
 
@@ -26,8 +30,8 @@ export function MemberMark({ member, className }: MemberMarkProps) {
   const scope = useId();
   return (
     <svg viewBox={`0 0 ${SPAN} ${SPAN}`} className={cn("size-5 shrink-0", className)} aria-hidden>
-      <MemberPatternDefs scope={scope} members={[ member ]} unit={UNIT} />
-      <path d={hexagon(SPAN)} fill={`url(#${memberPatternId(scope, member.id)})`} className="stroke-line-strong" strokeWidth={0.5} />
+      <MemberPatternDefs scope={scope} members={[ { ...member, id: ONLY } ]} unit={UNIT} />
+      <path d={hexagon(SPAN)} fill={`url(#${memberPatternId(scope, ONLY)})`} className="stroke-line-strong" strokeWidth={0.5} />
     </svg>
   );
 }
