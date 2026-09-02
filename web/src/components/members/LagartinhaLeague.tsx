@@ -14,7 +14,7 @@ export function LagartinhaLeague({ standings }: LagartinhaLeagueProps) {
 
   return (
     <section>
-      <SectionHeading title="Lagartinhas" hint="A disputa das crianças, entre elas." />
+      <SectionHeading title="Lagartinhas" hint="O ranking só entre as crianças." />
       <Leaderboard standings={league} />
     </section>
   );
