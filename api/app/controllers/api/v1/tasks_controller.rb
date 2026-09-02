@@ -66,7 +66,8 @@ module Api
       def task_params
         params.require(:task).permit(
           :title, :description, :points, :priority, :recurrence, :interval_days,
-          :due_on, :requires_review, :kid_friendly, :assignee_id, :created_by_id, :season_id
+          :due_on, :requires_review, :kid_friendly, :created_by_id, :season_id,
+          weekdays: [], assignee_ids: []
         )
       end
     end

@@ -9,8 +9,8 @@ const completion = (overrides: Partial<Completion> = {}): Completion => ({
 
 const task = (overrides: Partial<Task> = {}): Task => ({
   id: 1, seasonId: 7, title: "Lavar louça", description: null, points: 10, priority: "medium", recurrence: "none",
-  intervalDays: null, dueOn: null, requiresReview: false, kidFriendly: false, status: "done", completedAt: "2026-03-11T10:00:00.000Z",
-  assigneeId: null, createdById: null, createdAt: "2026-03-01T10:00:00.000Z", ...overrides,
+  intervalDays: null, weekdays: [], dueOn: null, requiresReview: false, kidFriendly: false, status: "done", completedAt: "2026-03-11T10:00:00.000Z",
+  assigneeIds: [], createdById: null, createdAt: "2026-03-01T10:00:00.000Z", ...overrides,
 });
 
 describe("completionsForMember", () => {

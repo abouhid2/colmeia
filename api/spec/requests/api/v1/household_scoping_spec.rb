@@ -186,10 +186,10 @@ RSpec.describe "Household scoping", type: :request do
     it "cannot assign a task to someone from another colmeia" do
       stranger = other.members.create!(name: "Estranho")
 
-      post "/api/v1/tasks", params: { task: { title: "Louça", points: 5, assignee_id: stranger.id, season_id: season.id } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Louça", points: 5, assignee_ids: [ stranger.id ], season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(json_body["details"]).to include(a_string_matching(/não é desta colmeia/))
+      expect(json_body["details"]).to eq([ "Escolha só quem mora nesta colmeia" ])
     end
 
     it "cannot let an outsider complete a task" do

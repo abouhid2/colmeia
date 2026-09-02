@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_03_131200) do
   create_table "achievement_awards", force: :cascade do |t|
     t.datetime "awarded_at", null: false
     t.integer "completion_id"
@@ -156,8 +156,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
     t.index ["purchased_by_id"], name: "index_shopping_items_on_purchased_by_id"
   end
 
+  create_table "task_members", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.integer "member_id", null: false
+    t.integer "task_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id"], name: "index_task_members_on_household_id"
+    t.index ["member_id"], name: "index_task_members_on_member_id"
+    t.index ["task_id", "member_id"], name: "index_task_members_on_task_id_and_member_id", unique: true
+  end
+
   create_table "tasks", force: :cascade do |t|
-    t.integer "assignee_id"
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.integer "created_by_id"
@@ -174,7 +184,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
     t.string "status", default: "open", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
-    t.index ["assignee_id"], name: "index_tasks_on_assignee_id"
+    t.json "weekdays", default: [], null: false
     t.index ["created_by_id"], name: "index_tasks_on_created_by_id"
     t.index ["due_on"], name: "index_tasks_on_due_on"
     t.index ["household_id"], name: "index_tasks_on_household_id"
@@ -205,8 +215,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
   add_foreign_key "shopping_items", "households"
   add_foreign_key "shopping_items", "members", column: "added_by_id"
   add_foreign_key "shopping_items", "members", column: "purchased_by_id"
+  add_foreign_key "task_members", "households"
+  add_foreign_key "task_members", "members"
+  add_foreign_key "task_members", "tasks"
   add_foreign_key "tasks", "households"
-  add_foreign_key "tasks", "members", column: "assignee_id"
   add_foreign_key "tasks", "members", column: "created_by_id"
   add_foreign_key "tasks", "seasons"
 end

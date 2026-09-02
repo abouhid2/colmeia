@@ -49,7 +49,7 @@ RSpec.describe "Seasons API", type: :request do
     it "reuses the open tasks of another estação, without their history" do
       household.tasks.create!(
         season: season, title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly",
-        interval_days: nil, due_on: Date.current, requires_review: true, assignee: member, created_by: member
+        interval_days: nil, due_on: Date.current, requires_review: true, assignee_ids: [ member.id ], created_by: member
       )
       household.tasks.create!(season: season, title: "Já feita", points: 5, status: "done", completed_at: Time.current)
 
@@ -62,8 +62,19 @@ RSpec.describe "Seasons API", type: :request do
       expect(copied.map(&:title)).to eq([ "Limpar o banheiro" ])
       expect(copied.first).to have_attributes(
         points: 20, priority: "high", recurrence: "weekly", requires_review: true,
-        assignee_id: member.id, created_by_id: member.id, due_on: nil, status: "open"
+        created_by_id: member.id, due_on: nil, status: "open"
       )
+    end
+
+    it "carries the chosen days of the week into the new estação" do
+      household.tasks.create!(season: season, title: "Levar o lixo", points: 5, recurrence: "weekdays", weekdays: [ 2, 4 ])
+
+      post "/api/v1/seasons",
+        params: { season: { name: "Nova", starts_on: Date.current.iso8601, copy_tasks_from_season_id: season.id } },
+        headers: headers
+
+      copied = household.seasons.find(json_body["id"]).tasks.first
+      expect(copied).to have_attributes(recurrence: "weekdays", weekdays: [ 2, 4 ])
     end
 
     it "cannot reuse the tasks of another colmeia" do

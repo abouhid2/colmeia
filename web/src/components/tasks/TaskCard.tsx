@@ -7,7 +7,7 @@ import { TaskMeta } from "./TaskMeta";
 
 interface TaskCardProps {
   task: Task;
-  assignee: Member | null;
+  assignees: Member[];
   today: Date;
   onComplete(task: Task): void;
   onEdit(task: Task): void;
@@ -15,7 +15,7 @@ interface TaskCardProps {
   readOnly?: boolean;
 }
 
-export function TaskCard({ task, assignee, today, onComplete, onEdit, readOnly = false }: TaskCardProps) {
+export function TaskCard({ task, assignees, today, onComplete, onEdit, readOnly = false }: TaskCardProps) {
   return (
     <article className="flex gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
       {!readOnly && (
@@ -34,7 +34,7 @@ export function TaskCard({ task, assignee, today, onComplete, onEdit, readOnly =
           <PointsBadge points={task.points} size="sm" />
         </div>
         {task.description && <TaskDescription text={task.description} />}
-        <TaskMeta task={task} assignee={assignee} today={today} />
+        <TaskMeta task={task} assignees={assignees} today={today} />
       </div>
       <IconButton label={`Editar: ${task.title}`} icon={<Pencil className="size-4" />} onClick={() => onEdit(task)} className="-mr-2 -mt-1" />
     </article>

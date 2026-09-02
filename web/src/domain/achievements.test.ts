@@ -8,8 +8,8 @@ const completion = (overrides: Partial<Completion>): Completion => ({
 });
 
 const task = (overrides: Partial<Task>): Task => ({
-  id: 1, seasonId: 7, title: "x", description: null, points: 10, priority: "medium", recurrence: "none", intervalDays: null,
-  dueOn: null, requiresReview: false, kidFriendly: false, status: "open", completedAt: null, assigneeId: null, createdById: null,
+  id: 1, seasonId: 7, title: "x", description: null, points: 10, priority: "medium", recurrence: "none", intervalDays: null, weekdays: [],
+  dueOn: null, requiresReview: false, kidFriendly: false, status: "open", completedAt: null, assigneeIds: [], createdById: null,
   createdAt: "2026-03-01T10:00:00.000Z", ...overrides,
 });
 

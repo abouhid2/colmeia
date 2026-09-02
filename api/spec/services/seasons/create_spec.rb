@@ -25,14 +25,14 @@ RSpec.describe Seasons::Create do
   it "carries the rest of what a task is over with it" do
     household.tasks.create!(
       season: season, title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly",
-      requires_review: true, assignee: member, created_by: member
+      requires_review: true, assignee_ids: [ member.id ], created_by: member
     )
 
     copied = open_season_copying_from(season).tasks.first
 
     expect(copied).to have_attributes(
       points: 20, priority: "high", recurrence: "weekly", requires_review: true,
-      assignee_id: member.id, created_by_id: member.id, status: "open"
+      created_by_id: member.id, status: "open"
     )
   end
 end

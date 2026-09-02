@@ -2,7 +2,7 @@ import type { AchievementId } from "./achievements";
 import type { NavPreferences } from "./navigation";
 
 export type Priority = "low" | "medium" | "high" | "urgent";
-export type Recurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
+export type Recurrence = "none" | "daily" | "weekly" | "weekdays" | "monthly" | "custom";
 export type TaskStatus = "open" | "done";
 export type CompletionStatus = "pending" | "approved";
 export type MemberColor = "honey" | "pollen" | "leaf" | "berry" | "sky" | "plum";
@@ -73,13 +73,16 @@ export interface Task {
   priority: Priority;
   recurrence: Recurrence;
   intervalDays: number | null;
+  /** The days of the week it repeats on, 0 for Sunday. Empty for every other recurrence. */
+  weekdays: number[];
   dueOn: string | null;
   requiresReview: boolean;
   /** Marked by an adult as something a child can actually do. */
   kidFriendly: boolean;
   status: TaskStatus;
   completedAt: string | null;
-  assigneeId: number | null;
+  /** Who the task is for. Empty means whoever gets to it first. */
+  assigneeIds: number[];
   createdById: number | null;
   createdAt: string;
 }
@@ -202,10 +205,11 @@ export interface TaskInput {
   priority: Priority;
   recurrence: Recurrence;
   intervalDays: number | null;
+  weekdays: number[];
   dueOn: string | null;
   requiresReview: boolean;
   kidFriendly: boolean;
-  assigneeId: number | null;
+  assigneeIds: number[];
   createdById: number | null;
 }
 

@@ -9,10 +9,11 @@ export interface TaskFormValues {
   priority: Priority;
   recurrence: Recurrence;
   intervalDays: string;
+  weekdays: number[];
   dueOn: string;
   requiresReview: boolean;
   kidFriendly: boolean;
-  assigneeId: string;
+  assigneeIds: number[];
 }
 
 export type TaskFormErrors = Partial<Record<keyof TaskFormValues, string>>;
@@ -25,10 +26,11 @@ function initialValues(task: Task | null): TaskFormValues {
     priority: task?.priority ?? "medium",
     recurrence: task?.recurrence ?? "none",
     intervalDays: task?.intervalDays ? String(task.intervalDays) : "",
+    weekdays: task?.weekdays ?? [],
     dueOn: task?.dueOn ?? "",
     requiresReview: task?.requiresReview ?? false,
     kidFriendly: task?.kidFriendly ?? false,
-    assigneeId: task?.assigneeId ? String(task.assigneeId) : "",
+    assigneeIds: task?.assigneeIds ?? [],
   };
 }
 
@@ -38,6 +40,7 @@ function validate(values: TaskFormValues): TaskFormErrors {
   if (!Number.isInteger(values.points) || values.points <= 0) errors.points = "Vale pelo menos 1 ponto";
   if (values.points > LIMITS.taskPoints) errors.points = `No máximo ${LIMITS.taskPoints} pontos`;
   if (values.recurrence === "custom" && !(Number(values.intervalDays) > 0)) errors.intervalDays = "Diga a cada quantos dias";
+  if (values.recurrence === "weekdays" && values.weekdays.length === 0) errors.weekdays = "Escolha pelo menos um dia";
   return errors;
 }
 
@@ -50,10 +53,11 @@ export function toTaskInput(values: TaskFormValues, createdById: number | null, 
     priority: values.priority,
     recurrence: values.recurrence,
     intervalDays: values.recurrence === "custom" ? Number(values.intervalDays) : null,
+    weekdays: values.recurrence === "weekdays" ? values.weekdays : [],
     dueOn: values.dueOn || null,
     requiresReview: values.requiresReview,
     kidFriendly: values.kidFriendly,
-    assigneeId: values.assigneeId ? Number(values.assigneeId) : null,
+    assigneeIds: values.assigneeIds,
     createdById,
   };
 }

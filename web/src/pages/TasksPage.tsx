@@ -51,7 +51,7 @@ export function TasksPage() {
   const open = sortOpenTasks(
     tasks.filter((task) =>
       task.status === "open"
-      && (memberId === null || task.assigneeId === memberId)
+      && (memberId === null || task.assigneeIds.includes(memberId))
       && (!kidOnly || task.kidFriendly)),
     now,
   );

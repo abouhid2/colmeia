@@ -47,6 +47,12 @@ describe("LocalApi", () => {
     expect(task.dueOn).toBe("2026-03-18");
   });
 
+  it("rolls a task with chosen days to the next chosen day", async () => {
+    // 11 Mar 2026 is a Wednesday, and o lixo sai às terças, quintas e sábados.
+    const { task } = await api.tasks.complete(14, 1);
+    expect(task.dueOn).toBe("2026-03-12");
+  });
+
   it("holds points until someone else rates a reviewed task", async () => {
     const { completion } = await api.tasks.complete(10, 3);
     expect(completion).toMatchObject({ status: "pending", pointsAwarded: 0 });
@@ -459,15 +465,53 @@ describe("LocalApi", () => {
 
   it("validates task input", async () => {
     await expect(api.tasks.create({
-      seasonId: SEASON_ID, title: "Regar", description: null, points: 5, priority: "low", recurrence: "custom", intervalDays: null,
-      dueOn: null, requiresReview: false, kidFriendly: false, assigneeId: null, createdById: null,
+      seasonId: SEASON_ID, title: "Regar", description: null, points: 5, priority: "low", recurrence: "custom", intervalDays: null, weekdays: [],
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeIds: [], createdById: null,
     })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("shares a task between more than one person, and drops whoever leaves", async () => {
+    const task = await api.tasks.create({
+      seasonId: SEASON_ID, title: "Arrumar a garagem", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null, weekdays: [],
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeIds: [ 3, 2, 2 ], createdById: null,
+    });
+    expect(task.assigneeIds).toEqual([ 2, 3 ]);
+
+    await api.members.remove(2);
+
+    const saved = (await api.tasks.list(SEASON_ID)).find((item) => item.id === task.id);
+    expect(saved?.assigneeIds).toEqual([ 3 ]);
+  });
+
+  it("refuses a task for somebody who is not in the colmeia", async () => {
+    await expect(api.tasks.create({
+      seasonId: SEASON_ID, title: "Arrumar a garagem", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null, weekdays: [],
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeIds: [ 999 ], createdById: null,
+    })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("refuses a task that repeats on days without saying which", async () => {
+    await expect(api.tasks.create({
+      seasonId: SEASON_ID, title: "Lixo", description: null, points: 5, priority: "low", recurrence: "weekdays", intervalDays: null, weekdays: [],
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeIds: [], createdById: null,
+    })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("sorts the chosen days, drops repeats, and forgets them when the recurrence changes", async () => {
+    const task = await api.tasks.create({
+      seasonId: SEASON_ID, title: "Lixo", description: null, points: 5, priority: "low", recurrence: "weekdays", intervalDays: null, weekdays: [ 4, 2, 4 ],
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeIds: [], createdById: null,
+    });
+    expect(task.weekdays).toEqual([ 2, 4 ]);
+
+    const weekly = await api.tasks.update(task.id, { recurrence: "weekly" });
+    expect(weekly.weekdays).toEqual([]);
   });
 
   describe("estações", () => {
     const openTask = (seasonId: number) => api.tasks.create({
-      seasonId, title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null,
-      dueOn: null, requiresReview: false, kidFriendly: false, assigneeId: null, createdById: null,
+      seasonId, title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null, weekdays: [],
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeIds: [], createdById: null,
     });
 
     it("lists them newest first, with what each one holds", async () => {

@@ -33,8 +33,8 @@ describe("useAchievementSync", () => {
     const other = await colmeia.api.seasons.create({ name: "Mutirão do quintal", startsOn: today, endsOn: null });
     const task = await colmeia.api.tasks.create({
       seasonId: other.id, title: "Apagar o fogo do fogão", description: null, points: 20,
-      priority: "urgent", recurrence: "none", intervalDays: null, dueOn: null,
-      requiresReview: false, kidFriendly: false, assigneeId: null, createdById: colmeia.member.id,
+      priority: "urgent", recurrence: "none", intervalDays: null, weekdays: [], dueOn: null,
+      requiresReview: false, kidFriendly: false, assigneeIds: [], createdById: colmeia.member.id,
     });
     const { completion } = await colmeia.api.tasks.complete(task.id, colmeia.member.id);
 

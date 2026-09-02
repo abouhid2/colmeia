@@ -62,26 +62,26 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   // Bruno already pinned badges they earned, which is what the profile shows.
   // Each one fills the honeycomb with a texture of their own.
   const members = [
-    member(1, EXAMPLE_ENTRY_MEMBER, "🦊", "pollen", "dots", DEFAULT_CROWN_TITLE, "bee", [ "firstTask", "bigTask" ]),
-    member(2, "Bruno", "🐻", "sky", "stripes", "Abelhão", "bee", [ "flawless" ]),
-    member(3, "Clara", "🐼", "plum", "crosses", "Rainha da Louça"),
-    member(4, "Duda", "🦉", "leaf", "rings", DEFAULT_CROWN_TITLE, "lagartinha"),
+    member(1, EXAMPLE_ENTRY_MEMBER, "🦋", "pollen", "dots", DEFAULT_CROWN_TITLE, "bee", [ "firstTask", "bigTask" ]),
+    member(2, "Bruno", "🐞", "sky", "stripes", "Abelhão", "bee", [ "flawless" ]),
+    member(3, "Clara", "🦗", "plum", "crosses", "Rainha da Louça"),
+    member(4, "Duda", "🐛", "leaf", "rings", DEFAULT_CROWN_TITLE, "lagartinha"),
   ];
 
   const task = (seed: TaskSeed): Task => ({
     seasonId: SEASON_ID,
-    description: null, priority: "medium", recurrence: "none", intervalDays: null, dueOn: null,
-    requiresReview: false, kidFriendly: false, status: "open", completedAt: null, assigneeId: null, createdById: null,
+    description: null, priority: "medium", recurrence: "none", intervalDays: null, weekdays: [], dueOn: null,
+    requiresReview: false, kidFriendly: false, status: "open", completedAt: null, assigneeIds: [], createdById: null,
     createdAt: iso(200), ...seed,
   });
   const tasks = [
     task({ id: 10, title: "Trocar a resistência do chuveiro", points: 50, priority: "urgent", requiresReview: true, createdById: 1,
       description: "A resistência queimou. Comprar uma de 220V e trocar com o disjuntor desligado." }),
-    task({ id: 11, title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly", dueOn: inDays(7), requiresReview: true, assigneeId: 2 }),
+    task({ id: 11, title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly", dueOn: inDays(7), requiresReview: true, assigneeIds: [ 2 ] }),
     task({ id: 12, title: "Lavar a louça do jantar", points: 5, recurrence: "daily", dueOn: today, kidFriendly: true }),
-    task({ id: 13, title: "Pendurar o quadro da sala", points: 15, priority: "low", assigneeId: 2, createdById: 3 }),
-    task({ id: 14, title: "Levar o lixo para fora", points: 5, recurrence: "daily", dueOn: inDays(-1), kidFriendly: true }),
-    task({ id: 15, title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom", intervalDays: 3, dueOn: inDays(1), assigneeId: 4, kidFriendly: true }),
+    task({ id: 13, title: "Pendurar o quadro da sala", points: 15, priority: "low", assigneeIds: [ 2 ], createdById: 3 }),
+    task({ id: 14, title: "Levar o lixo para fora", points: 5, recurrence: "weekdays", weekdays: [ 2, 4, 6 ], dueOn: inDays(-1), kidFriendly: true }),
+    task({ id: 15, title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom", intervalDays: 3, dueOn: inDays(1), assigneeIds: [ 3, 4 ], kidFriendly: true }),
     task({ id: 16, title: "Aspirar a sala e os quartos", points: 15, recurrence: "weekly", dueOn: inDays(2) }),
     task({ id: 17, title: "Trocar a roupa de cama", points: 10, recurrence: "weekly", dueOn: inDays(3), requiresReview: true }),
     task({ id: 18, title: "Organizar a despensa", points: 30, priority: "low", recurrence: "monthly", dueOn: inDays(12) }),

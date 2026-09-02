@@ -31,6 +31,7 @@ pt-BR:
         priority: Prioridade
         recurrence: Recorrência
         interval_days: Intervalo em dias
+        weekdays: Dias da semana
         due_on: Prazo
         status: Situação
         kid_friendly: Boa para lagartinhas
@@ -102,6 +103,13 @@ pt-BR:
               already_voted: "já escolheu alguém para esse título"
             season_title:
               not_voted_on: "é a coroa da estação, e a coroa ninguém vota"
+        task:
+          attributes:
+            base:
+              unknown_assignee: "Escolha só quem mora nesta colmeia"
+            weekdays:
+              blank: "precisam de pelo menos um dia"
+              unknown: "trazem um dia que não existe"
         member:
           attributes:
             favorite_achievements:

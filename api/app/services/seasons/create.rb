@@ -3,8 +3,8 @@ module Seasons
   # chores come back every season, only the score starts from zero.
   class Create
     COPIED_ATTRIBUTES = %i[
-      title description points priority recurrence interval_days
-      requires_review kid_friendly assignee_id created_by_id
+      title description points priority recurrence interval_days weekdays
+      requires_review kid_friendly created_by_id
     ].freeze
 
     def initialize(household:, attributes:, copy_tasks_from_season_id: nil)
@@ -30,7 +30,9 @@ module Seasons
 
       source = household.seasons.find(copy_tasks_from_season_id)
       source.tasks.active.order(:created_at).each do |task|
-        season.tasks.create!(task.slice(*COPIED_ATTRIBUTES).merge(household_id: household.id))
+        # Whoever the task was for comes with it: the same chores, the same hands.
+        attributes = task.slice(*COPIED_ATTRIBUTES).merge(household_id: household.id, assignee_ids: task.assignee_ids)
+        season.tasks.create!(attributes)
       end
     end
   end

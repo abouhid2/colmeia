@@ -120,13 +120,13 @@ module Households
       # waiting to be opened, which is what the invite link demonstrates. Ana
       # and Bruno also pinned badges they earned, which is what the profile shows.
       # Each one fills the honeycomb with a texture of their own.
-      members[:ana] = household.members.create!(name: ENTRY_MEMBER_NAME, avatar: "🦊", color: "pollen", pattern: "dots", claimed_at: now,
+      members[:ana] = household.members.create!(name: ENTRY_MEMBER_NAME, avatar: "🦋", color: "pollen", pattern: "dots", claimed_at: now,
         favorite_achievements: %w[ firstTask bigTask ])
-      members[:bruno] = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky", pattern: "stripes", crown_title: "Abelhão",
+      members[:bruno] = household.members.create!(name: "Bruno", avatar: "🐞", color: "sky", pattern: "stripes", crown_title: "Abelhão",
         favorite_achievements: %w[ flawless ])
-      members[:clara] = household.members.create!(name: "Clara", avatar: "🐼", color: "plum", pattern: "crosses", crown_title: "Rainha da Louça")
+      members[:clara] = household.members.create!(name: "Clara", avatar: "🦗", color: "plum", pattern: "crosses", crown_title: "Rainha da Louça")
       # Duda is the child of the house: everything she does is worth 1,5x.
-      members[:duda] = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf", pattern: "rings", kind: "lagartinha")
+      members[:duda] = household.members.create!(name: "Duda", avatar: "🐛", color: "leaf", pattern: "rings", kind: "lagartinha")
     end
 
     def create_tasks
@@ -139,20 +139,20 @@ module Households
       )
       tasks[:bathroom] = household.tasks.create!(
         season: season, title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly",
-        due_on: today + 7, requires_review: true, assignee: bruno
+        due_on: today + 7, requires_review: true, assignee_ids: [ bruno.id ]
       )
       tasks[:dishes] = household.tasks.create!(
         season: season, title: "Lavar a louça do jantar", points: 5, priority: "medium",
         recurrence: "daily", due_on: today + 1, kid_friendly: true
       )
-      household.tasks.create!(season: season, title: "Pendurar o quadro da sala", points: 15, priority: "low", assignee: bruno, created_by: clara)
+      household.tasks.create!(season: season, title: "Pendurar o quadro da sala", points: 15, priority: "low", assignee_ids: [ bruno.id ], created_by: clara)
       tasks[:trash] = household.tasks.create!(
         season: season, title: "Levar o lixo para fora", points: 5, priority: "medium",
-        recurrence: "daily", due_on: today + 1, kid_friendly: true
+        recurrence: "weekdays", weekdays: [ 2, 4, 6 ], due_on: today + 1, kid_friendly: true
       )
       household.tasks.create!(
         season: season, title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom",
-        interval_days: 3, due_on: today + 1, assignee: duda, kid_friendly: true
+        interval_days: 3, due_on: today + 1, assignee_ids: [ duda.id, clara.id ], kid_friendly: true
       )
       household.tasks.create!(season: season, title: "Aspirar a sala e os quartos", points: 15, priority: "medium", recurrence: "weekly", due_on: today + 2)
       household.tasks.create!(

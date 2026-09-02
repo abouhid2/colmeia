@@ -9,12 +9,13 @@ module TaskSerializer
       priority: task.priority,
       recurrence: task.recurrence,
       interval_days: task.interval_days,
+      weekdays: task.weekdays,
       due_on: task.due_on,
       requires_review: task.requires_review,
       kid_friendly: task.kid_friendly,
       status: task.status,
       completed_at: task.completed_at,
-      assignee_id: task.assignee_id,
+      assignee_ids: task.assignee_ids,
       created_by_id: task.created_by_id,
       created_at: task.created_at
     }

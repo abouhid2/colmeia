@@ -64,7 +64,7 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
       badges,
       // The history spans every estação: what this person did is theirs for good.
       history: completionsForMember(completions, member.id),
-      openTasks: sortOpenTasks(tasks.filter((task) => task.status === "open" && task.assigneeId === member.id), now),
+      openTasks: sortOpenTasks(tasks.filter((task) => task.status === "open" && task.assigneeIds.includes(member.id)), now),
       // Every goal this person is in, alone or with somebody else.
       goals: goalsOf(withPeople, member.id),
     };

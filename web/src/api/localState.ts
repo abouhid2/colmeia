@@ -88,7 +88,8 @@ export type StoredState = Omit<
   household: Older<Household, "demo" | "lagartinhasEnabled">;
   members: StoredMember[];
   seasons?: StoredSeason[];
-  tasks: Older<Task, "kidFriendly" | "seasonId">[];
+  /** Tasks used to belong to one person, and to repeat without days of their own. */
+  tasks: (Older<Task, "kidFriendly" | "seasonId" | "weekdays" | "assigneeIds"> & { assigneeId?: number | null })[];
   completions: Older<Completion, "multiplier" | "seasonId">[];
   goals: StoredGoal[];
   awards?: AchievementAward[];
@@ -129,7 +130,14 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
       favoriteAchievements: member.favoriteAchievements ?? [],
       navPreferences: normalizeNavPreferences(member.navPreferences),
     })),
-    tasks: state.tasks.map((task) => ({ ...task, kidFriendly: task.kidFriendly ?? false, seasonId: task.seasonId ?? first.id })),
+    tasks: state.tasks.map(({ assigneeId, ...task }) => ({
+      ...task,
+      kidFriendly: task.kidFriendly ?? false,
+      seasonId: task.seasonId ?? first.id,
+      weekdays: task.weekdays ?? [],
+      // One responsável became a list of them; nobody named stays an empty one.
+      assigneeIds: task.assigneeIds ?? (assigneeId == null ? [] : [ assigneeId ]),
+    })),
     completions: state.completions.map((completion) => ({
       ...completion,
       multiplier: completion.multiplier ?? 1,

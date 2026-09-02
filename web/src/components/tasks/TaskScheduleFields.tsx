@@ -3,6 +3,8 @@ import type { Member, Recurrence } from "../../domain/types";
 import { Field } from "../ui/Field";
 import { Input, Select } from "../ui/Input";
 import type { TaskFormErrors, TaskFormValues } from "./useTaskForm";
+import { TaskPeopleField } from "./TaskPeopleField";
+import { WeekdayPicker } from "./WeekdayPicker";
 
 interface TaskScheduleFieldsProps {
   values: TaskFormValues;
@@ -37,14 +39,21 @@ export function TaskScheduleFields({ values, errors, members, set }: TaskSchedul
           <Input id="task-due-custom" type="date" value={values.dueOn} onChange={(event) => set("dueOn", event.target.value)} />
         </Field>
       )}
-      <Field label="Responsável" htmlFor="task-assignee">
-        <Select id="task-assignee" value={values.assigneeId} onChange={(event) => set("assigneeId", event.target.value)}>
-          <option value="">Quem pegar primeiro</option>
-          {members.map((member) => (
-            <option key={member.id} value={member.id}>{member.avatar} {member.name}</option>
-          ))}
-        </Select>
-      </Field>
+      {values.recurrence === "weekdays" && (
+        <Field label="Em que dias" error={errors.weekdays}>
+          <WeekdayPicker value={values.weekdays} onChange={(weekdays) => set("weekdays", weekdays)} />
+        </Field>
+      )}
+      <TaskPeopleField
+        members={members}
+        selected={values.assigneeIds}
+        onToggle={(id) => set("assigneeIds", toggleId(values.assigneeIds, id))}
+        onAnyone={() => set("assigneeIds", [])}
+      />
     </>
   );
+}
+
+function toggleId(selected: number[], id: number): number[] {
+  return selected.includes(id) ? selected.filter((chosen) => chosen !== id) : [ ...selected, id ];
 }

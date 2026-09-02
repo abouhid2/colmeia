@@ -5,7 +5,7 @@ import { emptyNavPreferences, normalizeNavPreferences } from "../domain/navigati
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { DEFAULT_MEMBER_PATTERN, isMemberPattern } from "../domain/memberPatterns";
 import { completedAtError } from "../domain/completionMoment";
-import { isRecurring, nextDueOn } from "../domain/recurrence";
+import { isRecurring, nextDueOn, WEEKDAY_OPTIONS } from "../domain/recurrence";
 import { seasonCoversDay, seasonsNewestFirst } from "../domain/seasons";
 import { AUTO_TITLE, ownVote, titlesInOrder, VOTE_TITLE, votesInSeason } from "../domain/seasonTitles";
 import { LIMITS } from "../domain/limits";
@@ -13,7 +13,7 @@ import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } f
 import { awardedPoints, MAX_RATING } from "../domain/points";
 import type {
   AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
-  HouseholdUpdate, HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonTitle,
+  HouseholdUpdate, HouseholdWithMembers, Member, MemberInput, Recurrence, ReviewInput, Season, SeasonInput, SeasonTitle,
   SeasonTitleInput, SeasonTitleUpdate, SeasonTitleVote, SeasonUpdate,
   ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput, VoteInput, VoteKey,
 } from "../domain/types";
@@ -71,7 +71,7 @@ function resolveMoment(completedAt: string | undefined, now: Date, seasonStartsO
 /** The cycle counts from the day the work happened, but a completion from a
  *  cycle already closed must not drag the next date backwards. */
 function rolledDueOn(task: Task, moment: Date): string | null {
-  const rolled = nextDueOn(task.recurrence, task.intervalDays, moment);
+  const rolled = nextDueOn(task, moment);
   if (rolled === null || task.dueOn === null) return rolled;
   return rolled < task.dueOn ? task.dueOn : rolled;
 }
@@ -163,11 +163,30 @@ function validateSeason(input: Partial<SeasonInput>): void {
   if (input.startsOn !== undefined && endsOn !== null && endsOn < input.startsOn) invalid("O fim não pode ser antes do começo");
 }
 
+function validateTaskPeople(ids: number[] | undefined, state: LocalState): void {
+  if (ids === undefined || ids.length === 0) return;
+  if (ids.some((id) => !state.members.some((member) => member.id === id))) invalid("Escolha só quem mora nesta colmeia");
+}
+
 function validateTask(input: Partial<TaskInput>): void {
   validateName(input.title, LIMITS.taskTitle, "Dê um nome à tarefa");
   if (input.points !== undefined && (!Number.isInteger(input.points) || input.points <= 0)) invalid("A tarefa vale pelo menos 1 ponto");
   if (input.points !== undefined && input.points > LIMITS.taskPoints) invalid(`Uma tarefa vale no máximo ${LIMITS.taskPoints} pontos`);
   if (input.recurrence === "custom" && !(input.intervalDays && input.intervalDays > 0)) invalid("Diga a cada quantos dias a tarefa se repete");
+  if (input.recurrence === "weekdays" && (input.weekdays ?? []).length === 0) invalid("Escolha em que dias da semana a tarefa se repete");
+  if ((input.weekdays ?? []).some((day) => !WEEKDAY_OPTIONS.includes(day))) invalid("Escolha só dias da semana");
+}
+
+/** Who a task is for, the way the Rails model stores it: sorted, no repeats. */
+function normalizeAssignees(ids: number[] | undefined): number[] {
+  return [ ...new Set(ids ?? []) ].sort((left, right) => left - right);
+}
+
+/** Days only mean something for a task that repeats on them, the way the Rails
+ *  model normalizes them: sorted, without repeats, empty for anything else. */
+function normalizeWeekdays(recurrence: Recurrence, weekdays: number[] | undefined): number[] {
+  if (recurrence !== "weekdays") return [];
+  return [ ...new Set(weekdays ?? []) ].sort((left, right) => left - right);
 }
 
 /** Defaults a new person the way the Rails model does, handicap included. */
@@ -301,6 +320,7 @@ export class LocalApi implements ColmeiaApi {
       .filter((task) => task.seasonId === source.id && task.status === "open")
       .map((task): Task => ({
         ...task, id: this.nextId(state), seasonId, dueOn: null, status: "open",
+        weekdays: [ ...task.weekdays ], assigneeIds: [ ...task.assigneeIds ],
         completedAt: null, createdAt: now.toISOString(),
       }))
       .forEach((task) => state.tasks.push(task));
@@ -418,7 +438,11 @@ export class LocalApi implements ColmeiaApi {
         findOrFail(state.members, id, "Essa pessoa");
         state.members = state.members.filter((member) => member.id !== id);
         const nullify = (value: number | null) => (value === id ? null : value);
-        state.tasks.forEach((task) => { task.assigneeId = nullify(task.assigneeId); task.createdById = nullify(task.createdById); });
+        // A task somebody shared stays for whoever is left, without them on it.
+        state.tasks.forEach((task) => {
+          task.assigneeIds = task.assigneeIds.filter((candidate) => candidate !== id);
+          task.createdById = nullify(task.createdById);
+        });
         state.completions.forEach((completion) => { completion.memberId = nullify(completion.memberId); completion.reviewerId = nullify(completion.reviewerId); });
         state.shoppingItems.forEach((item) => { item.addedById = nullify(item.addedById); item.purchasedById = nullify(item.purchasedById); });
         // A goal only this person was in leaves with them; one they shared stays
@@ -560,8 +584,15 @@ export class LocalApi implements ColmeiaApi {
     create: (input: TaskInput): Promise<Task> =>
       this.mutate((state, now) => {
         validateTask(input);
+        validateTaskPeople(input.assigneeIds, state);
         this.openSeason(state, input.seasonId);
-        const task: Task = { ...input, title: input.title.trim(), id: this.nextId(state), status: "open", completedAt: null, createdAt: now.toISOString() };
+        const task: Task = {
+          ...input,
+          title: input.title.trim(),
+          weekdays: normalizeWeekdays(input.recurrence, input.weekdays),
+          assigneeIds: normalizeAssignees(input.assigneeIds),
+          id: this.nextId(state), status: "open", completedAt: null, createdAt: now.toISOString(),
+        };
         state.tasks.push(task);
         return task;
       }),
@@ -569,7 +600,10 @@ export class LocalApi implements ColmeiaApi {
       this.mutate((state) => {
         const task = findOrFail(state.tasks, id, "Essa tarefa");
         validateTask({ ...task, ...input });
+        validateTaskPeople(input.assigneeIds, state);
         Object.assign(task, input);
+        task.weekdays = normalizeWeekdays(task.recurrence, task.weekdays);
+        task.assigneeIds = normalizeAssignees(task.assigneeIds);
         return task;
       }),
     remove: (id: number): Promise<void> =>

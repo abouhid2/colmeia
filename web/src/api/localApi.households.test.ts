@@ -147,8 +147,8 @@ describe("LocalApi households", () => {
     api.setInviteCode(first.inviteCode);
     const [ firstSeason ] = await api.seasons.list();
     await api.tasks.create({
-      seasonId: firstSeason.id, title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null,
-      dueOn: null, requiresReview: false, kidFriendly: false, assigneeId: null, createdById: null,
+      seasonId: firstSeason.id, title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null, weekdays: [],
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeIds: [], createdById: null,
     });
     expect((await api.members.list()).map((member) => member.name)).toEqual([ "Ana" ]);
 

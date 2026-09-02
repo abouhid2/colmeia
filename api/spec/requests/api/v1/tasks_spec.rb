@@ -20,16 +20,39 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks" do
     it "creates a task" do
-      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, recurrence: "custom", interval_days: 3, assignee_id: member.id, season_id: season.id } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, recurrence: "custom", interval_days: 3, assignee_ids: [ member.id ], season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:created)
-      expect(json_body).to include("title" => "Regar", "recurrence" => "custom", "interval_days" => 3, "assignee_id" => member.id)
+      expect(json_body).to include("title" => "Regar", "recurrence" => "custom", "interval_days" => 3, "assignee_ids" => [ member.id ])
     end
 
     it "marks a task as good for lagartinhas" do
       post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, kid_friendly: true, season_id: season.id } }, headers: headers
 
       expect(json_body).to include("kid_friendly" => true)
+    end
+
+    it "creates a task that repeats on chosen days of the week" do
+      post "/api/v1/tasks", params: { task: { title: "Lixo", points: 5, recurrence: "weekdays", weekdays: [ 4, 2 ], season_id: season.id } }, headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(json_body).to include("recurrence" => "weekdays", "weekdays" => [ 2, 4 ])
+    end
+
+    it "refuses weekday recurrence with no day" do
+      post "/api/v1/tasks", params: { task: { title: "Lixo", points: 5, recurrence: "weekdays", season_id: season.id } }, headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json_body["details"]).to include("Dias da semana precisam de pelo menos um dia")
+    end
+
+    it "shares a task between more than one person" do
+      bruno = household.members.create!(name: "Bruno")
+
+      post "/api/v1/tasks", params: { task: { title: "Arrumar a garagem", points: 5, assignee_ids: [ bruno.id, member.id ], season_id: season.id } }, headers: headers
+
+      expect(response).to have_http_status(:created)
+      expect(json_body["assignee_ids"]).to eq([ member.id, bruno.id ].sort)
     end
 
     it "returns validation errors" do
@@ -42,10 +65,10 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks with a member that no longer exists" do
     it "answers 422 in Portuguese instead of crashing" do
-      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999, season_id: season.id } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_ids: [ 999_999 ], season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(json_body["details"].first).to include("não existe mais")
+      expect(json_body["details"]).to eq([ "Escolha só quem mora nesta colmeia" ])
     end
   end
 
