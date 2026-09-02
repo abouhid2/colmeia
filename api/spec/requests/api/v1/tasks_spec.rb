@@ -73,6 +73,19 @@ RSpec.describe "Tasks API", type: :request do
       expect(household.completions.sum(:points_awarded)).to eq(15)
     end
 
+    it "answers 409 for a task of a closed estação, so its history keeps the completion" do
+      task = household.tasks.create!(season: season, title: "Pendurar quadro", points: 15)
+      post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
+      season.update!(closed_at: Time.current)
+
+      post "/api/v1/tasks/#{task.id}/reopen", headers: headers
+
+      expect(response).to have_http_status(:conflict)
+      expect(json_body["details"]).to eq([ "Essa estação já foi encerrada" ])
+      expect(task.reload.status).to eq("done")
+      expect(household.completions.count).to eq(1)
+    end
+
     it "answers 409 when the task is already open" do
       task = household.tasks.create!(season: season, title: "Aberta", points: 5)
 

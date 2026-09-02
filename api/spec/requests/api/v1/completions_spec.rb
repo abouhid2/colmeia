@@ -63,6 +63,17 @@ RSpec.describe "Completions API", type: :request do
     expect(json_body).to include("status" => "approved", "rating" => 4, "points_awarded" => 16)
   end
 
+  it "refuses to review into a closed estação with 409" do
+    season.update!(closed_at: Time.current)
+
+    post "/api/v1/completions/#{completion.id}/review", params: { reviewer_id: reviewer.id, rating: 5 }, headers: headers
+
+    expect(response).to have_http_status(:conflict)
+    expect(json_body["details"]).to eq([ "Essa estação já foi encerrada" ])
+    expect(completion.reload).to be_pending
+    expect(completion.points_awarded).to eq(0)
+  end
+
   it "rejects self review with 409" do
     post "/api/v1/completions/#{completion.id}/review", params: { reviewer_id: worker.id, rating: 5 }, headers: headers
 
