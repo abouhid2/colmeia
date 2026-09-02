@@ -35,8 +35,9 @@ export function LandingPage() {
     <PlainPage>
       <div className="text-center">
         <BrandMark className="justify-center" />
-        <h1 className="mt-4 text-3xl font-bold tracking-tight">As tarefas da casa viram pontos</h1>
-        <p className="mt-2 text-ink-soft">E os pontos viram uma recompensa para todo mundo. Crie a sua colmeia ou entre na de quem te chamou.</p>
+        <h1 className="mt-4 text-2xl font-bold tracking-tight">
+          Competição <s className="decoration-berry-500 decoration-2 text-ink-faint">saudável</s> entre abelhas-operárias
+        </h1>
       </div>
 
       <Card className="space-y-5 p-6">

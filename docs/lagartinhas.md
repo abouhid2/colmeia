@@ -44,6 +44,25 @@ Descartei o valor duplo por tarefa (custo de cadastro que ninguém paga) e a
 contribuição relativa (justa e ilegível). A meta com alvo menor continua
 disponível: ela já existe e combina bem com o multiplicador.
 
+## Nem toda casa tem criança
+
+Uma colmeia só de adultos não tem o que fazer com multiplicador, liga separada
+nem tarefa marcada para criança: são três coisas na tela que não querem dizer
+nada ali. Por isso o assunto inteiro é um interruptor da colmeia,
+`lagartinhas_enabled`, na página Família, em "Ajustes da colmeia". Ele nasce
+desligado, porque a maioria das casas não tem criança, e a família de exemplo
+nasce ligada, porque tem a Duda.
+
+Desligado, nenhuma tela fala em lagartinha: somem o tipo de pessoa e o
+multiplicador no cadastro, a marca ao lado do nome, o mini ranking, a marca
+"boa para lagartinhas" nas tarefas e o filtro da lista.
+
+O que ele não faz é mexer em ninguém. Quem está cadastrado como lagartinha
+continua lagartinha, com o multiplicador que tem, e os pontos continuam saindo
+multiplicados. Desligar é parar de falar do assunto, não reescrever o que já
+aconteceu, pelo mesmo motivo do histórico logo abaixo. Quem desliga com uma
+criança na casa lê isso embaixo do interruptor, com o nome dela.
+
 ## Como interage com o resto
 
 **Avaliação.** A ordem importa e é sempre a mesma: a nota escala os pontos base

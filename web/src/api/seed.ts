@@ -118,7 +118,8 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   ];
 
   return {
-    household: { id: 1, name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: DEMO_INVITE_CODE, demo: true },
+    // Duda is a lagartinha, so the example shows what the switch turns on.
+    household: { id: 1, name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: DEMO_INVITE_CODE, demo: true, lagartinhasEnabled: true },
     members,
     seasons,
     tasks,

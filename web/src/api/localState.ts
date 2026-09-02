@@ -34,7 +34,7 @@ export interface LocalState {
 
 export function emptyState(inviteCode: string, name: string, now: Date): LocalState {
   return {
-    household: { id: 1, name, inviteCode, demo: false },
+    household: { id: 1, name, inviteCode, demo: false, lagartinhasEnabled: false },
     members: [],
     seasons: [ firstSeason(2, toIsoDate(now), now) ],
     tasks: [],
@@ -68,7 +68,7 @@ type StoredGoal = Older<Goal, "seasonId"> & { period?: string };
 export type StoredState = Omit<
   LocalState, "household" | "members" | "seasons" | "tasks" | "completions" | "goals" | "awards"
 > & {
-  household: Older<Household, "demo">;
+  household: Older<Household, "demo" | "lagartinhasEnabled">;
   members: StoredMember[];
   seasons?: StoredSeason[];
   tasks: Older<Task, "kidFriendly" | "seasonId">[];
@@ -88,7 +88,11 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
   return {
     ...state,
     // Anything stored before sandboxes existed is somebody's real colmeia.
-    household: { ...state.household, demo: state.household.demo ?? false },
+    household: {
+      ...state.household,
+      demo: state.household.demo ?? false,
+      lagartinhasEnabled: state.household.lagartinhasEnabled ?? hadLagartinhas(state),
+    },
     seasons: adopted,
     nextId: seasons.length > 0 ? state.nextId : state.nextId + 1,
     members: state.members.map((member) => ({
@@ -108,6 +112,12 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
     goals: state.goals.map(({ period: _period, ...goal }) => ({ ...goal, seasonId: goal.seasonId ?? first.id })),
     awards: state.awards ?? [],
   };
+}
+
+/** A colmeia stored before the switch existed answers for itself: it was using
+ *  lagartinhas if somebody in it is one. Everyone else opens with them off. */
+function hadLagartinhas(state: StoredState): boolean {
+  return state.members.some((member) => member.kind === "lagartinha");
 }
 
 /** The oldest day the colmeia has, so nothing predates its own first estação. */

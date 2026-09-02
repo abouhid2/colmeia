@@ -1,6 +1,6 @@
 import type {
   AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
-  HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
+  HouseholdUpdate, HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
   ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
 import type { ColmeiaApi, CompleteTaskOptions, CompleteTaskResult, CompletionQuery, DemoColmeia } from "./client";
@@ -101,7 +101,7 @@ export class HttpApi implements ColmeiaApi {
 
   household = {
     get: (): Promise<Household> => this.request("GET", "/household"),
-    update: (input: Pick<Household, "name">): Promise<Household> => this.request("PATCH", "/household", { household: input }),
+    update: (input: HouseholdUpdate): Promise<Household> => this.request("PATCH", "/household", { household: input }),
     reseed: (): Promise<Member> => this.request("POST", "/household/reseed"),
   };
 
