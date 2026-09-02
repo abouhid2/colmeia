@@ -237,9 +237,15 @@ module Households
       cast("Lesma", bruno, clara)
     end
 
+    # Títulos survive a reset and are editable like anywhere else, so the one
+    # this vote was written for may have been renamed or deleted. The example
+    # comes back with one vote fewer rather than refusing to come back at all.
     def cast(title_name, voter, votee)
+      title = titles[title_name]
+      return if title.nil?
+
       household.season_title_votes.create!(
-        season: seasons.fetch(:past), season_title: titles.fetch(title_name), voter: voter, votee: votee
+        season: seasons.fetch(:past), season_title: title, voter: voter, votee: votee
       )
     end
 

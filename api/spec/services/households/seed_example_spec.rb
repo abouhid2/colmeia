@@ -26,6 +26,30 @@ RSpec.describe Households::SeedExample do
     expect(tally.call("Lesma").keys).to contain_exactly(clara.id, duda.id)
   end
 
+  # Títulos are editable in the sandbox like anywhere else and they survive a
+  # reset, so "Recomeçar o exemplo" has to come back around whatever was done.
+  it "comes back one vote short after a título was renamed" do
+    described_class.new(household, now: now).call
+    household.season_titles.find_by!(name: "Pernilongo").update!(name: "Mosquito")
+
+    expect { described_class.new(household, now: now).reset }.not_to raise_error
+
+    past = household.seasons.find_by!(name: "Estação passada")
+    expect(past.season_title_votes.joins(:season_title).pluck("season_titles.name").uniq).to eq([ "Lesma" ])
+    expect(household.members.pluck(:name)).to eq(%w[ Ana Bruno Clara Duda ])
+  end
+
+  it "comes back after a título nobody had voted on was deleted" do
+    described_class.new(household, now: now).call
+    described_class.new(household, now: now).reset
+    household.season_titles.find_by!(name: "Pernilongo").destroy!
+
+    expect { described_class.new(household, now: now).reset }.not_to raise_error
+
+    expect(household.season_title_votes.count).to eq(2)
+    expect(household.members.pluck(:name)).to eq(%w[ Ana Bruno Clara Duda ])
+  end
+
   it "hands back Ana, already claimed, so the visitor walks straight in" do
     member = described_class.new(household, now: now).call
 
