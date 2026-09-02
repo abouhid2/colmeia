@@ -36,9 +36,10 @@ function SeasonForm({ season, onDone }: { season: Season | null; onDone(): void 
   const [name, setName] = useState(season?.name ?? "");
   const [startsOn, setStartsOn] = useState(season?.startsOn ?? toIsoDate(new Date()));
   const [endsOn, setEndsOn] = useState(season?.endsOn ?? "");
-  const [copyFrom, setCopyFrom] = useState(season ? NO_COPY : String(currentSeason?.id ?? NO_COPY));
-
   const reusable = seasons.filter((candidate) => candidate.tasksCount > 0);
+  // The estação on screen, unless it has nothing to hand over.
+  const suggested = reusable.find((candidate) => candidate.id === currentSeason?.id) ?? reusable[0];
+  const [copyFrom, setCopyFrom] = useState(season || !suggested ? NO_COPY : String(suggested.id));
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
