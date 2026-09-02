@@ -33,6 +33,7 @@ pt-BR:
         name: Nome
         avatar: Bichinho
         color: Cor
+        pattern: Textura
         kind: Tipo
         points_multiplier: Multiplicador de pontos
         crown_title: Título de vencedor

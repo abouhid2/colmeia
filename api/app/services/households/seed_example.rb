@@ -95,13 +95,14 @@ module Households
       # Ana already claimed her place; the other three are still invitations
       # waiting to be opened, which is what the invite link demonstrates. Ana
       # and Bruno also pinned badges they earned, which is what the profile shows.
-      members[:ana] = household.members.create!(name: ENTRY_MEMBER_NAME, avatar: "🦊", color: "pollen", claimed_at: now,
+      # Each one fills the honeycomb with a texture of their own.
+      members[:ana] = household.members.create!(name: ENTRY_MEMBER_NAME, avatar: "🦊", color: "pollen", pattern: "dots", claimed_at: now,
         favorite_achievements: %w[ firstTask bigTask ])
-      members[:bruno] = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky", crown_title: "Abelhão",
+      members[:bruno] = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky", pattern: "stripes", crown_title: "Abelhão",
         favorite_achievements: %w[ flawless ])
-      members[:clara] = household.members.create!(name: "Clara", avatar: "🐼", color: "plum", crown_title: "Rainha da Louça")
+      members[:clara] = household.members.create!(name: "Clara", avatar: "🐼", color: "plum", pattern: "crosses", crown_title: "Rainha da Louça")
       # Duda is the child of the house: everything she does is worth 1,5x.
-      members[:duda] = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf", kind: "lagartinha")
+      members[:duda] = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf", pattern: "rings", kind: "lagartinha")
     end
 
     def create_tasks

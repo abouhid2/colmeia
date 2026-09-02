@@ -76,6 +76,21 @@ RSpec.describe "Members API", type: :request do
     expect(member.reload.favorite_achievements).to eq([])
   end
 
+  it "serves a texture, defaults it to solid and lets somebody change it" do
+    post "/api/v1/members", params: { member: { name: "Bruno", color: "sky" } }, headers: headers
+    expect(json_body["pattern"]).to eq("solid")
+    id = json_body["id"]
+
+    patch "/api/v1/members/#{id}", params: { member: { pattern: "waves" } }, headers: headers
+    expect(json_body["pattern"]).to eq("waves")
+  end
+
+  it "rejects unknown textures" do
+    post "/api/v1/members", params: { member: { name: "X", pattern: "glitter" } }, headers: headers
+
+    expect(response).to have_http_status(:unprocessable_content)
+  end
+
   it "rejects unknown colors" do
     post "/api/v1/members", params: { member: { name: "X", color: "neon" } }, headers: headers
 

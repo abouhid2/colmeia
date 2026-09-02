@@ -5,6 +5,7 @@ module MemberSerializer
       name: member.name,
       avatar: member.avatar,
       color: member.color,
+      pattern: member.pattern,
       kind: member.kind,
       points_multiplier: member.points_multiplier.to_f,
       crown_title: member.crown_title,
