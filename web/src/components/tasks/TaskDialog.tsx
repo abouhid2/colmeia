@@ -1,4 +1,5 @@
 import type { Task, TaskInput } from "../../domain/types";
+import { useSeason } from "../../hooks/useSeasonContext";
 import { useSession } from "../../hooks/useSession";
 import { useTaskMutations } from "../../hooks/useTasks";
 import { useToast } from "../../hooks/useToast";
@@ -33,6 +34,7 @@ export function TaskDialog({ open, mode, task, onClose }: TaskDialogProps) {
 
 function PlanTaskForm({ task, onDone }: { task: Task | null; onDone(): void }) {
   const { members, currentMember } = useSession();
+  const { currentSeason } = useSeason();
   const { create, update, remove } = useTaskMutations();
   const { notify } = useToast();
 
@@ -49,11 +51,15 @@ function PlanTaskForm({ task, onDone }: { task: Task | null; onDone(): void }) {
     remove.mutate(task.id, { onSuccess: () => { notify({ message: "Tarefa excluída" }); onDone(); } });
   };
 
+  const seasonId = task?.seasonId ?? currentSeason?.id ?? null;
+  if (seasonId === null) return null;
+
   return (
     <TaskForm
       task={task}
       members={members}
       currentMemberId={currentMember?.id ?? null}
+      seasonId={seasonId}
       submitting={create.isPending || update.isPending}
       onSubmit={submit}
       onDelete={task ? destroy : undefined}

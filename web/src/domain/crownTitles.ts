@@ -1,4 +1,4 @@
-import type { GoalPeriod, Member } from "./types";
+import type { Member } from "./types";
 
 export const DEFAULT_CROWN_TITLE = "Abelha Rainha";
 
@@ -8,19 +8,17 @@ export const CROWN_TITLE_SUGGESTIONS = [DEFAULT_CROWN_TITLE, "Abelhão"];
 /** Everyone who is not wearing the crown right now. */
 export const WORKER_BEE_LABEL = "Abelha operária";
 
-const THIS_PERIOD: Record<GoalPeriod, string> = { week: "desta semana", month: "deste mês" };
+const THIS_SEASON = "desta estação";
 
 /** A blank title is how someone opts out: they never wear the crown. */
 export function wantsCrown(member: Pick<Member, "crownTitle">): boolean {
   return member.crownTitle.trim() !== "";
 }
 
-/** "Rei da Louça desta semana", the line under the name on a crowned profile. */
-export function crownedTitle(crownTitle: string, period: GoalPeriod): string {
-  return `${crownTitle.trim()} ${THIS_PERIOD[period]}`;
+/** "Rei da Louça desta estação", the line under the name on a crowned profile. */
+export function crownedTitle(crownTitle: string): string {
+  return `${crownTitle.trim()} ${THIS_SEASON}`;
 }
 
-export function crownExplanation(period: GoalPeriod): string {
-  const won = period === "week" ? "na semana passada" : "no mês passado";
-  return `Quem mais pontuou ${won} e bateu a meta usa o título que escolheu até o fim ${THIS_PERIOD[period]}.`;
-}
+export const CROWN_EXPLANATION =
+  "Quem mais pontuou na última estação encerrada e bateu a meta usa o título que escolheu até esta estação acabar.";

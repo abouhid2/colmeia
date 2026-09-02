@@ -3,12 +3,13 @@ require "rails_helper"
 RSpec.describe "Tasks API", type: :request do
   let(:household) { create_household }
   let(:headers) { headers_for(household) }
+  let(:season) { season_of(household) }
   let!(:member) { household.members.create!(name: "Ana") }
 
   describe "GET /api/v1/tasks" do
     it "lists tasks, optionally filtered by status" do
-      household.tasks.create!(title: "Aberta", points: 5)
-      household.tasks.create!(title: "Feita", points: 5, status: "done")
+      household.tasks.create!(season: season, title: "Aberta", points: 5)
+      household.tasks.create!(season: season, title: "Feita", points: 5, status: "done")
 
       get "/api/v1/tasks", params: { status: "open" }, headers: headers
 
@@ -19,20 +20,20 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks" do
     it "creates a task" do
-      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, recurrence: "custom", interval_days: 3, assignee_id: member.id } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, recurrence: "custom", interval_days: 3, assignee_id: member.id, season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:created)
       expect(json_body).to include("title" => "Regar", "recurrence" => "custom", "interval_days" => 3, "assignee_id" => member.id)
     end
 
     it "marks a task as good for lagartinhas" do
-      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, kid_friendly: true } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, kid_friendly: true, season_id: season.id } }, headers: headers
 
       expect(json_body).to include("kid_friendly" => true)
     end
 
     it "returns validation errors" do
-      post "/api/v1/tasks", params: { task: { title: "", points: 0 } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "", points: 0, season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json_body["details"]).to include("Título não pode ficar em branco")
@@ -41,7 +42,7 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks with a member that no longer exists" do
     it "answers 422 in Portuguese instead of crashing" do
-      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999 } }, headers: headers
+      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999, season_id: season.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(json_body["details"].first).to include("não existe mais")
@@ -50,7 +51,7 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks/:id/reopen" do
     it "reopens a done task and clears completed_at" do
-      task = household.tasks.create!(title: "Feita", points: 5, status: "done", completed_at: Time.current)
+      task = household.tasks.create!(season: season, title: "Feita", points: 5, status: "done", completed_at: Time.current)
 
       post "/api/v1/tasks/#{task.id}/reopen", headers: headers
 
@@ -59,7 +60,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "takes back the completion that closed the task, so it pays only once" do
-      task = household.tasks.create!(title: "Pendurar quadro", points: 15)
+      task = household.tasks.create!(season: season, title: "Pendurar quadro", points: 15)
       post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
 
       post "/api/v1/tasks/#{task.id}/reopen", headers: headers
@@ -73,7 +74,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "answers 409 when the task is already open" do
-      task = household.tasks.create!(title: "Aberta", points: 5)
+      task = household.tasks.create!(season: season, title: "Aberta", points: 5)
 
       post "/api/v1/tasks/#{task.id}/reopen", headers: headers
 
@@ -81,7 +82,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "ignores status through mass assignment" do
-      task = household.tasks.create!(title: "Aberta", points: 5)
+      task = household.tasks.create!(season: season, title: "Aberta", points: 5)
 
       patch "/api/v1/tasks/#{task.id}", params: { task: { status: "done" } }, headers: headers
 
@@ -91,7 +92,7 @@ RSpec.describe "Tasks API", type: :request do
 
   describe "POST /api/v1/tasks/:id/complete" do
     it "returns the updated task and the new completion" do
-      task = household.tasks.create!(title: "Louça", points: 5, recurrence: "daily", due_on: Date.current)
+      task = household.tasks.create!(season: season, title: "Louça", points: 5, recurrence: "daily", due_on: Date.current)
 
       post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
 
@@ -102,7 +103,7 @@ RSpec.describe "Tasks API", type: :request do
 
     it "pays a lagartinha the multiplied points and reports the multiplier used" do
       duda = household.members.create!(name: "Duda", kind: "lagartinha")
-      task = household.tasks.create!(title: "Louça", points: 5, kid_friendly: true)
+      task = household.tasks.create!(season: season, title: "Louça", points: 5, kid_friendly: true)
 
       post "/api/v1/tasks/#{task.id}/complete", params: { member_id: duda.id }, headers: headers
 
@@ -111,7 +112,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "responds with 409 when the task is already done" do
-      task = household.tasks.create!(title: "Feita", points: 5, status: "done")
+      task = household.tasks.create!(season: season, title: "Feita", points: 5, status: "done")
 
       post "/api/v1/tasks/#{task.id}/complete", params: { member_id: member.id }, headers: headers
 
@@ -119,7 +120,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "dates the completion when the work happened, if the request says so" do
-      task = household.tasks.create!(title: "Pendurar quadro", points: 15)
+      task = household.tasks.create!(season: season, title: "Pendurar quadro", points: 15)
       done_at = 3.days.ago.change(usec: 0)
 
       post "/api/v1/tasks/#{task.id}/complete",
@@ -131,7 +132,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "responds with 422 and says why when the moment is in the future" do
-      task = household.tasks.create!(title: "Louça", points: 5)
+      task = household.tasks.create!(season: season, title: "Louça", points: 5)
 
       post "/api/v1/tasks/#{task.id}/complete",
         params: { member_id: member.id, completed_at: 1.day.from_now.iso8601 }, headers: headers
@@ -142,7 +143,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "responds with 422 when the moment is more than a year back" do
-      task = household.tasks.create!(title: "Louça", points: 5)
+      task = household.tasks.create!(season: season, title: "Louça", points: 5)
 
       post "/api/v1/tasks/#{task.id}/complete",
         params: { member_id: member.id, completed_at: 400.days.ago.iso8601 }, headers: headers

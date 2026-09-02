@@ -10,12 +10,23 @@ import type {
   Member,
   MemberInput,
   ReviewInput,
+  Season,
+  SeasonInput,
+  SeasonUpdate,
   ShoppingItem,
   ShoppingItemInput,
   ShoppingItemUpdate,
   Task,
   TaskInput,
 } from "../domain/types";
+
+/** Which slice of the history a screen wants. */
+export interface CompletionQuery {
+  /** Only what was scored inside this estação. */
+  seasonId?: number | null;
+  /** At most this many, newest first. */
+  limit?: number;
+}
 
 export interface CompleteTaskResult {
   task: Task;
@@ -66,8 +77,18 @@ export interface ColmeiaApi {
     update(id: number, input: Partial<MemberInput>): Promise<Member>;
     remove(id: number): Promise<void>;
   };
+  /** The championships of the colmeia. Everything that scores belongs to one. */
+  seasons: {
+    list(): Promise<Season[]>;
+    create(input: SeasonInput): Promise<Season>;
+    update(id: number, input: Partial<SeasonUpdate>): Promise<Season>;
+    close(id: number): Promise<Season>;
+    reopen(id: number): Promise<Season>;
+    remove(id: number): Promise<void>;
+  };
   tasks: {
-    list(): Promise<Task[]>;
+    /** null spans every estação. */
+    list(seasonId: number | null): Promise<Task[]>;
     create(input: TaskInput): Promise<Task>;
     update(id: number, input: Partial<TaskInput>): Promise<Task>;
     remove(id: number): Promise<void>;
@@ -75,9 +96,9 @@ export interface ColmeiaApi {
     reopen(id: number): Promise<Task>;
   };
   completions: {
-    /** Newest first. Without a limit, the whole history: the ranking and the
-     *  achievements are counted from all of it. */
-    list(limit?: number): Promise<Completion[]>;
+    /** Newest first, across every estação unless one is named: the profile
+     *  history and the badges are counted from all of it. */
+    list(options?: CompletionQuery): Promise<Completion[]>;
     review(id: number, input: ReviewInput): Promise<Completion>;
   };
   achievementAwards: {
@@ -94,7 +115,8 @@ export interface ColmeiaApi {
     clearPurchased(): Promise<void>;
   };
   goals: {
-    list(): Promise<Goal[]>;
+    /** null spans every estação. */
+    list(seasonId: number | null): Promise<Goal[]>;
     create(input: GoalInput): Promise<Goal>;
     update(id: number, input: Partial<GoalInput>): Promise<Goal>;
     remove(id: number): Promise<void>;

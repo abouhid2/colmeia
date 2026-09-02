@@ -1,13 +1,17 @@
 import { CalendarCheck, ListChecks, Plus } from "lucide-react";
 import { useState } from "react";
 import { canReopen, completionsForMember } from "../domain/history";
+import { completionsInSeason, isClosed } from "../domain/seasons";
 import { sortOpenTasks } from "../domain/taskSort";
 import { useCompletions } from "../hooks/useCompletions";
 import { useMemberFilter } from "../hooks/useMemberFilter";
 import { useMemberLookup } from "../hooks/useMembers";
 import { useNow } from "../hooks/useNow";
+import { useSeason } from "../hooks/useSeasonContext";
 import { useTaskMutations, useTasks } from "../hooks/useTasks";
 import { MemberFilter } from "../components/members/MemberFilter";
+import { NoSeasonState } from "../components/season/NoSeasonState";
+import { SeasonClosedNotice } from "../components/season/SeasonClosedNotice";
 import { CompletionRow } from "../components/tasks/CompletionRow";
 import { TaskDialogs } from "../components/tasks/TaskDialogs";
 import { TaskList } from "../components/tasks/TaskList";
@@ -23,6 +27,7 @@ const HISTORY_PAGE = 50;
 
 export function TasksPage() {
   const now = useNow();
+  const { currentSeason, isLoading: loadingSeasons } = useSeason();
   const { tasks } = useTasks();
   const { completions } = useCompletions();
   const { reopen } = useTaskMutations();
@@ -33,6 +38,9 @@ export function TasksPage() {
   const [shown, setShown] = useState(HISTORY_PAGE);
   const [kidOnly, setKidOnly] = useState(false);
 
+  if (currentSeason === null) return loadingSeasons ? null : <NoSeasonState />;
+
+  const closed = isClosed(currentSeason);
   const open = sortOpenTasks(
     tasks.filter((task) =>
       task.status === "open"
@@ -40,7 +48,7 @@ export function TasksPage() {
       && (!kidOnly || task.kidFriendly)),
     now,
   );
-  const done = completionsForMember(completions, memberId);
+  const done = completionsForMember(completionsInSeason(completions, currentSeason.id), memberId);
   const history = done.slice(0, shown);
   // Nothing to filter by until an adult has marked a task for the children.
   const hasKidFriendly = tasks.some((task) => task.kidFriendly);
@@ -54,13 +62,16 @@ export function TasksPage() {
     <div className="space-y-5 animate-rise">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold tracking-tight">Tarefas</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" icon={<CalendarCheck className="size-4" />} onClick={dialogs.openLogDone}>
-            Registrar algo já feito
-          </Button>
-          <Button icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>
-        </div>
+        {!closed && (
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" icon={<CalendarCheck className="size-4" />} onClick={dialogs.openLogDone}>
+              Registrar algo já feito
+            </Button>
+            <Button icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>
+          </div>
+        )}
       </div>
+      {closed && <SeasonClosedNotice name={currentSeason.name} />}
       <MemberFilter />
       <div className="flex flex-wrap items-center gap-2">
         <Segmented label="Situação" options={options} value={status} onChange={setStatus} />
@@ -75,7 +86,7 @@ export function TasksPage() {
         done.length === 0 ? (
           <EmptyState
             icon={<ListChecks className="size-6" />}
-            title={filtered ? `${filtered.name} ainda não fez nada por aqui` : "Nada concluído ainda"}
+            title={filtered ? `${filtered.name} ainda não fez nada nesta estação` : "Nada concluído nesta estação"}
             hint={filtered ? undefined : "Toda tarefa feita aparece aqui, até as que se repetem."}
           />
         ) : (
@@ -87,7 +98,7 @@ export function TasksPage() {
                   completion={completion}
                   doer={lookup(completion.memberId)}
                   now={now}
-                  canReopen={canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
+                  canReopen={!closed && canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
                   onReopen={() => {
                     if (completion.taskId !== null) reopen.mutate(completion.taskId);
                   }}
@@ -106,10 +117,10 @@ export function TasksPage() {
           icon={<ListChecks className="size-6" />}
           title={kidOnly ? "Nenhuma tarefa para lagartinhas" : filtered ? `${filtered.name} está sem tarefa` : "Nenhuma tarefa aberta"}
           hint={kidOnly ? "Marque \"boa para lagartinhas\" nas tarefas que uma criança dá conta." : filtered ? "Crie uma tarefa para essa pessoa ou tire o filtro." : "Crie a primeira: o que precisa ser feito na casa?"}
-          action={<Button size="sm" icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>}
+          action={closed ? undefined : <Button size="sm" icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>}
         />
       ) : (
-        <TaskList tasks={open} today={now} lookup={lookup} onComplete={dialogs.openComplete} onEdit={dialogs.openEdit} />
+        <TaskList tasks={open} today={now} lookup={lookup} onComplete={dialogs.openComplete} onEdit={dialogs.openEdit} readOnly={closed} />
       )}
 
       <TaskDialogs dialogs={dialogs} />

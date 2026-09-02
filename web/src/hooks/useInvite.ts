@@ -23,7 +23,7 @@ export function useInvite(inviteCode: string) {
   });
 
   const bind = (memberId: number) => {
-    enter({ inviteCode, memberId });
+    enter({ inviteCode, memberId, seasonId: null });
     void navigate("/", { replace: true });
   };
 

@@ -11,8 +11,14 @@ module ApiHelpers
 end
 
 module HouseholdFactory
+  # A colmeia always opens with one estação, the way the app creates it.
   def create_household(name: "Casa")
-    Household.create!(name: name)
+    Households::Create.new(name: name).call
+  end
+
+  # The estação a colmeia starts with, for specs that do not care which one.
+  def season_of(household)
+    household.seasons.first
   end
 end
 

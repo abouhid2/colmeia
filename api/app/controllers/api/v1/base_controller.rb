@@ -50,6 +50,15 @@ module Api
       def render_conflict(message)
         render json: { error: "conflict", details: [ message ] }, status: :conflict
       end
+
+      def t_error(key)
+        I18n.t("api.errors.#{key}")
+      end
+
+      # A closed estação is a finished championship: nothing new is scored in it.
+      def season_closed?(season)
+        season.present? && season.closed?
+      end
     end
   end
 end

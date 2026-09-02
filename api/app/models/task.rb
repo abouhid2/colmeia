@@ -6,6 +6,7 @@ class Task < ApplicationRecord
 
   include HouseholdScoped
 
+  belongs_to_in_household :season
   belongs_to_in_household :assignee, class_name: "Member", optional: true
   belongs_to_in_household :created_by, class_name: "Member", optional: true
   has_many :completions, dependent: :nullify

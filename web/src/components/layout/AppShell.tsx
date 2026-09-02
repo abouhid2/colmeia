@@ -7,6 +7,7 @@ import { useSession } from "../../hooks/useSession";
 import { useSessionContext } from "../../hooks/useSessionContext";
 import { LandingPage } from "../../pages/LandingPage";
 import { InviteButton } from "../household/InviteButton";
+import { SeasonSwitcher } from "../season/SeasonSwitcher";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
 import { BrandMark } from "./BrandMark";
@@ -35,6 +36,7 @@ export function AppShell() {
           <div>
             <BrandMark />
             <p className="mt-1 truncate pl-9 text-sm text-ink-soft">{household.data?.name}</p>
+            <div className="mt-4"><SeasonSwitcher /></div>
           </div>
           <nav aria-label="Principal"><NavLinks layout="rail" /></nav>
           <div className="mt-auto space-y-3">
@@ -45,12 +47,15 @@ export function AppShell() {
         </aside>
 
         <div className="min-w-0">
-          <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-paper/90 px-4 py-2.5 backdrop-blur md:hidden">
-            <BrandMark />
-            <div className="flex items-center gap-1">
-              <InviteButton compact />
-              <MemberSwitcher compact />
+          <header className="sticky top-0 z-10 space-y-2 border-b border-line bg-paper/90 px-4 py-2.5 backdrop-blur md:hidden">
+            <div className="flex items-center justify-between">
+              <BrandMark />
+              <div className="flex items-center gap-1">
+                <InviteButton compact />
+                <MemberSwitcher compact />
+              </div>
             </div>
+            <SeasonSwitcher />
           </header>
           <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
             <Outlet />

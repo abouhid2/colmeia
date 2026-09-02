@@ -3,7 +3,7 @@ import type { Completion } from "../../domain/types";
 import { logDoneMessage } from "./logDoneCopy";
 
 const completion = (overrides: Partial<Completion> = {}): Completion => ({
-  id: 1, taskId: 2, memberId: 3, reviewerId: null, status: "approved", rating: null,
+  id: 1, seasonId: 1, taskId: 2, memberId: 3, reviewerId: null, status: "approved", rating: null,
   pointsAwarded: 15, multiplier: 1, taskTitle: "Trocar a lâmpada", taskPoints: 15,
   completedAt: "2026-08-14T18:30:00.000Z", reviewedAt: null, ...overrides,
 });

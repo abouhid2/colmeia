@@ -4,16 +4,17 @@ import type { GoalWithProgress } from "../../hooks/useGoalOverview";
 import { cn } from "../../lib/cn";
 import { Avatar } from "../ui/Avatar";
 import { IconButton } from "../ui/IconButton";
-import { periodScopeLabel } from "./goalCopy";
 
 interface GoalSummaryCardProps {
   item: GoalWithProgress;
   onEdit(): void;
+  /** A closed estação is history: there is nothing left to adjust. */
+  readOnly?: boolean;
 }
 
 /** Compact goal: who it belongs to, how many points it takes, what it pays. */
-export function GoalSummaryCard({ item, onEdit }: GoalSummaryCardProps) {
-  const { goal, progress, member } = item;
+export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryCardProps) {
+  const { goal, progress, season, member } = item;
   const progressLabel = member ? `Meta de ${member.name}` : "Meta da colmeia";
   return (
     <li className="flex items-start gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
@@ -24,7 +25,7 @@ export function GoalSummaryCard({ item, onEdit }: GoalSummaryCardProps) {
       )}
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-          {member ? member.name : "A colmeia inteira"} · {periodScopeLabel(goal.period)}
+          {member ? member.name : "A colmeia inteira"} · {season.name}
         </p>
         <p className="font-semibold">Meta: <span className="tabular-nums">{formatPoints(goal.targetPoints)}</span></p>
         <p className="flex items-start gap-1.5 text-sm text-ink-soft">
@@ -39,7 +40,9 @@ export function GoalSummaryCard({ item, onEdit }: GoalSummaryCardProps) {
           {progress.reached && <span className="ml-2 inline-flex items-center gap-1 font-semibold text-leaf-700"><PartyPopper className="size-3.5" /> batida</span>}
         </p>
       </div>
-      <IconButton label={`Ajustar meta: ${goal.title}`} icon={<Pencil className="size-4" />} onClick={onEdit} className="-mr-2 -mt-1" />
+      {!readOnly && (
+        <IconButton label={`Ajustar meta: ${goal.title}`} icon={<Pencil className="size-4" />} onClick={onEdit} className="-mr-2 -mt-1" />
+      )}
     </li>
   );
 }

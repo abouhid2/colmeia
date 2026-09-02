@@ -8,12 +8,14 @@ import { WhenFields } from "./WhenFields";
  *  happened, so it only needs who did it and when. */
 export function LogDoneForm({ onDone }: { onDone(): void }) {
   const log = useLogDone(onDone);
+  if (log.seasonId === null) return null;
 
   return (
     <TaskForm
       task={null}
       members={log.members}
       currentMemberId={log.memberId}
+      seasonId={log.seasonId}
       submitting={log.submitting}
       logged={{
         ready: log.ready,

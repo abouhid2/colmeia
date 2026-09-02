@@ -3,6 +3,7 @@ require "rails_helper"
 RSpec.describe "Goals API", type: :request do
   let(:household) { create_household }
   let(:headers) { headers_for(household) }
+  let(:season) { season_of(household) }
   let!(:member) { household.members.create!(name: "Duda") }
 
   it "starts empty" do
@@ -12,11 +13,11 @@ RSpec.describe "Goals API", type: :request do
   end
 
   it "creates household and personal goals, edits and removes them" do
-    post "/api/v1/goals", params: { goal: { title: "Pizza", target_points: 300, period: "week" } }, headers: headers
+    post "/api/v1/goals", params: { goal: { title: "Pizza", target_points: 300, season_id: season.id } }, headers: headers
     expect(response).to have_http_status(:created)
     expect(json_body).to include("title" => "Pizza", "member_id" => nil)
 
-    post "/api/v1/goals", params: { goal: { title: "Sorvete", target_points: 30, period: "week", member_id: member.id } }, headers: headers
+    post "/api/v1/goals", params: { goal: { title: "Sorvete", target_points: 30, season_id: season.id, member_id: member.id } }, headers: headers
     personal_id = json_body["id"]
     expect(json_body["member_id"]).to eq(member.id)
 
@@ -31,14 +32,14 @@ RSpec.describe "Goals API", type: :request do
   end
 
   it "rejects a goal without points" do
-    post "/api/v1/goals", params: { goal: { title: "Nada", target_points: 0 } }, headers: headers
+    post "/api/v1/goals", params: { goal: { title: "Nada", target_points: 0, season_id: season.id } }, headers: headers
 
     expect(response).to have_http_status(:unprocessable_content)
   end
 
   it "drops personal goals when the member leaves" do
-    household.goals.create!(title: "Sorvete", target_points: 30, member: member)
-    household.goals.create!(title: "Pizza", target_points: 300)
+    household.goals.create!(season: season, title: "Sorvete", target_points: 30, member: member)
+    household.goals.create!(season: season, title: "Pizza", target_points: 300)
 
     delete "/api/v1/members/#{member.id}", headers: headers
 

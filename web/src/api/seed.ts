@@ -3,7 +3,14 @@ import type { AchievementId } from "../domain/achievements";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { toIsoDate } from "../lib/dates";
 import type { Completion, Member, ShoppingItem, Task } from "../domain/types";
-import { DEMO_INVITE_CODE, EXAMPLE_ENTRY_MEMBER, EXAMPLE_HOUSEHOLD_NAME, type LocalState } from "./localState";
+import {
+  DEMO_INVITE_CODE, EXAMPLE_ENTRY_MEMBER, EXAMPLE_HOUSEHOLD_NAME,
+  type LocalState, type StoredSeason,
+} from "./localState";
+
+/** The estação that closed, and the one running now. */
+const PAST_SEASON_ID = 70;
+const SEASON_ID = 71;
 
 type TaskSeed = Partial<Task> & Pick<Task, "id" | "title" | "points">;
 type CompletionSeed = Partial<Completion> & Pick<Completion, "id" | "taskId" | "memberId" | "taskTitle" | "taskPoints">;
@@ -17,6 +24,20 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   /** Mid-morning on a given weekday of the week before this one. */
   const lastWeekStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
   const lastWeek = (weekday: number) => addHours(addDays(lastWeekStart, weekday), 10).toISOString();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+
+  // Two estações, so the demo opens with a championship already decided and
+  // another one running: the crown comes from the closed one.
+  const seasons: StoredSeason[] = [
+    {
+      id: PAST_SEASON_ID, name: "Estação passada", startsOn: toIsoDate(lastWeekStart),
+      endsOn: toIsoDate(addDays(lastWeekStart, 6)), closedAt: weekStart.toISOString(), createdAt: lastWeekStart.toISOString(),
+    },
+    {
+      id: SEASON_ID, name: "Estação atual", startsOn: toIsoDate(weekStart),
+      endsOn: null, closedAt: null, createdAt: weekStart.toISOString(),
+    },
+  ];
 
   // Nobody has claimed a place yet: the invite link is what lets a browser in.
   const member = (
@@ -36,6 +57,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   ];
 
   const task = (seed: TaskSeed): Task => ({
+    seasonId: SEASON_ID,
     description: null, priority: "medium", recurrence: "none", intervalDays: null, dueOn: null,
     requiresReview: false, kidFriendly: false, status: "open", completedAt: null, assigneeId: null, createdById: null,
     createdAt: iso(200), ...seed,
@@ -57,6 +79,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   ];
 
   const completion = (seed: CompletionSeed): Completion => ({
+    seasonId: SEASON_ID,
     reviewerId: null, status: "approved", rating: null, pointsAwarded: seed.taskPoints, multiplier: 1, completedAt: iso(1), reviewedAt: null, ...seed,
   });
   const completions = [
@@ -66,17 +89,18 @@ export function buildDemoState(now: Date = new Date()): LocalState {
     completion({ id: 33, taskId: 12, memberId: 4, taskTitle: "Lavar a louça do jantar", taskPoints: 5, pointsAwarded: 8, multiplier: 1.5, completedAt: iso(3) }),
     completion({ id: 34, taskId: 14, memberId: 1, taskTitle: "Levar o lixo para fora", taskPoints: 5, completedAt: iso(2) }),
     completion({ id: 35, taskId: 11, memberId: 2, status: "pending", pointsAwarded: 0, taskTitle: "Limpar o banheiro", taskPoints: 20, completedAt: iso(1) }),
-    // Last week the house beat the goal and Bruno pulled ahead, so he wears the crown this week.
-    completion({ id: 60, taskId: null, memberId: 2, reviewerId: 1, rating: 5, pointsAwarded: 90, taskTitle: "Montar o armário do quarto", taskPoints: 90, completedAt: lastWeek(1), reviewedAt: lastWeek(1) }),
-    completion({ id: 61, taskId: null, memberId: 2, taskTitle: "Lavar o carro", taskPoints: 40, completedAt: lastWeek(4) }),
-    completion({ id: 62, taskId: null, memberId: 1, taskTitle: "Fazer a feira do mês", taskPoints: 50, completedAt: lastWeek(0) }),
-    completion({ id: 63, taskId: null, memberId: 1, taskTitle: "Limpar o quintal", taskPoints: 30, completedAt: lastWeek(3) }),
-    completion({ id: 64, taskId: null, memberId: 1, taskTitle: "Trocar as lâmpadas", taskPoints: 20, completedAt: lastWeek(5) }),
-    completion({ id: 65, taskId: null, memberId: 3, reviewerId: 2, rating: 4, pointsAwarded: 16, taskTitle: "Passar as roupas", taskPoints: 20, completedAt: lastWeek(2), reviewedAt: lastWeek(2) }),
-    completion({ id: 66, taskId: null, memberId: 3, taskTitle: "Organizar a despensa", taskPoints: 30, completedAt: lastWeek(5) }),
-    completion({ id: 67, taskId: null, memberId: 4, taskTitle: "Regar as plantas", taskPoints: 5, pointsAwarded: 8, multiplier: 1.5, completedAt: lastWeek(2) }),
-    completion({ id: 68, taskId: null, memberId: 4, taskTitle: "Lavar a louça do jantar", taskPoints: 5, pointsAwarded: 8, multiplier: 1.5, completedAt: lastWeek(5) }),
-    completion({ id: 69, taskId: null, memberId: 4, taskTitle: "Aspirar a sala e os quartos", taskPoints: 20, pointsAwarded: 30, multiplier: 1.5, completedAt: lastWeek(6) }),
+    // The estação that closed: the house beat its goal and Bruno pulled ahead,
+    // so he wears the crown while this one runs.
+    completion({ id: 60, seasonId: PAST_SEASON_ID, taskId: null, memberId: 2, reviewerId: 1, rating: 5, pointsAwarded: 90, taskTitle: "Montar o armário do quarto", taskPoints: 90, completedAt: lastWeek(1), reviewedAt: lastWeek(1) }),
+    completion({ id: 61, seasonId: PAST_SEASON_ID, taskId: null, memberId: 2, taskTitle: "Lavar o carro", taskPoints: 40, completedAt: lastWeek(4) }),
+    completion({ id: 62, seasonId: PAST_SEASON_ID, taskId: null, memberId: 1, taskTitle: "Fazer a feira do mês", taskPoints: 50, completedAt: lastWeek(0) }),
+    completion({ id: 63, seasonId: PAST_SEASON_ID, taskId: null, memberId: 1, taskTitle: "Limpar o quintal", taskPoints: 30, completedAt: lastWeek(3) }),
+    completion({ id: 64, seasonId: PAST_SEASON_ID, taskId: null, memberId: 1, taskTitle: "Trocar as lâmpadas", taskPoints: 20, completedAt: lastWeek(5) }),
+    completion({ id: 65, seasonId: PAST_SEASON_ID, taskId: null, memberId: 3, reviewerId: 2, rating: 4, pointsAwarded: 16, taskTitle: "Passar as roupas", taskPoints: 20, completedAt: lastWeek(2), reviewedAt: lastWeek(2) }),
+    completion({ id: 66, seasonId: PAST_SEASON_ID, taskId: null, memberId: 3, taskTitle: "Organizar a despensa", taskPoints: 30, completedAt: lastWeek(5) }),
+    completion({ id: 67, seasonId: PAST_SEASON_ID, taskId: null, memberId: 4, taskTitle: "Regar as plantas", taskPoints: 5, pointsAwarded: 8, multiplier: 1.5, completedAt: lastWeek(2) }),
+    completion({ id: 68, seasonId: PAST_SEASON_ID, taskId: null, memberId: 4, taskTitle: "Lavar a louça do jantar", taskPoints: 5, pointsAwarded: 8, multiplier: 1.5, completedAt: lastWeek(5) }),
+    completion({ id: 69, seasonId: PAST_SEASON_ID, taskId: null, memberId: 4, taskTitle: "Aspirar a sala e os quartos", taskPoints: 20, pointsAwarded: 30, multiplier: 1.5, completedAt: lastWeek(6) }),
   ];
 
   const item = (seed: ItemSeed): ShoppingItem => ({
@@ -94,14 +118,16 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   return {
     household: { id: 1, name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: DEMO_INVITE_CODE, demo: true },
     members,
+    seasons,
     tasks,
     completions,
     shoppingItems,
     awards: [],
     goals: [
-      { id: 50, title: "Pizza e filme no sábado", targetPoints: 300, period: "week", memberId: null },
-      { id: 51, title: "Sorvete na sexta", targetPoints: 30, period: "week", memberId: 4 },
-      { id: 52, title: "Escolher o filme do sábado", targetPoints: 60, period: "week", memberId: 2 },
+      { id: 53, seasonId: PAST_SEASON_ID, title: "Pizza e filme no sábado", targetPoints: 300, memberId: null },
+      { id: 50, seasonId: SEASON_ID, title: "Pizza e filme no sábado", targetPoints: 300, memberId: null },
+      { id: 51, seasonId: SEASON_ID, title: "Sorvete na sexta", targetPoints: 30, memberId: 4 },
+      { id: 52, seasonId: SEASON_ID, title: "Escolher o filme do sábado", targetPoints: 60, memberId: 2 },
     ],
     nextId: 100,
   };

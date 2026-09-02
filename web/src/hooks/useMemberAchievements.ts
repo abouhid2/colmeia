@@ -6,7 +6,7 @@ import {
 import type { Member } from "../domain/types";
 import { useMemberAwards } from "./useAchievementAwards";
 import { useCompletions } from "./useCompletions";
-import { useTasks } from "./useTasks";
+import { useAllTasks } from "./useTasks";
 
 export interface MemberAchievements {
   records: AchievementRecord[];
@@ -23,7 +23,8 @@ const NONE: MemberAchievements = { records: [], unlocked: [], locked: [], favori
 /** One person's badges, counted off the stored history and the data alike. */
 export function useMemberAchievements(member: Member | null): MemberAchievements {
   const { completions } = useCompletions();
-  const { tasks } = useTasks();
+  // Badges are colmeia-wide, so they read every estação, not just this one.
+  const { tasks } = useAllTasks();
   const awards = useMemberAwards(member?.id ?? null);
 
   return useMemo(() => {

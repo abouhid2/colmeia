@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { completionsForMember } from "../domain/history";
 import { memberStats, type MemberStats } from "../domain/memberStats";
 import { sortOpenTasks } from "../domain/taskSort";
-import type { Completion, GoalPeriod, Member, Task } from "../domain/types";
+import type { Completion, Member, Season, Task } from "../domain/types";
 import { useCompletions } from "./useCompletions";
 import { useGoalOverview, type GoalWithProgress } from "./useGoalOverview";
 import { useMemberAchievements, type MemberAchievements } from "./useMemberAchievements";
@@ -15,10 +15,10 @@ export interface MemberProfile {
   member: Member | null;
   isLoading: boolean;
   stats: MemberStats;
-  period: GoalPeriod;
-  periodPoints: number;
+  season: Season | null;
+  seasonPoints: number;
   allTimePoints: number;
-  /** 1-based place in the period ranking, out of everyone in the house. */
+  /** 1-based place in the estação ranking, out of everyone in the house. */
   rank: number | null;
   houseSize: number;
   badges: MemberAchievements;
@@ -35,7 +35,7 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
   const { members, isLoading: loadingMembers } = useMembers();
   const { completions, isLoading: loadingCompletions } = useCompletions();
   const { tasks, isLoading: loadingTasks } = useTasks();
-  const { personal, period, standings, allTimeStandings, isLoading: loadingGoals } = useGoalOverview();
+  const { personal, season, standings, allTimeStandings, isLoading: loadingGoals } = useGoalOverview();
 
   const isLoading = loadingMembers || loadingCompletions || loadingTasks || loadingGoals;
   const member = memberId === null ? null : (members.find((candidate) => candidate.id === memberId) ?? null);
@@ -44,7 +44,7 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
   return useMemo(() => {
     if (member === null) {
       return {
-        member: null, isLoading, stats: NO_STATS, period, periodPoints: 0, allTimePoints: 0,
+        member: null, isLoading, stats: NO_STATS, season, seasonPoints: 0, allTimePoints: 0,
         rank: null, houseSize: members.length, badges, history: [], openTasks: [], goals: [],
       };
     }
@@ -55,15 +55,16 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
       member,
       isLoading,
       stats: memberStats(member.id, completions),
-      period,
-      periodPoints: standings[place]?.points ?? 0,
+      season,
+      seasonPoints: standings[place]?.points ?? 0,
       allTimePoints: allTimeStandings.find((standing) => standing.member.id === member.id)?.points ?? 0,
       rank: place === -1 ? null : place + 1,
       houseSize: standings.length,
       badges,
+      // The history spans every estação: what this person did is theirs for good.
       history: completionsForMember(completions, member.id),
       openTasks: sortOpenTasks(tasks.filter((task) => task.status === "open" && task.assigneeId === member.id), now),
       goals: personal.filter((item) => item.goal.memberId === member.id),
     };
-  }, [member, members, completions, tasks, personal, period, standings, allTimeStandings, now, isLoading, badges]);
+  }, [member, members, completions, tasks, personal, season, standings, allTimeStandings, now, isLoading, badges]);
 }

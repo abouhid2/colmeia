@@ -5,6 +5,7 @@ module Api
 
       def index
         scope = completions.recent_first
+        scope = scope.where(season_id: params[:season_id]) if params[:season_id].present?
         scope = scope.where(status: params[:status]) if params[:status].present?
         limit = page_limit
         scope = scope.limit(limit) if limit

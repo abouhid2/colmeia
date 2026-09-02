@@ -1,8 +1,9 @@
 import type {
-  AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
-  ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
+  AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
+  HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
+  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskOptions, CompleteTaskResult, DemoColmeia } from "./client";
+import type { ColmeiaApi, CompleteTaskOptions, CompleteTaskResult, CompletionQuery, DemoColmeia } from "./client";
 import { ApiError } from "./errors";
 import { toCamelKeys, toSnakeKeys } from "./keys";
 
@@ -22,6 +23,19 @@ const ERROR_LABELS: Record<string, string> = {
   invalid: "Faltou alguma coisa. Confira o que você escreveu.",
   bad_request: "Não deu para entender o pedido. Tente de novo.",
 };
+
+/** "/tasks?season_id=7", or "/tasks" when the whole colmeia is meant. */
+function scopedPath(path: string, seasonId: number | null | undefined): string {
+  return seasonId === null || seasonId === undefined ? path : `${path}?season_id=${seasonId}`;
+}
+
+function completionsPath({ seasonId, limit }: CompletionQuery): string {
+  const query = new URLSearchParams();
+  if (seasonId !== null && seasonId !== undefined) query.set("season_id", String(seasonId));
+  if (limit !== undefined) query.set("limit", String(limit));
+  const search = query.toString();
+  return search === "" ? "/completions" : `/completions?${search}`;
+}
 
 function parseJson(text: string): unknown {
   if (text.trim() === "") return null;
@@ -98,8 +112,17 @@ export class HttpApi implements ColmeiaApi {
     remove: (id: number): Promise<void> => this.request("DELETE", `/members/${id}`),
   };
 
+  seasons = {
+    list: (): Promise<Season[]> => this.request("GET", "/seasons"),
+    create: (input: SeasonInput): Promise<Season> => this.request("POST", "/seasons", { season: input }),
+    update: (id: number, input: Partial<SeasonUpdate>): Promise<Season> => this.request("PATCH", `/seasons/${id}`, { season: input }),
+    close: (id: number): Promise<Season> => this.request("POST", `/seasons/${id}/close`),
+    reopen: (id: number): Promise<Season> => this.request("POST", `/seasons/${id}/reopen`),
+    remove: (id: number): Promise<void> => this.request("DELETE", `/seasons/${id}`),
+  };
+
   tasks = {
-    list: (): Promise<Task[]> => this.request("GET", "/tasks"),
+    list: (seasonId: number | null): Promise<Task[]> => this.request("GET", scopedPath("/tasks", seasonId)),
     create: (input: TaskInput): Promise<Task> => this.request("POST", "/tasks", { task: input }),
     update: (id: number, input: Partial<TaskInput>): Promise<Task> => this.request("PATCH", `/tasks/${id}`, { task: input }),
     remove: (id: number): Promise<void> => this.request("DELETE", `/tasks/${id}`),
@@ -109,8 +132,8 @@ export class HttpApi implements ColmeiaApi {
   };
 
   completions = {
-    list: (limit?: number): Promise<Completion[]> =>
-      this.request("GET", limit === undefined ? "/completions" : `/completions?limit=${limit}`),
+    list: (options: CompletionQuery = {}): Promise<Completion[]> =>
+      this.request("GET", completionsPath(options)),
     review: (id: number, input: ReviewInput): Promise<Completion> => this.request("POST", `/completions/${id}/review`, input),
   };
 
@@ -131,7 +154,7 @@ export class HttpApi implements ColmeiaApi {
   };
 
   goals = {
-    list: (): Promise<Goal[]> => this.request("GET", "/goals"),
+    list: (seasonId: number | null): Promise<Goal[]> => this.request("GET", scopedPath("/goals", seasonId)),
     create: (input: GoalInput): Promise<Goal> => this.request("POST", "/goals", { goal: input }),
     update: (id: number, input: Partial<GoalInput>): Promise<Goal> => this.request("PATCH", `/goals/${id}`, { goal: input }),
     remove: (id: number): Promise<void> => this.request("DELETE", `/goals/${id}`),

@@ -22,7 +22,8 @@ export function ExampleResetCard() {
     invalidates: NOTHING,
     onSuccess: (member) => {
       // Everybody came back with a new id, so the browser follows the new Ana.
-      if (session !== null) enter({ inviteCode: session.inviteCode, memberId: member.id });
+      // The example comes back with its own estações, so the stored one is gone too.
+      if (session !== null) enter({ inviteCode: session.inviteCode, memberId: member.id, seasonId: null });
       void queryClient.invalidateQueries();
       notify({ message: "Exemplo recomeçado" });
     },

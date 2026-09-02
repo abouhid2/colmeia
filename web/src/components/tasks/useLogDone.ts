@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { TaskInput } from "../../domain/types";
+import { useSeason } from "../../hooks/useSeasonContext";
 import { useSession } from "../../hooks/useSession";
 import { useTaskMutations } from "../../hooks/useTasks";
 import { useToast } from "../../hooks/useToast";
@@ -13,6 +14,7 @@ import { useCompletionMoment } from "./useCompletionMoment";
  */
 export function useLogDone(onDone: () => void) {
   const { members, currentMember } = useSession();
+  const { currentSeason } = useSeason();
   const { create, complete } = useTaskMutations();
   const { notify } = useToast();
   const [memberId, setMemberId] = useState<number | null>(currentMember?.id ?? null);
@@ -49,6 +51,8 @@ export function useLogDone(onDone: () => void) {
 
   return {
     members,
+    /** The estação it lands in: the one on screen, like any new task. */
+    seasonId: currentSeason?.id ?? null,
     memberId,
     setMemberId,
     moment,

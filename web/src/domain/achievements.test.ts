@@ -3,12 +3,12 @@ import { achievementEvents, isRepeatable, memberAchievements, type AchievementId
 import type { Completion, Task } from "./types";
 
 const completion = (overrides: Partial<Completion>): Completion => ({
-  id: 1, taskId: null, memberId: 1, reviewerId: null, status: "approved", rating: null,
+  id: 1, seasonId: 7, taskId: null, memberId: 1, reviewerId: null, status: "approved", rating: null,
   pointsAwarded: 10, multiplier: 1, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-11T10:00:00.000Z", reviewedAt: null, ...overrides,
 });
 
 const task = (overrides: Partial<Task>): Task => ({
-  id: 1, title: "x", description: null, points: 10, priority: "medium", recurrence: "none", intervalDays: null,
+  id: 1, seasonId: 7, title: "x", description: null, points: 10, priority: "medium", recurrence: "none", intervalDays: null,
   dueOn: null, requiresReview: false, kidFriendly: false, status: "open", completedAt: null, assigneeId: null, createdById: null,
   createdAt: "2026-03-01T10:00:00.000Z", ...overrides,
 });

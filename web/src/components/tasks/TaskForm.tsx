@@ -24,6 +24,8 @@ interface TaskFormProps {
   task: Task | null;
   members: Member[];
   currentMemberId: number | null;
+  /** The estação the task belongs to; a task never leaves the one it was made in. */
+  seasonId: number;
   submitting: boolean;
   logged?: LoggedMode;
   onSubmit(input: TaskInput): void;
@@ -33,14 +35,14 @@ interface TaskFormProps {
 
 const PRIORITY_SEGMENTS = PRIORITY_OPTIONS.map((priority) => ({ value: priority, label: PRIORITIES[priority].label }));
 
-export function TaskForm({ task, members, currentMemberId, submitting, logged, onSubmit, onDelete, onCancel }: TaskFormProps) {
+export function TaskForm({ task, members, currentMemberId, seasonId, submitting, logged, onSubmit, onDelete, onCancel }: TaskFormProps) {
   const form = useTaskForm(task);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     form.touch();
-    if (form.isValid) onSubmit(toTaskInput(form.values, task?.createdById ?? currentMemberId));
+    if (form.isValid) onSubmit(toTaskInput(form.values, task?.createdById ?? currentMemberId, seasonId));
   };
 
   return (

@@ -31,6 +31,15 @@ describe("LocalApi households", () => {
     api = buildApi();
   });
 
+  it("opens every new colmeia with a first estação", async () => {
+    const created = await api.households.create({ name: "Casa nova", memberNames: [] });
+    api.setInviteCode(created.inviteCode);
+
+    expect((await api.seasons.list()).map((season) => [ season.name, season.startsOn, season.endsOn ])).toEqual([
+      [ "Primeira estação", "2026-03-11", null ],
+    ]);
+  });
+
   it("creates a colmeia with placeholder members nobody has claimed", async () => {
     const household = await api.households.create({ name: "  Família Silva  ", memberNames: [ "Ana", " Bruno ", "", "   " ] });
 
@@ -136,15 +145,19 @@ describe("LocalApi households", () => {
     await expect(api.members.list()).rejects.toMatchObject({ status: 401 });
 
     api.setInviteCode(first.inviteCode);
+    const [ firstSeason ] = await api.seasons.list();
     await api.tasks.create({
-      title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null,
+      seasonId: firstSeason.id, title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null,
       dueOn: null, requiresReview: false, kidFriendly: false, assigneeId: null, createdById: null,
     });
     expect((await api.members.list()).map((member) => member.name)).toEqual([ "Ana" ]);
 
     api.setInviteCode(second.inviteCode);
     expect((await api.members.list()).map((member) => member.name)).toEqual([ "Bruno" ]);
-    expect(await api.tasks.list()).toEqual([]);
+    expect(await api.tasks.list(null)).toEqual([]);
+    // Each colmeia keeps its own estações, and its own count of them.
+    expect((await api.seasons.list()).map((season) => season.tasksCount)).toEqual([ 0 ]);
+    expect(firstSeason.tasksCount).toBe(0);
   });
 
   it("lists the colmeias this browser holds, saying which are examples", async () => {
@@ -217,7 +230,7 @@ describe("LocalApi households", () => {
 
     expect((await older.members.list()).map((member) => [ member.kind, member.pointsMultiplier ]))
       .toEqual(state.members.map(() => [ "bee", 1 ]));
-    expect((await older.tasks.list()).every((task) => task.kidFriendly === false)).toBe(true);
+    expect((await older.tasks.list(null)).every((task) => task.kidFriendly === false)).toBe(true);
     expect((await older.completions.list()).every((completion) => completion.multiplier === 1)).toBe(true);
     // An index written before sandboxes existed holds real colmeias only.
     expect((await older.listStoredHouseholds()).map((item) => item.demo)).toEqual([ false ]);
@@ -237,8 +250,8 @@ describe("LocalApi households", () => {
     expect(household.members.filter((person) => person.claimedAt !== null)).toHaveLength(1);
 
     api.setInviteCode(household.inviteCode);
-    expect((await api.tasks.list()).length).toBeGreaterThan(0);
-    expect((await api.goals.list()).length).toBeGreaterThan(0);
+    expect((await api.tasks.list(null)).length).toBeGreaterThan(0);
+    expect((await api.goals.list(null)).length).toBeGreaterThan(0);
     expect(await api.household.get()).toMatchObject({ demo: true });
   });
 
@@ -250,10 +263,10 @@ describe("LocalApi households", () => {
 
     api.setInviteCode(first.household.inviteCode);
     await api.tasks.remove(10);
-    expect((await api.tasks.list()).some((task) => task.id === 10)).toBe(false);
+    expect((await api.tasks.list(null)).some((task) => task.id === 10)).toBe(false);
 
     api.setInviteCode(second.household.inviteCode);
-    expect((await api.tasks.list()).some((task) => task.id === 10)).toBe(true);
+    expect((await api.tasks.list(null)).some((task) => task.id === 10)).toBe(true);
   });
 
   it("puts an example back the way it was handed out", async () => {
@@ -265,7 +278,7 @@ describe("LocalApi households", () => {
     const member = await api.household.reseed();
 
     expect(member).toMatchObject({ name: "Ana", claimedAt: now.toISOString() });
-    expect((await api.tasks.list()).some((task) => task.id === 10)).toBe(true);
+    expect((await api.tasks.list(null)).some((task) => task.id === 10)).toBe(true);
     expect(await api.household.get()).toMatchObject({ name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: household.inviteCode, demo: true });
   });
 

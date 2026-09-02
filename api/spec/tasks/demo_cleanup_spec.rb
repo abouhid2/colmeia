@@ -13,7 +13,8 @@ RSpec.describe "demo:cleanup" do
 
   it "sweeps the sandboxes nobody came back to, with everything inside them" do
     cold = Household.create!(name: "Exemplo", demo: true, created_at: 8.days.ago)
-    cold.tasks.create!(title: "Louça", points: 5)
+    season = cold.seasons.create!(name: "Estação atual", starts_on: Date.current)
+    cold.tasks.create!(season: season, title: "Louça", points: 5)
 
     expect { run_cleanup }.to output("Removidas 1 colmeias de exemplo.\n").to_stdout
 

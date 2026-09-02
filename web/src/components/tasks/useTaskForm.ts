@@ -41,8 +41,9 @@ function validate(values: TaskFormValues): TaskFormErrors {
   return errors;
 }
 
-export function toTaskInput(values: TaskFormValues, createdById: number | null): TaskInput {
+export function toTaskInput(values: TaskFormValues, createdById: number | null, seasonId: number): TaskInput {
   return {
+    seasonId,
     title: values.title.trim(),
     description: values.description.trim() || null,
     points: values.points,
