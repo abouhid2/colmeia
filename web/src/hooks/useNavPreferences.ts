@@ -1,5 +1,4 @@
-import { NAV_ITEMS } from "../components/layout/navItems";
-import { withNavKeyMoved, withNavKeyVisible, type NavKey, type NavPreferences } from "../domain/navigation";
+import { withNavKeyMoved, withNavKeyVisible, type NavPreferences } from "../domain/navigation";
 import { useMemberMutations } from "./useMembers";
 import { useNavItems, type ResolvedNavItem } from "./useNavItems";
 import { useSession } from "./useSession";
@@ -8,8 +7,8 @@ import { useToast } from "./useToast";
 export interface NavPreferencesValue {
   /** Every screen in this person's order, the ones they turned off included. */
   items: ResolvedNavItem[];
-  move(key: NavKey, step: -1 | 1): void;
-  setVisible(key: NavKey, visible: boolean): void;
+  move(item: ResolvedNavItem, step: -1 | 1): void;
+  setVisible(item: ResolvedNavItem, visible: boolean): void;
   /** One change at a time: the next one is written from the one before it. */
   isSaving: boolean;
 }
@@ -27,11 +26,13 @@ export function useNavPreferences(): NavPreferencesValue {
     update.mutate({ id: currentMember.id, input: { navPreferences } }, { onSuccess: () => notify({ message }) });
   };
 
+  const shown = items.map((item) => item.key);
+
   return {
     items,
     isSaving: update.isPending,
-    move: (key, step) => save(withNavKeyMoved(preferences, key, step), `${NAV_ITEMS[key].label} mudou de lugar`),
-    setVisible: (key, visible) =>
-      save(withNavKeyVisible(preferences, key, visible), `${NAV_ITEMS[key].label} ${visible ? "voltou ao menu" : "saiu do menu"}`),
+    move: (item, step) => save(withNavKeyMoved(preferences, shown, item.key, step), `${item.label} mudou de lugar`),
+    setVisible: (item, visible) =>
+      save(withNavKeyVisible(preferences, item.key, visible), `${item.label} ${visible ? "voltou ao menu" : "saiu do menu"}`),
   };
 }

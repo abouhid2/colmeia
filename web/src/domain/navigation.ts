@@ -1,5 +1,5 @@
 /** The screens the navigation can hold, in the order the app arranges them. */
-export const NAV_KEYS = [ "home", "tasks", "shopping", "family", "achievements", "seasons" ] as const;
+export const NAV_KEYS = [ "home", "tasks", "goals", "shopping", "family", "achievements", "seasons" ] as const;
 
 export type NavKey = (typeof NAV_KEYS)[number];
 
@@ -57,17 +57,23 @@ export function isNavKeyVisible(preferences: NavPreferences, key: NavKey): boole
   return key === PINNED_NAV_KEY || !preferences.hidden.includes(key);
 }
 
-/** The whole order goes back, not just the part that moved: what somebody
- *  arranged should survive the day a new screen joins the list. */
-export function withNavKeyMoved(preferences: NavPreferences, key: NavKey, step: -1 | 1): NavPreferences {
+/**
+ * One step up or down among `shown`, the screens this release actually has.
+ * A key with no screen yet keeps the place the order gives it, so the screen a
+ * later release adds still lands where somebody left it. The whole order goes
+ * back, not just the part that moved.
+ */
+export function withNavKeyMoved(
+  preferences: NavPreferences, shown: NavKey[], key: NavKey, step: -1 | 1,
+): NavPreferences {
   const order = navOrder(preferences);
-  const from = order.indexOf(key);
-  const to = from + step;
-  if (from === -1 || to < 0 || to >= order.length) return { ...preferences, order };
+  const from = shown.indexOf(key);
+  const swapWith = from === -1 ? undefined : shown[from + step];
+  if (swapWith === undefined) return { ...preferences, order };
 
   const moved = [ ...order ];
-  moved[from] = moved[to];
-  moved[to] = key;
+  moved[order.indexOf(key)] = swapWith;
+  moved[order.indexOf(swapWith)] = key;
   return { ...preferences, order: moved };
 }
 

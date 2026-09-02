@@ -1,4 +1,4 @@
-import { CalendarRange, Plus, Target } from "lucide-react";
+import { CalendarRange, Plus, Settings2, Target } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { CROWN_EXPLANATION } from "../domain/crownTitles";
@@ -16,6 +16,7 @@ import { ALL_TIME_SCOPE_LABEL, SEASON_SCOPE_LABEL } from "../components/goal/goa
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ColmeiaCard } from "../components/household/ColmeiaCard";
 import { HouseholdSettingsCard } from "../components/household/HouseholdSettingsCard";
+import { SETTINGS_LABEL, SETTINGS_PATH } from "../components/layout/navItems";
 import { ExampleResetCard } from "../components/members/ExampleResetCard";
 import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
@@ -109,6 +110,12 @@ export function FamilyPage() {
       <section>
         <SectionHeading title="Ajustes da colmeia" />
         <HouseholdSettingsCard />
+        <Link
+          to={{ pathname: SETTINGS_PATH, search }}
+          className="mt-3 flex w-fit items-center gap-1.5 text-sm font-semibold text-honey-700 hover:underline"
+        >
+          <Settings2 className="size-4" aria-hidden /> {SETTINGS_LABEL}
+        </Link>
       </section>
 
       <section>
