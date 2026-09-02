@@ -33,7 +33,7 @@ export function VoteTitleCard({ result, members, open, voterId, myVoteeId, onVot
         </div>
       </div>
 
-      {open ? (
+      {open && (
         <>
           <div role="radiogroup" aria-label={`Quem foi ${title.name} nesta estação`} className="-mx-4 mt-3 flex gap-1.5 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
             {members.map((member) => {
@@ -57,8 +57,6 @@ export function VoteTitleCard({ result, members, open, voterId, myVoteeId, onVot
           </div>
           <p className="mt-2 text-sm font-semibold text-ink">{titleResultLine(result)}</p>
         </>
-      ) : (
-        <p className="mt-3 text-sm text-ink-soft">A votação abre quando a estação encerrar.</p>
       )}
     </li>
   );

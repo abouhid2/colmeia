@@ -27,7 +27,7 @@ export function SeasonTitlesSection({ voting, crown, closed, me }: SeasonTitlesS
     <section>
       <SectionHeading
         title="Títulos"
-        hint={closed ? "Hora de votar" : undefined}
+        hint={closed ? "Hora de votar" : "A votação abre quando a estação encerrar"}
         action={
           <Button variant="secondary" size="sm" icon={<Settings2 className="size-4" />} onClick={manager.open}>
             Gerenciar
