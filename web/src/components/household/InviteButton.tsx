@@ -27,7 +27,7 @@ export function InviteButton({ compact = false }: { compact?: boolean }) {
           Convidar
         </Button>
       )}
-      <ShareInviteDialog open={dialog.isOpen} inviteCode={household.inviteCode} onClose={dialog.close} />
+      <ShareInviteDialog open={dialog.isOpen} inviteCode={household.inviteCode} demo={household.demo} onClose={dialog.close} />
     </>
   );
 }
