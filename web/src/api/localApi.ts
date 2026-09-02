@@ -5,13 +5,15 @@ import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { completedAtError } from "../domain/completionMoment";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
 import { seasonsNewestFirst } from "../domain/seasons";
+import { AUTO_TITLE, ownVote, VOTE_TITLE, votesInSeason } from "../domain/seasonTitles";
 import { LIMITS } from "../domain/limits";
 import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } from "../domain/memberKinds";
 import { awardedPoints, MAX_RATING } from "../domain/points";
 import type {
   AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
-  HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
-  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
+  HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonTitle,
+  SeasonTitleInput, SeasonTitleUpdate, SeasonTitleVote, SeasonUpdate,
+  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput, VoteInput, VoteKey,
 } from "../domain/types";
 import type { ColmeiaApi, CompleteTaskOptions, CompleteTaskResult, CompletionQuery, DemoColmeia, StoredHousehold } from "./client";
 import { ApiError } from "./errors";
@@ -106,6 +108,24 @@ function validateMember(input: Partial<MemberInput>): void {
   if (!(multiplier >= MIN_MULTIPLIER && multiplier <= MAX_MULTIPLIER)) {
     invalid(`O multiplicador vai de ${formatMultiplier(MIN_MULTIPLIER)} a ${formatMultiplier(MAX_MULTIPLIER)}`);
   }
+}
+
+function validateSeasonTitle(input: Partial<SeasonTitleInput>): void {
+  validateName(input.name, LIMITS.titleName, "Dê um nome ao título");
+  if (input.description !== undefined && input.description.trim().length > LIMITS.titleDescription) {
+    invalid(`A descrição cabe em ${LIMITS.titleDescription} letras`);
+  }
+  if (input.emoji !== undefined && input.emoji.trim() === "") invalid("Escolha um emoji para o título");
+  if (input.emoji !== undefined && input.emoji.trim().length > LIMITS.titleEmoji) invalid("Use um emoji, não uma frase");
+}
+
+/** New títulos land at the end of the list. */
+function nextPosition(titles: SeasonTitle[]): number {
+  return titles.reduce((highest, title) => Math.max(highest, title.position + 1), 0);
+}
+
+function titlesInOrder(titles: SeasonTitle[]): SeasonTitle[] {
+  return [ ...titles ].sort((left, right) => left.position - right.position || left.id - right.id);
 }
 
 function validateGoal(input: Partial<GoalInput>): void {
@@ -369,8 +389,9 @@ export class LocalApi implements ColmeiaApi {
         state.completions.forEach((completion) => { completion.memberId = nullify(completion.memberId); completion.reviewerId = nullify(completion.reviewerId); });
         state.shoppingItems.forEach((item) => { item.addedById = nullify(item.addedById); item.purchasedById = nullify(item.purchasedById); });
         state.goals = state.goals.filter((goal) => goal.memberId !== id);
-        // Whoever leaves the colmeia takes their badges with them.
+        // Whoever leaves the colmeia takes their badges and their votes with them.
         state.awards = state.awards.filter((award) => award.memberId !== id);
+        state.titleVotes = state.titleVotes.filter((vote) => vote.voterId !== id && vote.voteeId !== id);
       }),
   };
 
@@ -418,6 +439,79 @@ export class LocalApi implements ColmeiaApi {
         state.seasons = state.seasons.filter((candidate) => candidate.id !== season.id);
         state.tasks = state.tasks.filter((task) => task.seasonId !== season.id);
         state.goals = state.goals.filter((goal) => goal.seasonId !== season.id);
+        state.titleVotes = state.titleVotes.filter((vote) => vote.seasonId !== season.id);
+      }),
+  };
+
+  seasonTitles = {
+    list: (): Promise<SeasonTitle[]> => this.read((state) => titlesInOrder(state.seasonTitles)),
+    create: (input: SeasonTitleInput): Promise<SeasonTitle> =>
+      this.mutate((state) => {
+        validateSeasonTitle(input);
+        const title: SeasonTitle = {
+          id: this.nextId(state),
+          name: input.name.trim(),
+          description: input.description.trim(),
+          emoji: input.emoji.trim(),
+          kind: VOTE_TITLE,
+          position: nextPosition(state.seasonTitles),
+          active: true,
+        };
+        state.seasonTitles.push(title);
+        return title;
+      }),
+    update: (id: number, input: SeasonTitleUpdate): Promise<SeasonTitle> =>
+      this.mutate((state) => {
+        const title = findOrFail(state.seasonTitles, id, "Esse título");
+        validateSeasonTitle({ ...title, ...input });
+        // `kind` is not in the input: the crown never becomes a voted title.
+        Object.assign(title, input);
+        if (input.name !== undefined) title.name = input.name.trim();
+        if (input.description !== undefined) title.description = input.description.trim();
+        if (input.emoji !== undefined) title.emoji = input.emoji.trim();
+        return title;
+      }),
+    remove: (id: number): Promise<void> =>
+      this.mutate((state) => {
+        const title = findOrFail(state.seasonTitles, id, "Esse título");
+        if (title.kind === AUTO_TITLE) conflict("Esse é o título da coroa, e a coroa fica na lista");
+        // Somebody was already called this: the title goes quiet, the votes stay.
+        if (state.titleVotes.some((vote) => vote.seasonTitleId === title.id)) {
+          title.active = false;
+          return;
+        }
+        state.seasonTitles = state.seasonTitles.filter((candidate) => candidate.id !== title.id);
+      }),
+  };
+
+  votes = {
+    list: (seasonId: number | null): Promise<SeasonTitleVote[]> =>
+      this.read((state) => (seasonId === null ? state.titleVotes : votesInSeason(state.titleVotes, seasonId))),
+    cast: (seasonId: number, input: VoteInput): Promise<SeasonTitleVote> =>
+      this.mutate((state) => {
+        const season = findOrFail(state.seasons, seasonId, "Essa estação");
+        if (season.closedAt === null) conflict("A votação abre quando a estação encerrar");
+        const title = findOrFail(state.seasonTitles, input.seasonTitleId, "Esse título");
+        if (title.kind === AUTO_TITLE) invalid("Título é a coroa da estação, e a coroa ninguém vota");
+        findOrFail(state.members, input.voterId, "Essa pessoa");
+        findOrFail(state.members, input.voteeId, "Essa pessoa");
+
+        // Voting again changes the vote instead of adding a second one.
+        const already = ownVote(votesInSeason(state.titleVotes, seasonId), title.id, input.voterId);
+        if (already !== null) {
+          already.voteeId = input.voteeId;
+          return already;
+        }
+        const vote: SeasonTitleVote = {
+          id: this.nextId(state), seasonId, seasonTitleId: title.id, voterId: input.voterId, voteeId: input.voteeId,
+        };
+        state.titleVotes.push(vote);
+        return vote;
+      }),
+    clear: (seasonId: number, key: VoteKey): Promise<void> =>
+      this.mutate((state) => {
+        const own = ownVote(votesInSeason(state.titleVotes, seasonId), key.seasonTitleId, key.voterId);
+        state.titleVotes = state.titleVotes.filter((vote) => vote !== own);
       }),
   };
 

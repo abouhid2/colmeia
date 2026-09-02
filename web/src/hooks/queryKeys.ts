@@ -7,6 +7,8 @@ export const queryKeys = {
   awards: ["awards"],
   shopping: ["shopping"],
   goals: ["goals"],
+  seasonTitles: ["season-titles"],
+  votes: ["votes"],
   storedHouseholds: ["stored-households"],
 } as const;
 

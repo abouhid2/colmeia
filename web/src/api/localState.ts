@@ -1,6 +1,8 @@
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
+import { defaultSeasonTitles } from "../domain/seasonTitles";
 import type {
-  AchievementAward, Completion, Goal, Household, HouseholdWithMembers, Member, Season, ShoppingItem, Task,
+  AchievementAward, Completion, Goal, Household, HouseholdWithMembers, Member, Season,
+  SeasonTitle, SeasonTitleVote, ShoppingItem, Task,
 } from "../domain/types";
 import { toIsoDate } from "../lib/dates";
 
@@ -28,10 +30,15 @@ export interface LocalState {
   goals: Goal[];
   /** Badges already written down, so they outlive their completions. */
   awards: AchievementAward[];
+  /** The names the colmeia hands out at the end of an estação. */
+  seasonTitles: SeasonTitle[];
+  /** Who the family said was what, once an estação closed. */
+  titleVotes: SeasonTitleVote[];
   nextId: number;
 }
 
 export function emptyState(inviteCode: string, name: string, now: Date): LocalState {
+  const titles = defaultSeasonTitles(3);
   return {
     household: { id: 1, name, inviteCode, demo: false },
     members: [],
@@ -41,7 +48,9 @@ export function emptyState(inviteCode: string, name: string, now: Date): LocalSt
     shoppingItems: [],
     goals: [],
     awards: [],
-    nextId: 3,
+    seasonTitles: titles,
+    titleVotes: [],
+    nextId: 3 + titles.length,
   };
 }
 
@@ -65,7 +74,8 @@ export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultipli
 type StoredGoal = Older<Goal, "seasonId"> & { period?: string };
 
 export type StoredState = Omit<
-  LocalState, "household" | "members" | "seasons" | "tasks" | "completions" | "goals" | "awards"
+  LocalState,
+  "household" | "members" | "seasons" | "tasks" | "completions" | "goals" | "awards" | "seasonTitles" | "titleVotes"
 > & {
   household: Older<Household, "demo">;
   members: StoredMember[];
@@ -74,6 +84,8 @@ export type StoredState = Omit<
   completions: Older<Completion, "multiplier" | "seasonId">[];
   goals: StoredGoal[];
   awards?: AchievementAward[];
+  seasonTitles?: SeasonTitle[];
+  titleVotes?: SeasonTitleVote[];
 };
 
 /** Fills in every field an older store can be missing, on read, so nothing
@@ -82,14 +94,20 @@ export type StoredState = Omit<
  *  colmeia has and never ends. */
 export function normalizeState(state: StoredState, now: Date): LocalState {
   const seasons = state.seasons ?? [];
-  const adopted = seasons.length > 0 ? seasons : [ firstSeason(state.nextId, firstDay(state, toIsoDate(now)), now) ];
+  let nextId = state.nextId;
+  const adopted = seasons.length > 0 ? seasons : [ firstSeason(nextId++, firstDay(state, toIsoDate(now)), now) ];
   const [ first ] = adopted;
+  // A colmeia stored before títulos existed opens the list every new one gets.
+  const seasonTitles = state.seasonTitles ?? defaultSeasonTitles(nextId);
+  if (state.seasonTitles === undefined) nextId += seasonTitles.length;
   return {
     ...state,
     // Anything stored before sandboxes existed is somebody's real colmeia.
     household: { ...state.household, demo: state.household.demo ?? false },
     seasons: adopted,
-    nextId: seasons.length > 0 ? state.nextId : state.nextId + 1,
+    seasonTitles,
+    titleVotes: state.titleVotes ?? [],
+    nextId,
     members: state.members.map((member) => ({
       ...member,
       kind: member.kind ?? "bee",

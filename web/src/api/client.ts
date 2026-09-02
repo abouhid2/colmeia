@@ -12,12 +12,18 @@ import type {
   ReviewInput,
   Season,
   SeasonInput,
+  SeasonTitle,
+  SeasonTitleInput,
+  SeasonTitleUpdate,
+  SeasonTitleVote,
   SeasonUpdate,
   ShoppingItem,
   ShoppingItemInput,
   ShoppingItemUpdate,
   Task,
   TaskInput,
+  VoteInput,
+  VoteKey,
 } from "../domain/types";
 
 /** Which slice of the history a screen wants. */
@@ -85,6 +91,23 @@ export interface ColmeiaApi {
     close(id: number): Promise<Season>;
     reopen(id: number): Promise<Season>;
     remove(id: number): Promise<void>;
+  };
+  /** The names the colmeia hands out at the end of an estação. They belong to
+   *  the colmeia, so they come back every season. */
+  seasonTitles: {
+    list(): Promise<SeasonTitle[]>;
+    create(input: SeasonTitleInput): Promise<SeasonTitle>;
+    update(id: number, input: SeasonTitleUpdate): Promise<SeasonTitle>;
+    /** A title somebody was already called goes quiet instead of away. */
+    remove(id: number): Promise<void>;
+  };
+  /** Who the family said was what, once an estação closed. */
+  votes: {
+    /** null spans every estação, for the titles listed on a profile. */
+    list(seasonId: number | null): Promise<SeasonTitleVote[]>;
+    /** One vote per person per title: voting again changes it. */
+    cast(seasonId: number, input: VoteInput): Promise<SeasonTitleVote>;
+    clear(seasonId: number, key: VoteKey): Promise<void>;
   };
   tasks: {
     /** null spans every estação. */

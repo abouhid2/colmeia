@@ -33,20 +33,29 @@ export interface Crown {
  */
 export function crownHolder({ members, completions, seasons, goals }: CrownInput): Crown | null {
   const wonIn = lastClosedSeason(seasons);
-  if (wonIn === null) return null;
+  return wonIn === null ? null : seasonCrown(wonIn, { members, completions, goals }).winner;
+}
 
-  const scored = approvedCompletions(completionsInSeason(completions, wonIn.id));
-  const goal = goals.find((candidate) => candidate.seasonId === wonIn.id && candidate.memberId === null) ?? null;
+export interface SeasonCrown {
+  /** Who won the estação, or null when nobody did. */
+  winner: Crown | null;
+  /** Whether the colmeia goal was reached. null when the estação had none. */
+  goalReached: boolean | null;
+}
 
-  if (goal) {
-    const householdPoints = scored.reduce((sum, completion) => sum + completion.pointsAwarded, 0);
-    if (householdPoints < goal.targetPoints) return null;
-  }
+/** The same rule, told about one estação: who won it, and whether the colmeia
+ *  goal that gates the crown was reached at all. */
+export function seasonCrown(season: Season, { members, completions, goals }: Omit<CrownInput, "seasons">): SeasonCrown {
+  const scored = approvedCompletions(completionsInSeason(completions, season.id));
+  const goal = goals.find((candidate) => candidate.seasonId === season.id && candidate.memberId === null) ?? null;
+  const earned = scored.reduce((sum, completion) => sum + completion.pointsAwarded, 0);
+  const goalReached = goal === null ? null : earned >= goal.targetPoints;
+  if (goalReached === false) return { winner: null, goalReached };
 
   const [winner, runnerUp] = rankMembers(members, scored);
-  if (!winner || winner.points === 0) return null;
-  if (runnerUp && runnerUp.points === winner.points && runnerUp.tasksCount === winner.tasksCount) return null;
-  if (!wantsCrown(winner.member)) return null;
+  if (!winner || winner.points === 0) return { winner: null, goalReached };
+  if (runnerUp && runnerUp.points === winner.points && runnerUp.tasksCount === winner.tasksCount) return { winner: null, goalReached };
+  if (!wantsCrown(winner.member)) return { winner: null, goalReached };
 
-  return { member: winner.member, points: winner.points, tasksCount: winner.tasksCount, wonIn };
+  return { winner: { member: winner.member, points: winner.points, tasksCount: winner.tasksCount, wonIn: season }, goalReached };
 }

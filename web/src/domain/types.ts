@@ -118,6 +118,45 @@ export interface Goal {
   memberId: number | null;
 }
 
+/** The crown the ranking awards on its own, or one the family votes on. */
+export type SeasonTitleKind = "auto" | "vote";
+
+/** A name the colmeia hands out at the end of an estação. Titles belong to the
+ *  colmeia, not to one estação: they come back every season. */
+export interface SeasonTitle {
+  id: number;
+  name: string;
+  description: string;
+  emoji: string;
+  kind: SeasonTitleKind;
+  /** Where it sits in the list. */
+  position: number;
+  /** A title dropped after somebody was already called it goes quiet instead of away. */
+  active: boolean;
+}
+
+export type SeasonTitleInput = Pick<SeasonTitle, "name" | "description" | "emoji">;
+
+export type SeasonTitleUpdate = Partial<SeasonTitleInput & Pick<SeasonTitle, "position" | "active">>;
+
+/** One person saying who was the Pernilongo of an estação. */
+export interface SeasonTitleVote {
+  id: number;
+  seasonId: number;
+  seasonTitleId: number;
+  voterId: number;
+  voteeId: number;
+}
+
+export interface VoteInput {
+  seasonTitleId: number;
+  voterId: number;
+  voteeId: number;
+}
+
+/** Taking a vote back needs only to say which vote is yours. */
+export type VoteKey = Pick<VoteInput, "seasonTitleId" | "voterId">;
+
 export interface HouseholdWithMembers extends Household {
   members: Member[];
 }
