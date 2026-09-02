@@ -5,16 +5,22 @@ interface ToggleProps {
   onChange(checked: boolean): void;
   label: string;
   hint?: string;
+  /** Shown as it is, and not for turning: say why in the hint. */
+  disabled?: boolean;
 }
 
-export function Toggle({ checked, onChange, label, hint }: ToggleProps) {
+export function Toggle({ checked, onChange, label, hint, disabled = false }: ToggleProps) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between gap-4 rounded-xl border border-line px-3.5 py-3 text-left transition-colors hover:bg-dune-100"
+      className={cn(
+        "flex w-full items-center justify-between gap-4 rounded-xl border border-line px-3.5 py-3 text-left transition-colors hover:bg-dune-100",
+        "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent",
+      )}
     >
       <span>
         <span className="block text-sm font-semibold">{label}</span>

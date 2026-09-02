@@ -8,6 +8,7 @@ import { InvitePage } from "./pages/InvitePage";
 import { MemberPage } from "./pages/MemberPage";
 import { NewHouseholdPage } from "./pages/NewHouseholdPage";
 import { SeasonsPage } from "./pages/SeasonsPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { ShoppingPage } from "./pages/ShoppingPage";
 import { TasksPage } from "./pages/TasksPage";
 
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="familia/:memberId" element={<MemberPage />} />
             <Route path="estacoes" element={<SeasonsPage />} />
             <Route path="conquistas" element={<AchievementsPage />} />
+            <Route path="ajustes" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

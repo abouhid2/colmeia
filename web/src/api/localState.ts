@@ -1,4 +1,5 @@
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
+import { normalizeNavPreferences } from "../domain/navigation";
 import type {
   AchievementAward, Completion, Goal, Household, HouseholdWithMembers, Member, Season, ShoppingItem, Task,
 } from "../domain/types";
@@ -60,7 +61,7 @@ export function withCounts(state: LocalState, season: StoredSeason): Season {
 
 /** A browser can hold a state written before crown titles, lagartinhas or estações existed. */
 export type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements">;
+export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements" | "navPreferences">;
 /** Goals used to carry a weekly or monthly period instead of belonging to an estação. */
 type StoredGoal = Older<Goal, "seasonId"> & { period?: string };
 
@@ -96,6 +97,7 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
       pointsMultiplier: member.pointsMultiplier ?? 1,
       crownTitle: member.crownTitle ?? DEFAULT_CROWN_TITLE,
       favoriteAchievements: member.favoriteAchievements ?? [],
+      navPreferences: normalizeNavPreferences(member.navPreferences),
     })),
     tasks: state.tasks.map((task) => ({ ...task, kidFriendly: task.kidFriendly ?? false, seasonId: task.seasonId ?? first.id })),
     completions: state.completions.map((completion) => ({

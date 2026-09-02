@@ -1,6 +1,7 @@
 import { isAchievementId, MAX_FAVORITE_ACHIEVEMENTS, type AchievementId } from "../domain/achievements";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { generateInviteCode } from "../domain/inviteCode";
+import { emptyNavPreferences, normalizeNavPreferences } from "../domain/navigation";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { completedAtError } from "../domain/completionMoment";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
@@ -139,6 +140,7 @@ function newMember(input: MemberInput): Omit<Member, "claimedAt" | "createdAt" |
     pointsMultiplier: multiplierForKind(kind, input.pointsMultiplier ?? 1),
     crownTitle: input.crownTitle.trim(),
     favoriteAchievements: input.favoriteAchievements ?? [],
+    navPreferences: normalizeNavPreferences(input.navPreferences),
   };
 }
 
@@ -271,6 +273,7 @@ export class LocalApi implements ColmeiaApi {
       kind: "bee",
       pointsMultiplier: 1,
       crownTitle: DEFAULT_CROWN_TITLE,
+      navPreferences: emptyNavPreferences(),
       favoriteAchievements: [],
       claimedAt: null,
       createdAt: now.toISOString(),
@@ -357,6 +360,7 @@ export class LocalApi implements ColmeiaApi {
         const wasLagartinha = member.kind === "lagartinha";
         Object.assign(member, input);
         if (input.crownTitle !== undefined) member.crownTitle = input.crownTitle.trim();
+        if (input.navPreferences !== undefined) member.navPreferences = normalizeNavPreferences(input.navPreferences);
         if (!wasLagartinha) member.pointsMultiplier = multiplierForKind(member.kind, member.pointsMultiplier);
         return member;
       }),
