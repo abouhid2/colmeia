@@ -1,7 +1,7 @@
 import { Clock, RotateCcw, Star } from "lucide-react";
 import { MAX_RATING } from "../../domain/points";
 import type { Completion, Member } from "../../domain/types";
-import { timeAgo } from "../../lib/dates";
+import { completedLabel } from "../../lib/dates";
 import { cn } from "../../lib/cn";
 import { Avatar } from "../ui/Avatar";
 import { Badge } from "../ui/Badge";
@@ -11,12 +11,13 @@ import { PointsBadge } from "../ui/PointsBadge";
 interface CompletionRowProps {
   completion: Completion;
   doer: Member | null;
+  now: Date;
   canReopen: boolean;
   onReopen(): void;
 }
 
 /** One row of history: what got done, by whom, and whether it still earned points. */
-export function CompletionRow({ completion, doer, canReopen, onReopen }: CompletionRowProps) {
+export function CompletionRow({ completion, doer, now, canReopen, onReopen }: CompletionRowProps) {
   const rating = completion.rating;
 
   return (
@@ -25,7 +26,7 @@ export function CompletionRow({ completion, doer, canReopen, onReopen }: Complet
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-ink-soft">{completion.taskTitle}</p>
         <p className="truncate text-xs text-ink-faint">
-          {doer?.name ?? "Alguém"} · {timeAgo(completion.completedAt)}
+          {doer?.name ?? "Alguém"} · {completedLabel(completion.completedAt, now)}
         </p>
         {rating !== null && (
           <div className="mt-1 flex" aria-label={`Nota ${rating} de ${MAX_RATING}`}>

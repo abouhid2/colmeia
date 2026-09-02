@@ -1,7 +1,8 @@
 # Revisão de texto da Colmeia
 
-O que mudou em cada tela, com o texto antigo e o novo. São 114 textos, em 43
-arquivos. Nada de comportamento mudou: só palavra.
+O que mudou em cada tela, com o texto antigo e o novo. Foram duas passadas:
+115 textos reescritos e depois 27 sub-textos removidos. Nada de comportamento
+mudou: só palavra.
 
 O que guiou as escolhas:
 
@@ -10,6 +11,102 @@ O que guiou as escolhas:
 - Erro diz o que houve e o que fazer, sem pedir desculpa.
 - Vazio convida a fazer alguma coisa.
 - Sentence case, sem travessão, sem " - " separando ideias.
+
+## Segunda passada: menos legenda
+
+O dono leu a primeira rodada e disse que ainda soava a IA. O motivo não era a
+escolha das palavras, era a quantidade de texto: quase toda seção tinha um
+subtítulo explicando o próprio título, e quase todo campo tinha uma legenda
+repetindo o rótulo. Interface que explica tudo parece feita por máquina, porque
+gente não narra o que está à vista.
+
+Saíram 27 sub-textos. A regra que sobrou:
+
+**Um sub-texto só fica se carrega uma regra que a tela não mostra.** Se ele
+descreve o que a lista abaixo obviamente é, ou repete o rótulo, sai.
+
+A definição de estação aparecia cinco vezes: no título da página, na seção da
+Família, no seletor, no diálogo de criar e no estado vazio. Ficou só no estado
+vazio, que é onde alguém encontra a palavra pela primeira vez sem nada em volta.
+
+### Subtítulos de seção que saíram
+
+| Seção | Subtítulo removido |
+| --- | --- |
+| Lagartinhas | "O ranking só entre as crianças." |
+| Metas e recompensas | "Uma meta para a colmeia inteira e quantas individuais quiserem." |
+| Estações (Família) | "Cada campeonato com as suas tarefas, metas e ranking." |
+| Metas individuais | "Cada um com a sua meta e a sua recompensa." |
+| Para fazer agora | "As mais urgentes primeiro." |
+| Tarefas abertas (pessoa) | "Na fila de Duda nesta estação, as mais urgentes primeiro." |
+| Histórico de conquistas | "As mais recentes, com a data de cada uma." |
+| Ainda não | "Falta pouco para algumas." |
+| Histórico (pessoa) | encurtado para "De todas as estações." |
+
+### Títulos de página que perderam a legenda
+
+| Página | Legenda removida |
+| --- | --- |
+| Compras | "Uma lista só, e todo mundo escreve nela." |
+| Estações | "Cada estação é um campeonato com as suas tarefas, metas e ranking." |
+| Conquistas | "O que já foi ganho, e o que ainda falta." |
+
+### Estados vazios que viraram só título
+
+| Título | Legenda removida |
+| --- | --- |
+| Nada concluído ainda | "A primeira tarefa feita aparece aqui." (em duas telas) |
+| Duda ainda não tem meta | "Uma recompensa só de Duda, contando os pontos dela." |
+| Nada na fila | "Ninguém passou tarefa nenhuma para Duda ainda." |
+| Não falta nenhuma | "Duda já ganhou todas." |
+| Nada concluído nesta estação | "Toda tarefa feita aparece aqui, até as que se repetem." |
+| Ninguém tem meta individual ainda | "Uma recompensa para uma pessoa só, contando os pontos dela." |
+
+Os vazios que aparecem só porque um filtro está ligado perderam a legenda
+inteira. O filtro está visível logo acima e sai com um toque, então não precisa
+de instrução.
+
+### Campos de formulário
+
+| Campo | Antes | Depois |
+| --- | --- | --- |
+| Meta em pontos | legenda "Quantos pontos precisam juntar." | sem legenda |
+| Recompensa | legenda "O que ganha quem bater a meta." | sem legenda |
+| Nome da estação | legenda com exemplos e placeholder abstrato | os exemplos viraram o placeholder |
+| Boa para lagartinhas | "Uma criança dá conta desta tarefa sozinha." | sem legenda |
+| Abelha | "Ganha exatamente o que a tarefa vale." | sem legenda |
+| Quando vencer, vira | "Escolha o título que quiser. Deixe em branco…" | "Deixe em branco para ficar de fora da coroa." |
+| Link do convite | "Mande para quem mora aí. Quem abrir escolhe…" | "Quem abrir escolhe quem é na lista." |
+
+O diálogo da meta ganhou um quadro "Como fica" que já mostra o resultado, então
+as duas legendas viraram ruído em cima de uma explicação melhor.
+
+A legenda da abelha sumiu, a da lagartinha ficou. Ganhar o valor cheio da tarefa
+é o normal e não precisa ser dito; ganhar multiplicado é a exceção e precisa.
+
+### Descrições de diálogo que saíram
+
+| Diálogo | Descrição removida |
+| --- | --- |
+| Nova meta | "Combinem quantos pontos precisam juntar e o que ganham ao chegar lá." |
+| Nova estação | "Um campeonato com as suas tarefas, as suas metas e o seu ranking." |
+| Estações (seletor) | "Cada estação tem as suas tarefas, metas e ranking." |
+| Convidar | "Cada pessoa abre o link e diz quem é." |
+
+### O que continua explicando, e por quê
+
+- **A regra da coroa**, na Família. Ninguém adivinha como se ganha o título.
+- **"Os pontos só entram no favo depois da nota"**, em Para avaliar.
+- **A nota de 1 a 5 muda os pontos**, no formulário da tarefa.
+- **O multiplicador da lagartinha**, dito por extenso. Bônus escondido não é
+  confiado, e isso está escrito em `docs/lagartinhas.md`.
+- **"Pode ficar em branco"** e **"as tarefas abertas vêm junto"**, na estação.
+  São consequências que só aparecem depois de salvar.
+- **O que encerrar uma estação faz.** É irreversível na prática.
+- **As telas de beco sem saída**: convite morto, colmeia sumida, pessoa que saiu.
+- **Os vazios de primeira vez** que ensinam o próximo passo: a primeira tarefa,
+  a primeira estação, a primeira conquista, a lista de compras.
+- **"A casa está em dia. Aproveite."** Não explica nada, é a recompensa.
 
 ## Glossário
 

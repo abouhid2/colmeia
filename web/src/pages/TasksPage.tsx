@@ -1,4 +1,4 @@
-import { ListChecks, Plus } from "lucide-react";
+import { CalendarCheck, ListChecks, Plus } from "lucide-react";
 import { useState } from "react";
 import { canReopen, completionsForMember } from "../domain/history";
 import { completionsInSeason, isClosed } from "../domain/seasons";
@@ -65,9 +65,16 @@ export function TasksPage() {
 
   return (
     <div className="space-y-5 animate-rise">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold tracking-tight">Tarefas</h1>
-        {!closed && <Button icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>}
+        {!closed && (
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" icon={<CalendarCheck className="size-4" />} onClick={dialogs.openLogDone}>
+              Registrar algo já feito
+            </Button>
+            <Button icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>
+          </div>
+        )}
       </div>
       {closed && <SeasonClosedNotice name={currentSeason.name} />}
       <MemberFilter />
@@ -85,7 +92,6 @@ export function TasksPage() {
           <EmptyState
             icon={<ListChecks className="size-6" />}
             title={filtered ? `${filtered.name} ainda não fez nada nesta estação` : "Nada concluído nesta estação"}
-            hint={filtered ? undefined : "Toda tarefa feita aparece aqui, até as que se repetem."}
           />
         ) : (
           <>
@@ -95,6 +101,7 @@ export function TasksPage() {
                   key={completion.id}
                   completion={completion}
                   doer={lookup(completion.memberId)}
+                  now={now}
                   canReopen={!closed && canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
                   onReopen={() => {
                     if (completion.taskId !== null) reopen.mutate(completion.taskId);
@@ -113,7 +120,7 @@ export function TasksPage() {
         <EmptyState
           icon={<ListChecks className="size-6" />}
           title={kidOnly ? "Nenhuma tarefa para lagartinhas" : filtered ? `${filtered.name} está sem tarefa` : "Nenhuma tarefa aberta"}
-          hint={kidOnly ? "Marque \"boa para lagartinhas\" nas tarefas que uma criança dá conta." : filtered ? "Crie uma tarefa para essa pessoa ou tire o filtro." : "Crie a primeira: o que precisa ser feito na casa?"}
+          hint={kidOnly ? "Marque \"boa para lagartinhas\" nas tarefas que uma criança dá conta." : filtered ? undefined : "Crie a primeira: o que precisa ser feito na casa?"}
           action={closed ? undefined : <Button size="sm" icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>}
         />
       ) : (

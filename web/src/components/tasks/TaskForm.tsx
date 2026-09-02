@@ -1,5 +1,5 @@
 import { Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { LIMITS } from "../../domain/limits";
 import { PRIORITIES, PRIORITY_OPTIONS } from "../../domain/priorities";
 import type { Member, Task, TaskInput } from "../../domain/types";
@@ -13,6 +13,14 @@ import { PointsPicker } from "./PointsPicker";
 import { TaskScheduleFields } from "./TaskScheduleFields";
 import { toTaskInput, useTaskForm } from "./useTaskForm";
 
+/** The "já feita" flow: nothing to schedule, and the caller owns who did it
+ *  and when, since neither belongs to the task itself. */
+export interface LoggedMode {
+  fields: ReactNode;
+  /** Whether who and when are both settled. */
+  ready: boolean;
+}
+
 interface TaskFormProps {
   task: Task | null;
   members: Member[];
@@ -20,6 +28,7 @@ interface TaskFormProps {
   /** The estação the task belongs to; a task never leaves the one it was made in. */
   seasonId: number;
   submitting: boolean;
+  logged?: LoggedMode;
   onSubmit(input: TaskInput): void;
   onDelete?(): void;
   onCancel(): void;
@@ -27,7 +36,7 @@ interface TaskFormProps {
 
 const PRIORITY_SEGMENTS = PRIORITY_OPTIONS.map((priority) => ({ value: priority, label: PRIORITIES[priority].label }));
 
-export function TaskForm({ task, members, currentMemberId, seasonId, submitting, onSubmit, onDelete, onCancel }: TaskFormProps) {
+export function TaskForm({ task, members, currentMemberId, seasonId, submitting, logged, onSubmit, onDelete, onCancel }: TaskFormProps) {
   const form = useTaskForm(task);
   const lagartinhasEnabled = useLagartinhasEnabled();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -49,7 +58,9 @@ export function TaskForm({ task, members, currentMemberId, seasonId, submitting,
       <Field label="Prioridade">
         <Segmented label="Prioridade" options={PRIORITY_SEGMENTS} value={form.values.priority} onChange={(priority) => form.set("priority", priority)} />
       </Field>
-      <TaskScheduleFields values={form.values} errors={form.errors} members={members} set={form.set} />
+      {logged
+        ? logged.fields
+        : <TaskScheduleFields values={form.values} errors={form.errors} members={members} set={form.set} />}
       <Toggle
         checked={form.values.requiresReview}
         onChange={(checked) => form.set("requiresReview", checked)}
@@ -61,7 +72,6 @@ export function TaskForm({ task, members, currentMemberId, seasonId, submitting,
           checked={form.values.kidFriendly}
           onChange={(checked) => form.set("kidFriendly", checked)}
           label="Boa para lagartinhas"
-          hint="Uma criança dá conta desta tarefa sozinha."
         />
       )}
       <Field label="Detalhes" htmlFor="task-description">
@@ -75,7 +85,9 @@ export function TaskForm({ task, members, currentMemberId, seasonId, submitting,
         ) : <span />}
         <div className="flex gap-2">
           <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
-          <Button type="submit" loading={submitting}>{task ? "Salvar tarefa" : "Criar tarefa"}</Button>
+          <Button type="submit" loading={submitting} disabled={logged !== undefined && !logged.ready}>
+            {logged ? "Registrar como feita" : task ? "Salvar tarefa" : "Criar tarefa"}
+          </Button>
         </div>
       </div>
     </form>

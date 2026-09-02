@@ -2,10 +2,17 @@ import { cleanup, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { rankMembers } from "../../domain/leaderboard";
 import type { Completion, Member } from "../../domain/types";
+import { useHousehold } from "../../hooks/useHousehold";
 import { exampleColmeia, renderInColmeia } from "../../test/colmeia";
 import { LagartinhaLeague } from "./LagartinhaLeague";
 
 afterEach(cleanup);
+
+/** The league renders nothing both while the colmeia is loading and when it
+ *  says it has no children, so something has to say which of the two it is. */
+function Ready() {
+  return <p>{useHousehold().data === undefined ? "carregando" : "pronto"}</p>;
+}
 
 async function standingsOf(lagartinhasEnabled: boolean) {
   const colmeia = await exampleColmeia(lagartinhasEnabled);
@@ -25,10 +32,11 @@ describe("LagartinhaLeague", () => {
 
   it("is not there at all once the switch is off, Duda still being one", async () => {
     const { colmeia, standings } = await standingsOf(false);
-    const screen = renderInColmeia(colmeia, <LagartinhaLeague standings={standings} />);
+    const screen = renderInColmeia(colmeia, <><Ready /><LagartinhaLeague standings={standings} /></>);
 
     expect(standings.some((standing) => standing.member.kind === "lagartinha")).toBe(true);
-    await waitFor(() => expect(screen.queryByText("O ranking só entre as crianças.")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("pronto")).not.toBeNull());
     expect(screen.queryByText("Lagartinhas")).toBeNull();
+    expect(screen.queryByText("Duda")).toBeNull();
   });
 });

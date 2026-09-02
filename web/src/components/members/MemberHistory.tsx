@@ -1,13 +1,14 @@
 import { Hourglass, Star } from "lucide-react";
 import { MAX_RATING } from "../../domain/points";
 import type { Completion, Member } from "../../domain/types";
-import { timeAgo } from "../../lib/dates";
+import { completedLabel } from "../../lib/dates";
 import { cn } from "../../lib/cn";
 import { Badge } from "../ui/Badge";
 import { Card } from "../ui/Card";
 
 interface MemberHistoryProps {
   completions: Completion[];
+  now: Date;
   lookup(id: number | null): Member | null;
 }
 
@@ -25,7 +26,7 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-export function MemberHistory({ completions, lookup }: MemberHistoryProps) {
+export function MemberHistory({ completions, now, lookup }: MemberHistoryProps) {
   return (
     <Card>
       <ol className="divide-y divide-line">
@@ -40,7 +41,7 @@ export function MemberHistory({ completions, lookup }: MemberHistoryProps) {
                 <span className="font-display text-sm font-bold tabular-nums text-honey-700">+{completion.pointsAwarded}</span>
               )}
               <p className="flex w-full items-center gap-2 text-xs text-ink-faint">
-                <span>{timeAgo(completion.completedAt)}</span>
+                <span>{completedLabel(completion.completedAt, now)}</span>
                 {completion.rating !== null && (
                   <>
                     <Stars rating={completion.rating} />

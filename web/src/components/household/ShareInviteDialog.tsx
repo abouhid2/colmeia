@@ -12,7 +12,7 @@ interface ShareInviteDialogProps {
 
 export function ShareInviteDialog({ open, inviteCode, demo = false, onClose }: ShareInviteDialogProps) {
   return (
-    <Dialog open={open} onClose={onClose} title="Convidar" description="Cada pessoa abre o link e diz quem é.">
+    <Dialog open={open} onClose={onClose} title="Convidar">
       <div className="space-y-5">
         <InviteLinkField inviteCode={inviteCode} />
         {demo && (

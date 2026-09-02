@@ -19,7 +19,7 @@ export function GoalDialog({ dialog }: { dialog: GoalDialogState }) {
   if (currentSeason === null) return null;
 
   return (
-    <Dialog open={isOpen} onClose={close} title={goal ? "Ajustar a meta" : "Nova meta"} description="Combinem quantos pontos precisam juntar e o que ganham ao chegar lá.">
+    <Dialog open={isOpen} onClose={close} title={goal ? "Ajustar a meta" : "Nova meta"}>
       <GoalForm
         key={`${goal?.id ?? "new"}-${defaultMemberId ?? "all"}`}
         goal={goal}
@@ -75,10 +75,10 @@ function GoalForm({ goal, defaultMemberId, seasonId, seasonName, onDone }: GoalF
           ))}
         </Select>
       </Field>
-      <Field label="Meta em pontos" htmlFor="goal-target" hint="Quantos pontos precisam juntar.">
+      <Field label="Meta em pontos" htmlFor="goal-target">
         <Input id="goal-target" type="number" min={1} max={LIMITS.goalTarget} step={1} value={target} onChange={(event) => setTarget(Number(event.target.value))} required />
       </Field>
-      <Field label="Recompensa" htmlFor="goal-title" hint="O que ganha quem bater a meta.">
+      <Field label="Recompensa" htmlFor="goal-title">
         <Input id="goal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ex.: pizza e filme no sábado" maxLength={LIMITS.goalTitle} required autoFocus />
       </Field>
       <div className="rounded-card border border-line bg-paper p-3">
