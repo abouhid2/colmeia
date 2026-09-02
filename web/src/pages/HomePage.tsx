@@ -66,11 +66,11 @@ export function HomePage() {
       <section>
         <SectionHeading
           title="Metas individuais"
-          hint={filtered ? `Só de ${filtered.name}.` : "Cada um com a sua recompensa."}
+          hint={filtered ? `Só de ${filtered.name}.` : "Cada um com a sua meta de pontos e a sua recompensa."}
           action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(memberId ?? currentMember?.id ?? null)}>Nova meta</Button>}
         />
         {personalShown.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title={filtered ? `${filtered.name} ainda não tem meta` : "Ninguém tem meta individual ainda"} hint="Uma recompensa só para uma pessoa, contando só os pontos dela." />
+          <EmptyState icon={<Target className="size-6" />} title={filtered ? `${filtered.name} ainda não tem meta` : "Ninguém tem meta individual ainda"} hint="Uma meta de pontos só para uma pessoa, com uma recompensa só dela." />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {personalShown.map((item) => (

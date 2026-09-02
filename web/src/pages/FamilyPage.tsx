@@ -70,12 +70,12 @@ export function FamilyPage() {
 
       <section>
         <SectionHeading
-          title="Recompensas"
-          hint="Uma meta para a casa e quantas individuais quiserem."
+          title="Metas e recompensas"
+          hint="Quantos pontos juntar e o que ganham ao chegar lá."
           action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(memberId)}>Nova meta</Button>}
         />
         {shownGoals.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title="Nenhuma meta ainda" hint={filtered ? `Crie uma recompensa para ${filtered.name}.` : "Combinem uma recompensa e uma quantidade de pontos."} />
+          <EmptyState icon={<Target className="size-6" />} title="Nenhuma meta ainda" hint={filtered ? `Combinem quantos pontos ${filtered.name} precisa juntar e o que ganha ao chegar lá.` : "Combinem quantos pontos juntar e o que a casa ganha ao chegar lá."} />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {shownGoals.map((item) => (
