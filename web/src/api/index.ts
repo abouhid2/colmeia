@@ -16,3 +16,4 @@ export function createApi(): ColmeiaApi {
 }
 
 export type { ColmeiaApi, StoredHousehold } from "./client";
+export { DEMO_INVITE_CODE } from "./localState";

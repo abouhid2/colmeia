@@ -80,7 +80,7 @@ export function FamilyPage() {
       </section>
 
       <section>
-        <SectionHeading title="Esta colmeia" hint="O link do convite, as outras colmeias deste navegador e a saída." />
+        <SectionHeading title="Esta colmeia" />
         <ColmeiaCard />
       </section>
 
