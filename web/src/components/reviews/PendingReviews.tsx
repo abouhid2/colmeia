@@ -1,12 +1,14 @@
 import { formatPoints } from "../../domain/points";
 import { useReviewCompletion, useCompletions } from "../../hooks/useCompletions";
 import { useMemberLookup } from "../../hooks/useMembers";
+import { useNow } from "../../hooks/useNow";
 import { useSession } from "../../hooks/useSession";
 import { useToast } from "../../hooks/useToast";
 import { SectionHeading } from "../ui/SectionHeading";
 import { ReviewCard } from "./ReviewCard";
 
 export function PendingReviews() {
+  const now = useNow();
   const { pending } = useCompletions();
   const lookup = useMemberLookup();
   const { currentMember } = useSession();
@@ -32,6 +34,7 @@ export function PendingReviews() {
               key={completion.id}
               completion={completion}
               doer={doer}
+              now={now}
               canReview={completion.memberId !== currentMember.id}
               submitting={review.isPending && review.variables?.id === completion.id}
               onReview={(rating) => submit(completion.id, doer?.name ?? "Alguém", rating)}

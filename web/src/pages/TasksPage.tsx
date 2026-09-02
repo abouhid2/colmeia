@@ -86,6 +86,7 @@ export function TasksPage() {
                   key={completion.id}
                   completion={completion}
                   doer={lookup(completion.memberId)}
+                  now={now}
                   canReopen={canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
                   onReopen={() => {
                     if (completion.taskId !== null) reopen.mutate(completion.taskId);

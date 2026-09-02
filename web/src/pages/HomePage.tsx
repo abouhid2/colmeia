@@ -107,7 +107,7 @@ export function HomePage() {
 
       <LagartinhaLeague standings={standings} />
 
-      <ActivityFeed completions={recent} lookup={lookup} />
+      <ActivityFeed completions={recent} now={now} lookup={lookup} />
 
       <TaskDialogs dialogs={dialogs} />
       <GoalDialog dialog={goalDialog} />

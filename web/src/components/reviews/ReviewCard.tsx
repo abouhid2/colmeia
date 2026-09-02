@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { awardedPoints } from "../../domain/points";
 import type { Completion, Member } from "../../domain/types";
-import { timeAgo } from "../../lib/dates";
+import { completedLabel } from "../../lib/dates";
 import { LagartinhaMark } from "../members/LagartinhaMark";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
@@ -10,12 +10,13 @@ import { StarRating } from "../ui/StarRating";
 interface ReviewCardProps {
   completion: Completion;
   doer: Member | null;
+  now: Date;
   canReview: boolean;
   submitting: boolean;
   onReview(rating: number): void;
 }
 
-export function ReviewCard({ completion, doer, canReview, submitting, onReview }: ReviewCardProps) {
+export function ReviewCard({ completion, doer, now, canReview, submitting, onReview }: ReviewCardProps) {
   const [rating, setRating] = useState<number | null>(null);
   // The multiplier the work was done under is the one that will be paid.
   const preview = rating === null ? null : awardedPoints(completion.taskPoints, rating, completion.multiplier);
@@ -27,7 +28,7 @@ export function ReviewCard({ completion, doer, canReview, submitting, onReview }
         <p className="min-w-0 flex-1 text-sm">
           <span className="font-semibold">{doer?.name ?? "Alguém"}</span>
           {doer && <LagartinhaMark member={doer} compact className="ml-1 align-middle" />} concluiu <span className="font-semibold">{completion.taskTitle}</span>
-          <span className="text-ink-soft"> · {timeAgo(completion.completedAt)} · vale {completion.taskPoints} pontos</span>
+          <span className="text-ink-soft"> · {completedLabel(completion.completedAt, now)} · vale {completion.taskPoints} pontos</span>
         </p>
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
