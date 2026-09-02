@@ -8,8 +8,11 @@ today = Date.current
 
 # Ana already claimed her place; the other three are still invitations waiting
 # to be opened, which is what the invite link demonstrates.
-ana = household.members.create!(name: "Ana", avatar: "🦊", color: "pollen", claimed_at: now)
-bruno = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky", crown_title: "Abelhão")
+# Ana and Bruno already pinned badges they earned, which is what the profile shows.
+ana = household.members.create!(name: "Ana", avatar: "🦊", color: "pollen", claimed_at: now,
+  favorite_achievements: %w[ firstTask bigTask ])
+bruno = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky", crown_title: "Abelhão",
+  favorite_achievements: %w[ flawless ])
 clara = household.members.create!(name: "Clara", avatar: "🐼", color: "plum", crown_title: "Rainha da Louça")
 # Duda is the child of the house: everything she does is worth 1,5x.
 duda = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf", kind: "lagartinha")

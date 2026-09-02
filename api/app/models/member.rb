@@ -9,6 +9,8 @@ class Member < ApplicationRecord
   # What someone wants to be called when they win the reward period.
   # Blank is a deliberate choice: that person never wears the crown.
   CROWN_TITLE_LIMIT = 30
+  # How many badges someone can pin on their own profile.
+  MAX_FAVORITE_ACHIEVEMENTS = 3
 
   belongs_to :household
   has_many :assigned_tasks, class_name: "Task", foreign_key: :assignee_id,
@@ -22,8 +24,11 @@ class Member < ApplicationRecord
   has_many :purchases, class_name: "ShoppingItem", foreign_key: :purchased_by_id,
     dependent: :nullify, inverse_of: :purchased_by
   has_many :goals, dependent: :destroy
+  # Whoever leaves the colmeia takes their badges with them.
+  has_many :achievement_awards, dependent: :destroy
 
   normalizes :crown_title, with: ->(title) { title.to_s.strip }, apply_to_nil: true
+  normalizes :favorite_achievements, with: ->(keys) { Array(keys).map(&:to_s) }, apply_to_nil: true
 
   validates :name, presence: true, length: { maximum: 40 }
   validates :avatar, presence: true, length: { maximum: 8 }
@@ -32,6 +37,7 @@ class Member < ApplicationRecord
   validates :points_multiplier,
     numericality: { greater_than_or_equal_to: MIN_MULTIPLIER, less_than_or_equal_to: MAX_MULTIPLIER }
   validates :crown_title, length: { maximum: CROWN_TITLE_LIMIT }, allow_blank: true
+  validate :favorite_achievements_are_pinnable
 
   before_save :apply_lagartinha_multiplier
 
@@ -60,6 +66,14 @@ class Member < ApplicationRecord
   end
 
   private
+
+  # Three badges, all real, no repeats: the shelf on the profile has three slots.
+  def favorite_achievements_are_pinnable
+    keys = favorite_achievements
+    errors.add(:favorite_achievements, :too_many, count: MAX_FAVORITE_ACHIEVEMENTS) if keys.size > MAX_FAVORITE_ACHIEVEMENTS
+    errors.add(:favorite_achievements, :unknown) if (keys - AchievementAward::KEYS).any?
+    errors.add(:favorite_achievements, :duplicated) if keys.uniq.size != keys.size
+  end
 
   # Becoming a lagartinha suggests the default handicap, once. Going back to
   # bee leaves whatever the family set: an adult may want one too.

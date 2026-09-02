@@ -10,6 +10,7 @@ pt-BR:
       shopping_item: Item
       goal: Meta
       household: Casa
+      achievement_award: Conquista
     attributes:
       task:
         title: Título
@@ -28,6 +29,7 @@ pt-BR:
         kind: Tipo
         points_multiplier: Multiplicador de pontos
         crown_title: Título de vencedor
+        favorite_achievements: Conquistas fixadas
       completion:
         rating: Nota
         status: Situação
@@ -45,3 +47,15 @@ pt-BR:
         period: Período
       household:
         name: Nome da casa
+      achievement_award:
+        key: Conquista
+        completion_id: Conclusão
+        awarded_at: Conquistada em
+    errors:
+      models:
+        member:
+          attributes:
+            favorite_achievements:
+              too_many: "não passam de %{count}"
+              unknown: "trazem uma conquista que não existe"
+              duplicated: "não podem repetir a mesma conquista"

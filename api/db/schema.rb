@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_03_010615) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
   create_table "achievement_awards", force: :cascade do |t|
     t.datetime "awarded_at", null: false
     t.integer "completion_id"
@@ -72,6 +72,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010615) do
     t.string "color", default: "honey", null: false
     t.datetime "created_at", null: false
     t.string "crown_title", default: "Abelha Rainha", null: false
+    t.json "favorite_achievements", default: [], null: false
     t.integer "household_id", null: false
     t.string "kind", default: "bee", null: false
     t.string "name", null: false
