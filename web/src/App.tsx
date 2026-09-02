@@ -3,6 +3,7 @@ import { AppShell } from "./components/layout/AppShell";
 import { AppProviders } from "./components/providers/AppProviders";
 import { FamilyPage } from "./pages/FamilyPage";
 import { HomePage } from "./pages/HomePage";
+import { MemberPage } from "./pages/MemberPage";
 import { ShoppingPage } from "./pages/ShoppingPage";
 import { TasksPage } from "./pages/TasksPage";
 
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="tarefas" element={<TasksPage />} />
             <Route path="compras" element={<ShoppingPage />} />
             <Route path="familia" element={<FamilyPage />} />
+            <Route path="familia/:memberId" element={<MemberPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
