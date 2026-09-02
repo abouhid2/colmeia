@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { memberAchievements, type AchievementId } from "./achievements";
+import { achievementEvents, isRepeatable, memberAchievements, type AchievementId } from "./achievements";
 import type { Completion, Task } from "./types";
 
 const completion = (overrides: Partial<Completion>): Completion => ({
@@ -115,5 +115,71 @@ describe("memberAchievements", () => {
 
     expect(find(memberAchievements({ memberId: 1, completions: sameDay, tasks: [] }), "sevenDays").current).toBe(1);
     expect(find(memberAchievements({ memberId: 1, completions: spread, tasks: [] }), "sevenDays")).toMatchObject({ unlocked: true, progress: "7 de 7 dias" });
+  });
+});
+
+describe("achievementEvents", () => {
+  it("gives nothing to someone who never did a thing", () => {
+    expect(achievementEvents({ memberId: 1, completions: [], tasks: [] })).toEqual([]);
+  });
+
+  it("hangs a milestone on the completion that crossed it", () => {
+    const completions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((day) => onDay(day));
+
+    const events = achievementEvents({ memberId: 1, completions, tasks: [] });
+
+    expect(events.find((event) => event.id === "firstTask")).toMatchObject({ completionId: 101, awardedAt: "2026-03-01T12:00:00.000Z" });
+    expect(events.find((event) => event.id === "tenTasks")).toMatchObject({ completionId: 110, awardedAt: "2026-03-10T12:00:00.000Z" });
+    expect(events.find((event) => event.id === "sevenDays")?.completionId).toBe(107);
+    expect(events.filter((event) => event.id === "firstTask")).toHaveLength(1);
+  });
+
+  it("awards a repeatable badge once per completion that earns it", () => {
+    const completions = [
+      completion({ id: 1, taskPoints: 50, completedAt: "2026-03-01T10:00:00.000Z" }),
+      completion({ id: 2, taskPoints: 80, completedAt: "2026-03-05T10:00:00.000Z" }),
+      completion({ id: 3, taskPoints: 10, completedAt: "2026-03-06T10:00:00.000Z" }),
+    ];
+
+    const events = achievementEvents({ memberId: 1, completions, tasks: [] }).filter((event) => event.id === "bigTask");
+
+    expect(events.map((event) => event.completionId)).toEqual([1, 2]);
+  });
+
+  it("dates Impecável by the review, not by the task being done", () => {
+    const completions = [completion({ id: 4, rating: 5, completedAt: "2026-03-01T10:00:00.000Z", reviewedAt: "2026-03-02T20:00:00.000Z" })];
+
+    const events = achievementEvents({ memberId: 1, completions, tasks: [] });
+
+    expect(events.find((event) => event.id === "flawless")).toMatchObject({ completionId: 4, awardedAt: "2026-03-02T20:00:00.000Z" });
+  });
+
+  it("counts an urgent task every time, reading urgency off the task", () => {
+    const tasks = [task({ id: 7, priority: "urgent" })];
+    const completions = [
+      completion({ id: 1, taskId: 7, completedAt: "2026-03-01T10:00:00.000Z" }),
+      completion({ id: 2, taskId: 7, completedAt: "2026-03-04T10:00:00.000Z" }),
+    ];
+
+    const events = achievementEvents({ memberId: 1, completions, tasks }).filter((event) => event.id === "urgentTask");
+
+    expect(events.map((event) => event.completionId)).toEqual([1, 2]);
+  });
+
+  it("comes back oldest first, whatever order the completions arrive in", () => {
+    const completions = [onDay(9), onDay(2), onDay(5)];
+
+    const events = achievementEvents({ memberId: 1, completions, tasks: [] });
+
+    expect(events.map((event) => event.awardedAt)).toEqual([...events.map((event) => event.awardedAt)].sort());
+  });
+
+  it("marks as repeatable only the badges that can happen again", () => {
+    const achievements = memberAchievements({ memberId: 1, completions: [], tasks: [] });
+    const repeatable = achievements.filter((achievement) => achievement.repeatable).map((achievement) => achievement.id);
+
+    expect(repeatable).toEqual(["flawless", "urgentTask", "bigTask"]);
+    expect(isRepeatable("bigTask")).toBe(true);
+    expect(isRepeatable("tenTasks")).toBe(false);
   });
 });
