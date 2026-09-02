@@ -1,5 +1,5 @@
-import type { Goal, Household, Member } from "../domain/types";
-import { DEMO_INVITE_CODE, type LocalState } from "./localState";
+import type { Goal, Household } from "../domain/types";
+import { DEMO_INVITE_CODE, normalizeState, type LocalState, type StoredMember, type StoredState } from "./localState";
 import { parseJson, type KeyValueStore } from "./storage";
 
 export const HOUSEHOLD_INDEX_KEY = "colmeia.households.v3";
@@ -14,10 +14,10 @@ export interface HouseholdEntry {
 
 export type HouseholdIndex = Record<string, HouseholdEntry>;
 
-type LegacyMember = Omit<Member, "claimedAt">;
+type LegacyMember = Omit<StoredMember, "claimedAt">;
 
 /** v2 held one colmeia per browser, with no invite code and nobody to claim. */
-interface LegacyV2State extends Omit<LocalState, "household" | "members"> {
+interface LegacyV2State extends Omit<StoredState, "household" | "members"> {
   household: Omit<Household, "inviteCode">;
   members: LegacyMember[];
 }
@@ -37,7 +37,7 @@ function fromV1({ goal, ...rest }: LegacyV1State): LegacyV2State {
 
 /** v2 had no notion of who this browser was, so everybody stays a placeholder:
  *  whoever opens the app says which of these people they are, once. */
-function fromV2(state: LegacyV2State): LocalState {
+function fromV2(state: LegacyV2State): StoredState {
   return {
     ...state,
     household: { ...state.household, inviteCode: DEMO_INVITE_CODE },
@@ -63,7 +63,7 @@ export class LocalStore {
     const stored = parseJson<HouseholdIndex>(this.store.getItem(HOUSEHOLD_INDEX_KEY));
     if (stored !== null && typeof stored === "object") return stored;
 
-    const state = this.takeLegacyState() ?? this.seed();
+    const state = normalizeState(this.takeLegacyState() ?? this.seed());
     state.household.inviteCode = DEMO_INVITE_CODE;
     this.writeState(state);
     const index: HouseholdIndex = { [DEMO_INVITE_CODE]: this.entry(state) };
@@ -73,7 +73,9 @@ export class LocalStore {
 
   read(inviteCode: string): LocalState | null {
     const stored = this.resolve(inviteCode);
-    return stored === null ? null : parseJson<LocalState>(this.store.getItem(storageKey(stored)));
+    if (stored === null) return null;
+    const state = parseJson<StoredState>(this.store.getItem(storageKey(stored)));
+    return state === null ? null : normalizeState(state);
   }
 
   /** The code as this browser filed it, whatever case it was typed in. */
@@ -111,7 +113,7 @@ export class LocalStore {
     this.store.setItem(HOUSEHOLD_INDEX_KEY, JSON.stringify(index));
   }
 
-  private takeLegacyState(): LocalState | null {
+  private takeLegacyState(): StoredState | null {
     const v2 = parseJson<LegacyV2State>(this.store.getItem(LEGACY_V2_KEY));
     const v1 = parseJson<LegacyV1State>(this.store.getItem(LEGACY_V1_KEY));
     this.store.removeItem(LEGACY_V2_KEY);

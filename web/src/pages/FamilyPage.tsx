@@ -1,17 +1,20 @@
 import { Plus, Target } from "lucide-react";
 import { useState } from "react";
 import type { Member } from "../domain/types";
+import { useCrown } from "../hooks/useCrown";
 import { useDisclosure } from "../hooks/useDisclosure";
 import { useGoalOverview } from "../hooks/useGoalOverview";
 import { useMemberFilter } from "../hooks/useMemberFilter";
 import { useSession } from "../hooks/useSession";
 import { GoalDialog } from "../components/goal/GoalDialog";
 import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
+import { crownExplanation } from "../domain/crownTitles";
 import { periodScopeLabel } from "../components/goal/goalCopy";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ColmeiaCard } from "../components/household/ColmeiaCard";
 import { DemoResetCard } from "../components/members/DemoResetCard";
 import { HouseholdNameForm } from "../components/members/HouseholdNameForm";
+import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
 import { MemberCard } from "../components/members/MemberCard";
 import { MemberDialog } from "../components/members/MemberDialog";
@@ -27,6 +30,7 @@ export function FamilyPage() {
   const { members } = useSession();
   const { memberId, member: filtered } = useMemberFilter();
   const { household, personal, period, standings, allTimeStandings } = useGoalOverview();
+  const crown = useCrown();
   const [scope, setScope] = useState<Scope>("period");
   const [editing, setEditing] = useState<Member | null>(null);
   const memberDialog = useDisclosure();
@@ -50,14 +54,16 @@ export function FamilyPage() {
           title="Ranking"
           action={<Segmented label="Período do ranking" size="sm" value={scope} onChange={setScope} options={[{ value: "period", label: periodScopeLabel(period) }, { value: "all", label: "Desde sempre" }]} />}
         />
-        <Leaderboard standings={scope === "period" ? standings : allTimeStandings} />
+        <Leaderboard standings={scope === "period" ? standings : allTimeStandings} crownedMemberId={crown?.member.id ?? null} period={period} />
       </section>
 
+      <LagartinhaLeague standings={scope === "period" ? standings : allTimeStandings} />
+
       <section>
-        <SectionHeading title="Quem mora aqui" action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => openMember(null)}>Adicionar</Button>} />
+        <SectionHeading title="Quem mora aqui" hint={crownExplanation(period)} action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => openMember(null)}>Adicionar</Button>} />
         <ul className="grid gap-3 sm:grid-cols-2">
           {shownMembers.map((member) => (
-            <MemberCard key={member.id} member={member} periodStanding={findStanding(standings, member)} allTimeStanding={findStanding(allTimeStandings, member)} onEdit={openMember} />
+            <MemberCard key={member.id} member={member} periodStanding={findStanding(standings, member)} allTimeStanding={findStanding(allTimeStandings, member)} crowned={crown?.member.id === member.id} period={period} onEdit={openMember} />
           ))}
         </ul>
       </section>

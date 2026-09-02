@@ -21,7 +21,7 @@ module Completions
         rating: rating,
         reviewer: reviewer,
         reviewed_at: now,
-        points_awarded: Completion.points_for(completion.task_points, rating)
+        points_awarded: completion.points_for_rating(rating)
       )
       completion
     end

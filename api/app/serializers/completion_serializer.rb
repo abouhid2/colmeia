@@ -8,6 +8,7 @@ module CompletionSerializer
       status: completion.status,
       rating: completion.rating,
       points_awarded: completion.points_awarded,
+      multiplier: completion.multiplier.to_f,
       task_title: completion.task_title,
       task_points: completion.task_points,
       completed_at: completion.completed_at,

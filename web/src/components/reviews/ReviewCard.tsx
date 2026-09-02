@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { pointsForRating } from "../../domain/points";
+import { awardedPoints } from "../../domain/points";
 import type { Completion, Member } from "../../domain/types";
 import { timeAgo } from "../../lib/dates";
+import { LagartinhaMark } from "../members/LagartinhaMark";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { StarRating } from "../ui/StarRating";
@@ -16,14 +17,16 @@ interface ReviewCardProps {
 
 export function ReviewCard({ completion, doer, canReview, submitting, onReview }: ReviewCardProps) {
   const [rating, setRating] = useState<number | null>(null);
-  const preview = rating === null ? null : pointsForRating(completion.taskPoints, rating);
+  // The multiplier the work was done under is the one that will be paid.
+  const preview = rating === null ? null : awardedPoints(completion.taskPoints, rating, completion.multiplier);
 
   return (
     <li className="rounded-card border border-lake-500/30 bg-lake-100/40 p-4">
       <div className="flex items-center gap-3">
         {doer ? <Avatar member={doer} size="sm" /> : <span className="size-8 rounded-full bg-dune-100" />}
         <p className="min-w-0 flex-1 text-sm">
-          <span className="font-semibold">{doer?.name ?? "Alguém"}</span> concluiu <span className="font-semibold">{completion.taskTitle}</span>
+          <span className="font-semibold">{doer?.name ?? "Alguém"}</span>
+          {doer && <LagartinhaMark member={doer} compact className="ml-1 align-middle" />} concluiu <span className="font-semibold">{completion.taskTitle}</span>
           <span className="text-ink-soft"> · {timeAgo(completion.completedAt)} · vale {completion.taskPoints} pontos</span>
         </p>
       </div>

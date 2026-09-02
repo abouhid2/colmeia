@@ -25,6 +25,12 @@ RSpec.describe "Tasks API", type: :request do
       expect(json_body).to include("title" => "Regar", "recurrence" => "custom", "interval_days" => 3, "assignee_id" => member.id)
     end
 
+    it "marks a task as good for lagartinhas" do
+      post "/api/v1/tasks", params: { task: { title: "Regar", points: 5, kid_friendly: true } }, headers: headers
+
+      expect(json_body).to include("kid_friendly" => true)
+    end
+
     it "returns validation errors" do
       post "/api/v1/tasks", params: { task: { title: "", points: 0 } }, headers: headers
 
@@ -92,6 +98,16 @@ RSpec.describe "Tasks API", type: :request do
       expect(response).to have_http_status(:ok)
       expect(json_body.dig("task", "due_on")).to eq((Date.current + 1).iso8601)
       expect(json_body.dig("completion", "points_awarded")).to eq(5)
+    end
+
+    it "pays a lagartinha the multiplied points and reports the multiplier used" do
+      duda = household.members.create!(name: "Duda", kind: "lagartinha")
+      task = household.tasks.create!(title: "Louça", points: 5, kid_friendly: true)
+
+      post "/api/v1/tasks/#{task.id}/complete", params: { member_id: duda.id }, headers: headers
+
+      expect(json_body.dig("completion", "points_awarded")).to eq(8)
+      expect(json_body.dig("completion", "multiplier")).to eq(1.5)
     end
 
     it "responds with 409 when the task is already done" do

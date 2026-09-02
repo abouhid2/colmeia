@@ -4,6 +4,8 @@ export type TaskStatus = "open" | "done";
 export type CompletionStatus = "pending" | "approved";
 export type GoalPeriod = "week" | "month";
 export type MemberColor = "honey" | "pollen" | "leaf" | "berry" | "sky" | "plum";
+/** A lagartinha is a child: the same colmeia, smaller reach, points scaled up. */
+export type MemberKind = "bee" | "lagartinha";
 
 export interface Household {
   id: number;
@@ -17,8 +19,13 @@ export interface Member {
   name: string;
   avatar: string;
   color: MemberColor;
+  kind: MemberKind;
+  /** What this person earns per point a task is worth. 1 for most adults. */
+  pointsMultiplier: number;
   /** null while the member is still a placeholder nobody has claimed. */
   claimedAt: string | null;
+  /** What they want to be called when they win a period. Blank means they never wear the crown. */
+  crownTitle: string;
   createdAt: string;
 }
 
@@ -32,6 +39,8 @@ export interface Task {
   intervalDays: number | null;
   dueOn: string | null;
   requiresReview: boolean;
+  /** Marked by an adult as something a child can actually do. */
+  kidFriendly: boolean;
   status: TaskStatus;
   completedAt: string | null;
   assigneeId: number | null;
@@ -47,6 +56,8 @@ export interface Completion {
   status: CompletionStatus;
   rating: number | null;
   pointsAwarded: number;
+  /** The doer's multiplier at the time, so history survives a later change. */
+  multiplier: number;
   taskTitle: string;
   taskPoints: number;
   completedAt: string;
@@ -83,7 +94,10 @@ export interface HouseholdInput {
   memberNames: string[];
 }
 
-export type MemberInput = Pick<Member, "name" | "avatar" | "color">;
+export interface MemberInput extends Pick<Member, "name" | "avatar" | "color" | "crownTitle"> {
+  kind?: MemberKind;
+  pointsMultiplier?: number;
+}
 
 export interface TaskInput {
   title: string;
@@ -94,6 +108,7 @@ export interface TaskInput {
   intervalDays: number | null;
   dueOn: string | null;
   requiresReview: boolean;
+  kidFriendly: boolean;
   assigneeId: number | null;
   createdById: number | null;
 }

@@ -14,6 +14,7 @@ import { TaskList } from "../components/tasks/TaskList";
 import { useTaskDialogs } from "../components/tasks/useTaskDialogs";
 import { Button } from "../components/ui/Button";
 import { EmptyState } from "../components/ui/EmptyState";
+import { FilterChip } from "../components/ui/FilterChip";
 import { Segmented } from "../components/ui/Segmented";
 
 type Status = "open" | "done";
@@ -30,13 +31,19 @@ export function TasksPage() {
   const dialogs = useTaskDialogs();
   const [status, setStatus] = useState<Status>("open");
   const [shown, setShown] = useState(HISTORY_PAGE);
+  const [kidOnly, setKidOnly] = useState(false);
 
   const open = sortOpenTasks(
-    tasks.filter((task) => task.status === "open" && (memberId === null || task.assigneeId === memberId)),
+    tasks.filter((task) =>
+      task.status === "open"
+      && (memberId === null || task.assigneeId === memberId)
+      && (!kidOnly || task.kidFriendly)),
     now,
   );
   const done = completionsForMember(completions, memberId);
   const history = done.slice(0, shown);
+  // Nothing to filter by until an adult has marked a task for the children.
+  const hasKidFriendly = tasks.some((task) => task.kidFriendly);
 
   const options = [
     { value: "open" as const, label: `Abertas · ${open.length}` },
@@ -50,7 +57,14 @@ export function TasksPage() {
         <Button icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>
       </div>
       <MemberFilter />
-      <Segmented label="Situação" options={options} value={status} onChange={setStatus} />
+      <div className="flex flex-wrap items-center gap-2">
+        <Segmented label="Situação" options={options} value={status} onChange={setStatus} />
+        {status === "open" && hasKidFriendly && (
+          <FilterChip selected={kidOnly} aria-pressed={kidOnly} onClick={() => setKidOnly((current) => !current)}>
+            <span aria-hidden>🐛</span> Para lagartinhas
+          </FilterChip>
+        )}
+      </div>
 
       {status === "done" ? (
         done.length === 0 ? (
@@ -84,8 +98,8 @@ export function TasksPage() {
       ) : open.length === 0 ? (
         <EmptyState
           icon={<ListChecks className="size-6" />}
-          title={filtered ? `Nada atribuído a ${filtered.name}` : "Nenhuma tarefa aberta"}
-          hint={filtered ? "Crie uma tarefa para essa pessoa ou veja todas." : "Crie a primeira: o que precisa ser feito na casa?"}
+          title={kidOnly ? "Nenhuma tarefa para lagartinhas" : filtered ? `Nada atribuído a ${filtered.name}` : "Nenhuma tarefa aberta"}
+          hint={kidOnly ? "Marque \"boa para lagartinhas\" nas tarefas que uma criança dá conta." : filtered ? "Crie uma tarefa para essa pessoa ou veja todas." : "Crie a primeira: o que precisa ser feito na casa?"}
           action={<Button size="sm" icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>}
         />
       ) : (

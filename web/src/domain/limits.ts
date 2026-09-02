@@ -5,6 +5,7 @@ export const LIMITS = {
   goalTitle: 80,
   goalTarget: 100_000,
   memberName: 40,
+  crownTitle: 30,
   shoppingItemName: 80,
   shoppingQuantity: 30,
   householdName: 60,

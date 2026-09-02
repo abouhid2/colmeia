@@ -2,6 +2,7 @@ import { ArrowRight, Plus, Sun, Target } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { sortOpenTasks } from "../domain/taskSort";
 import { useCompletions } from "../hooks/useCompletions";
+import { useCrown } from "../hooks/useCrown";
 import { useGoalOverview } from "../hooks/useGoalOverview";
 import { useMemberFilter } from "../hooks/useMemberFilter";
 import { useMemberLookup } from "../hooks/useMembers";
@@ -15,6 +16,7 @@ import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ActivityFeed } from "../components/home/ActivityFeed";
 import { Greeting } from "../components/home/Greeting";
+import { LagartinhaLeague } from "../components/members/LagartinhaLeague";
 import { Leaderboard } from "../components/members/Leaderboard";
 import { MemberFilter } from "../components/members/MemberFilter";
 import { PendingReviews } from "../components/reviews/PendingReviews";
@@ -37,6 +39,7 @@ export function HomePage() {
   const { tasks } = useTasks();
   const { completions } = useCompletions();
   const lookup = useMemberLookup();
+  const crown = useCrown();
   const dialogs = useTaskDialogs();
   const goalDialog = useGoalDialog();
 
@@ -49,7 +52,7 @@ export function HomePage() {
 
   return (
     <div className="space-y-8 animate-rise">
-      <Greeting member={currentMember} now={now} />
+      <Greeting member={currentMember} now={now} crowned={crown !== null && crown.member.id === currentMember?.id} period={period} />
       <MemberFilter />
 
       {household.length === 0 ? (
@@ -99,8 +102,10 @@ export function HomePage() {
 
       <section>
         <SectionHeading title="Quem mais contribuiu" hint={period === "month" ? "Neste mês" : "Nesta semana"} />
-        <Leaderboard standings={standings} />
+        <Leaderboard standings={standings} crownedMemberId={crown?.member.id ?? null} period={period} />
       </section>
+
+      <LagartinhaLeague standings={standings} />
 
       <ActivityFeed completions={recent} lookup={lookup} />
 

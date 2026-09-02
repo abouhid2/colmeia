@@ -1,4 +1,5 @@
-import { addDays, subHours } from "date-fns";
+import { addDays, addHours, startOfWeek, subHours, subWeeks } from "date-fns";
+import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { toIsoDate } from "../lib/dates";
 import type { Completion, Member, ShoppingItem, Task } from "../domain/types";
 import { DEMO_INVITE_CODE, type LocalState } from "./localState";
@@ -12,26 +13,39 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   const today = toIsoDate(now);
   const iso = (hoursAgo: number) => subHours(now, hoursAgo).toISOString();
   const inDays = (days: number) => toIsoDate(addDays(now, days));
+  /** Mid-morning on a given weekday of the week before this one. */
+  const lastWeekStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
+  const lastWeek = (weekday: number) => addHours(addDays(lastWeekStart, weekday), 10).toISOString();
 
   // Nobody has claimed a place yet: the invite link is what lets a browser in.
-  const member = (id: number, name: string, avatar: string, color: Member["color"]): Member => ({
-    id, name, avatar, color, claimedAt: null, createdAt: iso(240),
+  const member = (
+    id: number, name: string, avatar: string, color: Member["color"],
+    crownTitle = DEFAULT_CROWN_TITLE, kind: Member["kind"] = "bee",
+  ): Member => ({
+    id, name, avatar, color, crownTitle, kind,
+    pointsMultiplier: kind === "lagartinha" ? 1.5 : 1, claimedAt: null, createdAt: iso(240),
   });
-  const members = [member(1, "Ana", "🦊", "pollen"), member(2, "Bruno", "🐻", "sky"), member(3, "Clara", "🐼", "plum"), member(4, "Duda", "🦉", "leaf")];
+  // Duda is the child of the house: everything she does is worth 1,5x.
+  const members = [
+    member(1, "Ana", "🦊", "pollen"),
+    member(2, "Bruno", "🐻", "sky", "Abelhão"),
+    member(3, "Clara", "🐼", "plum", "Rainha da Louça"),
+    member(4, "Duda", "🦉", "leaf", DEFAULT_CROWN_TITLE, "lagartinha"),
+  ];
 
   const task = (seed: TaskSeed): Task => ({
     description: null, priority: "medium", recurrence: "none", intervalDays: null, dueOn: null,
-    requiresReview: false, status: "open", completedAt: null, assigneeId: null, createdById: null,
+    requiresReview: false, kidFriendly: false, status: "open", completedAt: null, assigneeId: null, createdById: null,
     createdAt: iso(200), ...seed,
   });
   const tasks = [
     task({ id: 10, title: "Trocar a resistência do chuveiro", points: 50, priority: "urgent", requiresReview: true, createdById: 1,
       description: "A resistência queimou. Comprar uma de 220V e trocar com o disjuntor desligado." }),
     task({ id: 11, title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly", dueOn: inDays(7), requiresReview: true, assigneeId: 2 }),
-    task({ id: 12, title: "Lavar a louça do jantar", points: 5, recurrence: "daily", dueOn: today }),
+    task({ id: 12, title: "Lavar a louça do jantar", points: 5, recurrence: "daily", dueOn: today, kidFriendly: true }),
     task({ id: 13, title: "Pendurar o quadro da sala", points: 15, priority: "low", assigneeId: 2, createdById: 3 }),
-    task({ id: 14, title: "Levar o lixo para fora", points: 5, recurrence: "daily", dueOn: inDays(-1) }),
-    task({ id: 15, title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom", intervalDays: 3, dueOn: inDays(1), assigneeId: 4 }),
+    task({ id: 14, title: "Levar o lixo para fora", points: 5, recurrence: "daily", dueOn: inDays(-1), kidFriendly: true }),
+    task({ id: 15, title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom", intervalDays: 3, dueOn: inDays(1), assigneeId: 4, kidFriendly: true }),
     task({ id: 16, title: "Aspirar a sala e os quartos", points: 15, recurrence: "weekly", dueOn: inDays(2) }),
     task({ id: 17, title: "Trocar a roupa de cama", points: 10, recurrence: "weekly", dueOn: inDays(3), requiresReview: true }),
     task({ id: 18, title: "Organizar a despensa", points: 30, priority: "low", recurrence: "monthly", dueOn: inDays(12) }),
@@ -41,15 +55,26 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   ];
 
   const completion = (seed: CompletionSeed): Completion => ({
-    reviewerId: null, status: "approved", rating: null, pointsAwarded: seed.taskPoints, completedAt: iso(1), reviewedAt: null, ...seed,
+    reviewerId: null, status: "approved", rating: null, pointsAwarded: seed.taskPoints, multiplier: 1, completedAt: iso(1), reviewedAt: null, ...seed,
   });
   const completions = [
     completion({ id: 30, taskId: 19, memberId: 1, reviewerId: 2, rating: 4, pointsAwarded: 32, taskTitle: "Lavar o carro", taskPoints: 40, completedAt: iso(9), reviewedAt: iso(8) }),
     completion({ id: 31, taskId: 20, memberId: 2, taskTitle: "Fazer o almoço de domingo", taskPoints: 30, completedAt: iso(7) }),
     completion({ id: 32, taskId: 21, memberId: 3, reviewerId: 1, rating: 5, pointsAwarded: 20, taskTitle: "Passar as roupas", taskPoints: 20, completedAt: iso(5), reviewedAt: iso(4) }),
-    completion({ id: 33, taskId: 12, memberId: 4, taskTitle: "Lavar a louça do jantar", taskPoints: 5, completedAt: iso(3) }),
+    completion({ id: 33, taskId: 12, memberId: 4, taskTitle: "Lavar a louça do jantar", taskPoints: 5, pointsAwarded: 8, multiplier: 1.5, completedAt: iso(3) }),
     completion({ id: 34, taskId: 14, memberId: 1, taskTitle: "Levar o lixo para fora", taskPoints: 5, completedAt: iso(2) }),
     completion({ id: 35, taskId: 11, memberId: 2, status: "pending", pointsAwarded: 0, taskTitle: "Limpar o banheiro", taskPoints: 20, completedAt: iso(1) }),
+    // Last week the house beat the goal and Bruno pulled ahead, so he wears the crown this week.
+    completion({ id: 60, taskId: null, memberId: 2, reviewerId: 1, rating: 5, pointsAwarded: 90, taskTitle: "Montar o armário do quarto", taskPoints: 90, completedAt: lastWeek(1), reviewedAt: lastWeek(1) }),
+    completion({ id: 61, taskId: null, memberId: 2, taskTitle: "Lavar o carro", taskPoints: 40, completedAt: lastWeek(4) }),
+    completion({ id: 62, taskId: null, memberId: 1, taskTitle: "Fazer a feira do mês", taskPoints: 50, completedAt: lastWeek(0) }),
+    completion({ id: 63, taskId: null, memberId: 1, taskTitle: "Limpar o quintal", taskPoints: 30, completedAt: lastWeek(3) }),
+    completion({ id: 64, taskId: null, memberId: 1, taskTitle: "Trocar as lâmpadas", taskPoints: 20, completedAt: lastWeek(5) }),
+    completion({ id: 65, taskId: null, memberId: 3, reviewerId: 2, rating: 4, pointsAwarded: 16, taskTitle: "Passar as roupas", taskPoints: 20, completedAt: lastWeek(2), reviewedAt: lastWeek(2) }),
+    completion({ id: 66, taskId: null, memberId: 3, taskTitle: "Organizar a despensa", taskPoints: 30, completedAt: lastWeek(5) }),
+    completion({ id: 67, taskId: null, memberId: 4, taskTitle: "Regar as plantas", taskPoints: 5, pointsAwarded: 8, multiplier: 1.5, completedAt: lastWeek(2) }),
+    completion({ id: 68, taskId: null, memberId: 4, taskTitle: "Lavar a louça do jantar", taskPoints: 5, pointsAwarded: 8, multiplier: 1.5, completedAt: lastWeek(5) }),
+    completion({ id: 69, taskId: null, memberId: 4, taskTitle: "Aspirar a sala e os quartos", taskPoints: 20, pointsAwarded: 30, multiplier: 1.5, completedAt: lastWeek(6) }),
   ];
 
   const item = (seed: ItemSeed): ShoppingItem => ({

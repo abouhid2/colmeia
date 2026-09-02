@@ -16,6 +16,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_000011) do
     t.datetime "created_at", null: false
     t.integer "household_id", null: false
     t.integer "member_id"
+    t.decimal "multiplier", precision: 3, scale: 2, default: "1.0", null: false
     t.integer "points_awarded", default: 0, null: false
     t.integer "rating"
     t.datetime "reviewed_at"
@@ -58,8 +59,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_000011) do
     t.datetime "claimed_at"
     t.string "color", default: "honey", null: false
     t.datetime "created_at", null: false
+    t.string "crown_title", default: "Abelha Rainha", null: false
     t.integer "household_id", null: false
+    t.string "kind", default: "bee", null: false
     t.string "name", null: false
+    t.decimal "points_multiplier", precision: 3, scale: 2, default: "1.0", null: false
     t.datetime "updated_at", null: false
     t.index ["household_id"], name: "index_members_on_household_id"
   end
@@ -89,6 +93,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_000011) do
     t.date "due_on"
     t.integer "household_id", null: false
     t.integer "interval_days"
+    t.boolean "kid_friendly", default: false, null: false
     t.integer "points", default: 10, null: false
     t.string "priority", default: "medium", null: false
     t.string "recurrence", default: "none", null: false

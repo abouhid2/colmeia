@@ -43,6 +43,37 @@ describe("LocalApi", () => {
     expect(reviewed).toMatchObject({ status: "approved", rating: 3, pointsAwarded: 30, reviewerId: 1 });
   });
 
+  it("multiplies what a lagartinha earns and records the multiplier used", async () => {
+    const { completion } = await api.tasks.complete(12, 4);
+
+    expect(completion).toMatchObject({ pointsAwarded: 8, taskPoints: 5, multiplier: 1.5 });
+  });
+
+  it("pays a review with the multiplier the work was done under", async () => {
+    const { completion } = await api.tasks.complete(17, 4);
+    expect(completion).toMatchObject({ status: "pending", multiplier: 1.5 });
+
+    await api.members.update(4, { pointsMultiplier: 3 });
+    const reviewed = await api.completions.review(completion.id, { reviewerId: 1, rating: 4 });
+
+    expect(reviewed.pointsAwarded).toBe(12);
+  });
+
+  it("hands a new lagartinha the default handicap and keeps a chosen one", async () => {
+    const promoted = await api.members.update(2, { kind: "lagartinha" });
+    expect(promoted).toMatchObject({ kind: "lagartinha", pointsMultiplier: 1.5 });
+
+    const demoted = await api.members.update(2, { kind: "bee" });
+    expect(demoted.pointsMultiplier).toBe(1.5);
+
+    const created = await api.members.create({ name: "Tino", avatar: "🐢", color: "leaf", crownTitle: "Tartaruga-mor", kind: "lagartinha", pointsMultiplier: 2 });
+    expect(created.pointsMultiplier).toBe(2);
+  });
+
+  it("refuses a multiplier outside the sane range", async () => {
+    await expect(api.members.update(4, { pointsMultiplier: 9 })).rejects.toMatchObject({ status: 422 });
+  });
+
   it("refuses to complete a finished task", async () => {
     await expect(api.tasks.complete(19, 1)).rejects.toMatchObject({ status: 409 });
   });
@@ -118,6 +149,40 @@ describe("LocalApi", () => {
     expect(store.getItem("colmeia.db.v1")).toBeNull();
   });
 
+  it("reads members stored before crown titles existed with the default title", async () => {
+    const store = new MemoryStore();
+    const stored = buildDemoState(now);
+    const bare = stored.members.map(({ crownTitle: _crownTitle, ...member }) => member);
+    store.setItem("colmeia.db.v2", JSON.stringify({ ...stored, members: bare }));
+
+    const upgraded = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
+    upgraded.setInviteCode(DEMO_INVITE_CODE);
+
+    expect((await upgraded.members.list()).map((member) => member.crownTitle)).toEqual(
+      ["Abelha Rainha", "Abelha Rainha", "Abelha Rainha", "Abelha Rainha"],
+    );
+  });
+
+  it("keeps the crown title a member chose, trimmed", async () => {
+    expect((await api.members.list()).find((member) => member.id === 2)?.crownTitle).toBe("Abelhão");
+
+    const changed = await api.members.update(2, { crownTitle: "  Rei da Louça  " });
+    expect(changed.crownTitle).toBe("Rei da Louça");
+  });
+
+  it("takes a blank crown title as opting out of the crown", async () => {
+    const changed = await api.members.update(2, { crownTitle: "   " });
+
+    expect(changed.crownTitle).toBe("");
+  });
+
+  it("refuses a crown title too long to sit next to a name", async () => {
+    await expect(api.members.update(2, { crownTitle: "a".repeat(31) })).rejects.toMatchObject({ status: 422 });
+    await expect(
+      api.members.create({ name: "Novo", avatar: "🐝", color: "honey", crownTitle: "a".repeat(31) }),
+    ).rejects.toMatchObject({ status: 422 });
+  });
+
   it("stamps purchases and clears bought items", async () => {
     const bought = await api.shopping.update(40, { purchased: true, purchasedById: 2 });
     expect(bought.purchasedAt).toBe(now.toISOString());
@@ -135,7 +200,7 @@ describe("LocalApi", () => {
   it("validates task input", async () => {
     await expect(api.tasks.create({
       title: "Regar", description: null, points: 5, priority: "low", recurrence: "custom", intervalDays: null,
-      dueOn: null, requiresReview: false, assigneeId: null, createdById: null,
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeId: null, createdById: null,
     })).rejects.toMatchObject({ status: 422 });
   });
 });

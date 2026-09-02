@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { LIMITS } from "../domain/limits";
 import { DEMO_INVITE_CODE, LocalApi, type KeyValueStore } from "./localApi";
 import { HOUSEHOLD_INDEX_KEY, HOUSEHOLD_KEY_PREFIX } from "./localStore";
@@ -47,7 +48,7 @@ describe("LocalApi households", () => {
       .rejects.toMatchObject({ status: 422 });
     await expect(api.households.create({ name: "Casa", memberNames: [ "x".repeat(LIMITS.memberName + 1) ] }))
       .rejects.toMatchObject({ status: 422 });
-    await expect(api.households.join(DEMO_INVITE_CODE, { name: "x".repeat(LIMITS.memberName + 1), avatar: "🐝", color: "honey" }))
+    await expect(api.households.join(DEMO_INVITE_CODE, { name: "x".repeat(LIMITS.memberName + 1), avatar: "🐝", color: "honey", crownTitle: DEFAULT_CROWN_TITLE }))
       .rejects.toMatchObject({ status: 422 });
   });
 
@@ -63,11 +64,11 @@ describe("LocalApi households", () => {
     const created = await api.households.create({ name: "Casa cheia", memberNames: names });
     api.setInviteCode(created.inviteCode);
     for (let seat = LIMITS.initialMembers; seat < LIMITS.householdMembers; seat += 1) {
-      await api.members.create({ name: `Pessoa ${seat}`, avatar: "🐝", color: "honey" });
+      await api.members.create({ name: `Pessoa ${seat}`, avatar: "🐝", color: "honey", crownTitle: DEFAULT_CROWN_TITLE });
     }
 
-    await expect(api.members.create({ name: "Mais uma", avatar: "🐝", color: "honey" })).rejects.toMatchObject({ status: 422 });
-    await expect(api.households.join(created.inviteCode, { name: "Mais uma", avatar: "🐝", color: "honey" }))
+    await expect(api.members.create({ name: "Mais uma", avatar: "🐝", color: "honey", crownTitle: DEFAULT_CROWN_TITLE })).rejects.toMatchObject({ status: 422 });
+    await expect(api.households.join(created.inviteCode, { name: "Mais uma", avatar: "🐝", color: "honey", crownTitle: DEFAULT_CROWN_TITLE }))
       .rejects.toMatchObject({ status: 422 });
     expect((await api.members.list())).toHaveLength(LIMITS.householdMembers);
   });
@@ -119,9 +120,9 @@ describe("LocalApi households", () => {
   it("lets someone the list did not have join, already claimed", async () => {
     const created = await api.households.create({ name: "Casa", memberNames: [ "Ana" ] });
 
-    const duda = await api.households.join(created.inviteCode, { name: " Duda ", avatar: "🦉", color: "leaf" });
+    const duda = await api.households.join(created.inviteCode, { name: " Duda ", avatar: "🦉", color: "leaf", crownTitle: "Abelhão" });
 
-    expect(duda).toMatchObject({ name: "Duda", avatar: "🦉", color: "leaf" });
+    expect(duda).toMatchObject({ name: "Duda", avatar: "🦉", color: "leaf", crownTitle: "Abelhão" });
     expect(duda.claimedAt).toBe(now.toISOString());
     expect((await api.households.lookup(created.inviteCode)).members).toHaveLength(2);
   });
@@ -135,7 +136,7 @@ describe("LocalApi households", () => {
     api.setInviteCode(first.inviteCode);
     await api.tasks.create({
       title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null,
-      dueOn: null, requiresReview: false, assigneeId: null, createdById: null,
+      dueOn: null, requiresReview: false, kidFriendly: false, assigneeId: null, createdById: null,
     });
     expect((await api.members.list()).map((member) => member.name)).toEqual([ "Ana" ]);
 
@@ -190,6 +191,26 @@ describe("LocalApi households", () => {
     store.setItem(`${HOUSEHOLD_KEY_PREFIX}${created.inviteCode}`, "}{");
 
     await expect(broken.households.lookup(created.inviteCode)).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("fills in the lagartinha fields for a store written before they existed", async () => {
+    const store = new MemoryStore();
+    const state = buildDemoState(now);
+    store.setItem(HOUSEHOLD_INDEX_KEY, JSON.stringify({ [DEMO_INVITE_CODE]: { name: "Casa", createdAt: now.toISOString() } }));
+    store.setItem(`${HOUSEHOLD_KEY_PREFIX}${DEMO_INVITE_CODE}`, JSON.stringify({
+      ...state,
+      members: state.members.map(({ kind: _kind, pointsMultiplier: _multiplier, ...member }) => member),
+      tasks: state.tasks.map(({ kidFriendly: _kidFriendly, ...task }) => task),
+      completions: state.completions.map(({ multiplier: _multiplier, ...completion }) => completion),
+    }));
+
+    const older = buildApi(store);
+    older.setInviteCode(DEMO_INVITE_CODE);
+
+    expect((await older.members.list()).map((member) => [ member.kind, member.pointsMultiplier ]))
+      .toEqual(state.members.map(() => [ "bee", 1 ]));
+    expect((await older.tasks.list()).every((task) => task.kidFriendly === false)).toBe(true);
+    expect((await older.completions.list()).every((completion) => completion.multiplier === 1)).toBe(true);
   });
 
   it("seeds a fresh browser with the demo colmeia, nobody claimed" , async () => {
