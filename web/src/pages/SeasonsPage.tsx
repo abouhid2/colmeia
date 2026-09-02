@@ -7,15 +7,15 @@ import { useCompletions } from "../hooks/useCompletions";
 import { useSeason } from "../hooks/useSeasonContext";
 import { useSeasonMutations } from "../hooks/useSeasons";
 import { useToast } from "../hooks/useToast";
+import { CloseSeasonDialog } from "../components/season/CloseSeasonDialog";
 import { SeasonCard } from "../components/season/SeasonCard";
 import { SeasonDialog } from "../components/season/SeasonDialog";
 import { useSeasonDialog } from "../components/season/useSeasonDialog";
 import { Button } from "../components/ui/Button";
-import { Dialog } from "../components/ui/Dialog";
 import { EmptyState } from "../components/ui/EmptyState";
 
 export function SeasonsPage() {
-  const { seasons, currentSeason, setCurrentSeasonId } = useSeason();
+  const { seasons, currentSeason } = useSeason();
   const { completions } = useCompletions();
   const { close, reopen, remove } = useSeasonMutations();
   const { notify } = useToast();
@@ -65,7 +65,6 @@ export function SeasonsPage() {
               points={pointsIn(season)}
               isCurrent={season.id === currentSeason?.id}
               confirmingDelete={confirmingDeleteId === season.id}
-              onSelect={() => setCurrentSeasonId(season.id)}
               onEdit={() => dialog.openEdit(season)}
               onClose={() => setClosing(season)}
               onReopen={() => reopen.mutate(season.id, { onSuccess: () => notify({ message: `${season.name} reaberta` }) })}
@@ -77,18 +76,12 @@ export function SeasonsPage() {
 
       <SeasonDialog dialog={dialog} />
 
-      <Dialog
-        open={closing !== null}
-        onClose={() => setClosing(null)}
-        title={closing ? `Encerrar ${closing.name}?` : "Encerrar estação"}
-        description="Ninguém pontua mais nela, e as tarefas dela param de aceitar conclusão."
-      >
-        <p className="text-sm text-ink-soft">Os títulos saem do ranking que congelar agora.</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setClosing(null)}>Cancelar</Button>
-          <Button onClick={confirmClose} loading={close.isPending}>Encerrar estação</Button>
-        </div>
-      </Dialog>
+      <CloseSeasonDialog
+        season={closing}
+        isPending={close.isPending}
+        onCancel={() => setClosing(null)}
+        onConfirm={confirmClose}
+      />
     </div>
   );
 }

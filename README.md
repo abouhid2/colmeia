@@ -18,6 +18,7 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 - **Metas da estação**: uma da colmeia inteira, com o favo enchendo e o ranking de quem mais ajudou, e quantas individuais quiserem (só os pontos daquela pessoa contam).
 - **Lagartinhas**: crianças na colmeia. Cada pessoa é abelha ou lagartinha, e a lagartinha ganha os pontos multiplicados (1,5× por padrão, ajustável de 0,5× a 3×) para conseguir acompanhar os adultos. O multiplicador fica à vista, ao lado do nome. Há um ranking só das lagartinhas, e as tarefas podem ser marcadas "boa para lagartinhas", com filtro na lista. Tudo isso é opcional: em Família, "Ajustes da colmeia" tem o interruptor "Tem lagartinhas na colmeia?", desligado em toda colmeia nova. Desligado, nenhuma tela fala em lagartinha, e quem já é uma continua na colmeia com o multiplicador dela. O raciocínio está em [docs/lagartinhas.md](docs/lagartinhas.md).
 - **Conquistas**: dez medalhas que saem sozinhas do que cada pessoa já fez, na aba Conquistas. Três delas caem de novo toda vez que acontecem (nota 5 recebida, tarefa de 50 pontos ou mais, tarefa urgente) e contam quantas vezes. Cada medalha ganha fica anotada, então a contagem e as datas continuam ali mesmo que a tarefa ou a conclusão seja apagada. Cada pessoa fixa até três no próprio perfil.
+- **Títulos**: no fim de cada estação a colmeia distribui nomes. O de vencedor sai sozinho do ranking (é a coroa, e cada pessoa escolhe como quer ser chamada ao vencer). Os outros a família vota: Pernilongo, Abelhudo, Mosca-morta, Lesma e Cigarra vêm prontos, e dá para renomear, reordenar, tirar da lista ou criar quantos quiserem. A votação abre quando a estação encerra: um voto por pessoa em cada título, e pode mudar de ideia. Os títulos ganhos ficam no perfil de quem levou.
 - **Menu de cada um**: em "Meus ajustes" a pessoa escolhe quais telas ficam no menu e em que ordem, só para ela. No celular cabem cinco: as quatro primeiras e um "Mais" com o resto. Início nunca sai, e uma tela nova entra sozinha no fim da lista de quem já arrumou a sua.
 - **Filtro por integrante** presente em todas as telas: escolha uma pessoa e o app mostra só as tarefas, compras, metas e conquistas dela.
 - **Família de exemplo**: quem chega sem convite e sem colmeia clica em "Experimentar com uma família de exemplo" e cai numa colmeia só dele, já cheia de tarefas, pessoas e histórico de mentira. Dá para mexer em tudo, recomeçar do zero e sair quando quiser.
@@ -40,7 +41,9 @@ estação seguinte corre. Dá para reabrir uma estação encerrada, e apagar uma
 ainda não tem nenhuma conclusão.
 
 O seletor de estação fica na barra lateral e no cabeçalho, e a página
-`/estacoes` é onde se cria, ajusta, encerra e reabre.
+`/estacoes` é onde se cria, ajusta, encerra e reabre. Cada estação tem a sua
+página em `/estacoes/<id>`, com o ranking que ela congelou, as metas, os
+números e os títulos.
 
 ## Colmeias e convites
 

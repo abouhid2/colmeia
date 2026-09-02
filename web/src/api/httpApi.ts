@@ -1,7 +1,8 @@
 import type {
   AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
-  HouseholdUpdate, HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
-  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
+  HouseholdUpdate, HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonTitle,
+  SeasonTitleInput, SeasonTitleUpdate, SeasonTitleVote, SeasonUpdate,
+  ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput, VoteInput, VoteKey,
 } from "../domain/types";
 import type { ColmeiaApi, CompleteTaskOptions, CompleteTaskResult, CompletionQuery, DemoColmeia } from "./client";
 import { ApiError } from "./errors";
@@ -119,6 +120,23 @@ export class HttpApi implements ColmeiaApi {
     close: (id: number): Promise<Season> => this.request("POST", `/seasons/${id}/close`),
     reopen: (id: number): Promise<Season> => this.request("POST", `/seasons/${id}/reopen`),
     remove: (id: number): Promise<void> => this.request("DELETE", `/seasons/${id}`),
+  };
+
+  seasonTitles = {
+    list: (): Promise<SeasonTitle[]> => this.request("GET", "/season_titles"),
+    create: (input: SeasonTitleInput): Promise<SeasonTitle> => this.request("POST", "/season_titles", { seasonTitle: input }),
+    update: (id: number, input: SeasonTitleUpdate): Promise<SeasonTitle> =>
+      this.request("PATCH", `/season_titles/${id}`, { seasonTitle: input }),
+    remove: (id: number): Promise<void> => this.request("DELETE", `/season_titles/${id}`),
+  };
+
+  votes = {
+    list: (seasonId: number | null): Promise<SeasonTitleVote[]> =>
+      this.request("GET", seasonId === null ? "/season_title_votes" : `/seasons/${seasonId}/votes`),
+    cast: (seasonId: number, input: VoteInput): Promise<SeasonTitleVote> =>
+      this.request("PUT", `/seasons/${seasonId}/votes`, input),
+    clear: (seasonId: number, key: VoteKey): Promise<void> =>
+      this.request("DELETE", `/seasons/${seasonId}/votes`, key),
   };
 
   tasks = {

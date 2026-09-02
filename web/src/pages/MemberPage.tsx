@@ -5,6 +5,7 @@ import { useCrown } from "../hooks/useCrown";
 import { useDisclosure } from "../hooks/useDisclosure";
 import { useMemberLookup } from "../hooks/useMembers";
 import { useMemberProfile } from "../hooks/useMemberProfile";
+import { useMemberTitles } from "../hooks/useMemberTitles";
 import { useSession } from "../hooks/useSession";
 import { useNow } from "../hooks/useNow";
 import { GoalDialog } from "../components/goal/GoalDialog";
@@ -16,6 +17,7 @@ import { MemberDialog } from "../components/members/MemberDialog";
 import { MemberHero } from "../components/members/MemberHero";
 import { MemberHistory } from "../components/members/MemberHistory";
 import { MemberStatTiles } from "../components/members/MemberStatTiles";
+import { MemberTitles } from "../components/members/MemberTitles";
 import { SeasonClosedNotice } from "../components/season/SeasonClosedNotice";
 import { TaskDialogs } from "../components/tasks/TaskDialogs";
 import { TaskList } from "../components/tasks/TaskList";
@@ -51,6 +53,7 @@ export function MemberPage() {
   const { search } = useLocation();
   const { memberId } = useParams();
   const profile = useMemberProfile(parseMemberId(memberId));
+  const titles = useMemberTitles(parseMemberId(memberId));
   const { currentMember } = useSession();
   const crown = useCrown();
   const lookup = useMemberLookup();
@@ -88,6 +91,13 @@ export function MemberPage() {
       />
 
       <MemberStatTiles stats={profile.stats} />
+
+      {titles.length > 0 && (
+        <section>
+          <SectionHeading title="Títulos" />
+          <MemberTitles awards={titles} />
+        </section>
+      )}
 
       <section>
         <AchievementList achievements={profile.badges.records} memberName={member.name} />

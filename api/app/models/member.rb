@@ -25,8 +25,12 @@ class Member < ApplicationRecord
   has_many :purchases, class_name: "ShoppingItem", foreign_key: :purchased_by_id,
     dependent: :nullify, inverse_of: :purchased_by
   has_many :goals, dependent: :destroy
-  # Whoever leaves the colmeia takes their badges with them.
+  # Whoever leaves the colmeia takes their badges and their votes with them.
   has_many :achievement_awards, dependent: :destroy
+  has_many :votes_cast, class_name: "SeasonTitleVote", foreign_key: :voter_id,
+    dependent: :destroy, inverse_of: :voter
+  has_many :votes_received, class_name: "SeasonTitleVote", foreign_key: :votee_id,
+    dependent: :destroy, inverse_of: :votee
 
   normalizes :crown_title, with: ->(title) { title.to_s.strip }, apply_to_nil: true
   normalizes :favorite_achievements, with: ->(keys) { Array(keys).map(&:to_s) }, apply_to_nil: true

@@ -14,6 +14,18 @@ RSpec.describe Households::SeedExample do
     expect(household.shopping_items.count).to eq(6)
   end
 
+  it "leaves the closed estação already voted, with a winner and a draw" do
+    described_class.new(household, now: now).call
+    past = household.seasons.find_by(name: "Estação passada")
+    bruno, clara, duda = household.members.where(name: %w[ Bruno Clara Duda ]).order(:id).to_a
+
+    tally = ->(title) { past.season_title_votes.joins(:season_title).where(season_titles: { name: title }).pluck(:votee_id).tally }
+
+    expect(tally.call("Pernilongo")).to include(bruno.id => 2)
+    expect(tally.call("Lesma").values).to eq([ 1, 1 ])
+    expect(tally.call("Lesma").keys).to contain_exactly(clara.id, duda.id)
+  end
+
   it "hands back Ana, already claimed, so the visitor walks straight in" do
     member = described_class.new(household, now: now).call
 
