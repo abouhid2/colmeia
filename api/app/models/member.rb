@@ -3,7 +3,8 @@ class Member < ApplicationRecord
   # How somebody's share of the honeycomb is drawn, so a colour-blind eye and
   # a printed page can still tell who filled which cell.
   PATTERNS = %w[ solid dots stripes crosses checks waves rings ].freeze
-  AVATARS = %w[ 🐝 🦊 🐻 🐼 🦉 🐸 🐙 🦁 🐨 🦄 🐧 🐢 ].freeze
+  # The colmeia is a hive: everybody in it is a bicho de jardim.
+  AVATARS = %w[ 🐝 🦋 🐞 🐜 🐛 🦗 🕷️ 🪲 🐌 🦂 ].freeze
   KINDS = %w[ bee lagartinha ].freeze
   MAX_PER_HOUSEHOLD = 30
   MIN_MULTIPLIER = 0.5
@@ -17,8 +18,8 @@ class Member < ApplicationRecord
   MAX_FAVORITE_ACHIEVEMENTS = 3
 
   belongs_to :household
-  has_many :assigned_tasks, class_name: "Task", foreign_key: :assignee_id,
-    dependent: :nullify, inverse_of: :assignee
+  has_many :task_members, dependent: :destroy
+  has_many :assigned_tasks, through: :task_members, source: :task
   has_many :created_tasks, class_name: "Task", foreign_key: :created_by_id,
     dependent: :nullify, inverse_of: :created_by
   has_many :completions, dependent: :nullify

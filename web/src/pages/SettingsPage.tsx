@@ -35,8 +35,8 @@ export function SettingsPage() {
 
       {mark.member !== null && (
         <section>
-          <SectionHeading title="Minha cor e textura" hint="É por elas que a colmeia vê o que é seu no favo." />
-          <MemberMarkSettings member={mark.member} onColor={mark.setColor} onPattern={mark.setPattern} />
+          <SectionHeading title="Meu bichinho, cor e textura" hint="É por eles que a colmeia vê o que é seu no favo." />
+          <MemberMarkSettings member={mark.member} onAvatar={mark.setAvatar} onColor={mark.setColor} onPattern={mark.setPattern} />
         </section>
       )}
     </div>

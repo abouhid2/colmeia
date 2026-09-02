@@ -6,6 +6,7 @@ import { useToast } from "./useToast";
 export interface MemberMarkValue {
   /** Whoever is using the app, or null while the colmeia is still loading. */
   member: Member | null;
+  setAvatar(avatar: string): void;
   setColor(color: MemberColor): void;
   setPattern(pattern: MemberPattern): void;
   isSaving: boolean;
@@ -18,7 +19,7 @@ export function useMemberMark(): MemberMarkValue {
   const { update } = useMemberMutations();
   const { notify } = useToast();
 
-  const save = (input: { color: MemberColor } | { pattern: MemberPattern }, message: string) => {
+  const save = (input: { avatar: string } | { color: MemberColor } | { pattern: MemberPattern }, message: string) => {
     if (currentMember === null) return;
     update.mutate({ id: currentMember.id, input }, { onSuccess: () => notify({ message }) });
   };
@@ -26,6 +27,7 @@ export function useMemberMark(): MemberMarkValue {
   return {
     member: currentMember,
     isSaving: update.isPending,
+    setAvatar: (avatar) => save({ avatar }, "Bichinho trocado"),
     setColor: (color) => save({ color }, "Cor trocada"),
     setPattern: (pattern) => save({ pattern }, "Textura trocada"),
   };

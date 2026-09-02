@@ -11,7 +11,7 @@ describe("SettingsPage", () => {
     const colmeia = await exampleColmeia(true);
     const screen = renderInColmeia(colmeia, <SettingsPage />);
 
-    await waitFor(() => expect(screen.queryByText("Minha cor e textura")).not.toBeNull());
+    await waitFor(() => expect(screen.queryByText("Meu bichinho, cor e textura")).not.toBeNull());
     fireEvent.click(screen.getByRole("radio", { name: "Ondas" }));
 
     await waitFor(async () => {
@@ -24,12 +24,25 @@ describe("SettingsPage", () => {
     const colmeia = await exampleColmeia(true);
     const screen = renderInColmeia(colmeia, <SettingsPage />);
 
-    await waitFor(() => expect(screen.queryByText("Minha cor e textura")).not.toBeNull());
+    await waitFor(() => expect(screen.queryByText("Meu bichinho, cor e textura")).not.toBeNull());
     fireEvent.click(screen.getByRole("radio", { name: "Folha" }));
 
     await waitFor(async () => {
       const saved: Member[] = await colmeia.api.members.list();
       expect(saved.find((member) => member.id === colmeia.member.id)?.color).toBe("leaf");
+    });
+  });
+
+  it("saves the bichinho whoever is looking picks for themselves", async () => {
+    const colmeia = await exampleColmeia(true);
+    const screen = renderInColmeia(colmeia, <SettingsPage />);
+
+    await waitFor(() => expect(screen.queryByText("Meu bichinho, cor e textura")).not.toBeNull());
+    fireEvent.click(screen.getAllByRole("radio", { name: "🐞" })[0]!);
+
+    await waitFor(async () => {
+      const saved: Member[] = await colmeia.api.members.list();
+      expect(saved.find((member) => member.id === colmeia.member.id)?.avatar).toBe("🐞");
     });
   });
 });

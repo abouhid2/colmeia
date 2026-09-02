@@ -24,4 +24,5 @@ export const MEMBER_COLORS: Record<MemberColor, MemberColorMeta> = {
 
 export const MEMBER_COLOR_OPTIONS = Object.keys(MEMBER_COLORS) as MemberColor[];
 
-export const AVATAR_OPTIONS = ["🐝", "🦊", "🐻", "🐼", "🦉", "🐸", "🐙", "🦁", "🐨", "🦄", "🐧", "🐢"];
+/** The colmeia is a hive: everybody in it is a bicho de jardim. */
+export const AVATAR_OPTIONS = ["🐝", "🦋", "🐞", "🐜", "🐛", "🦗", "🕷️", "🪲", "🐌", "🦂"];

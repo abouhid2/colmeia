@@ -1,19 +1,21 @@
 import type { Member, MemberColor, MemberPattern } from "../../domain/types";
 import { Avatar } from "../ui/Avatar";
 import { Field } from "../ui/Field";
+import { AvatarChoices } from "./AvatarChoices";
 import { ColorPicker } from "./ColorPicker";
 import { MemberMark } from "./MemberMark";
 import { PatternPicker } from "./PatternPicker";
 
 interface MemberMarkSettingsProps {
   member: Member;
+  onAvatar(avatar: string): void;
   onColor(color: MemberColor): void;
   onPattern(pattern: MemberPattern): void;
 }
 
 /** How somebody shows up in the colmeia: the colour they wear and the texture
  *  their share of the favo is filled with, both live above the pickers. */
-export function MemberMarkSettings({ member, onColor, onPattern }: MemberMarkSettingsProps) {
+export function MemberMarkSettings({ member, onAvatar, onColor, onPattern }: MemberMarkSettingsProps) {
   return (
     <div className="space-y-4 rounded-card border border-line bg-surface p-4 shadow-card">
       <div className="flex items-center gap-3">
@@ -23,6 +25,9 @@ export function MemberMarkSettings({ member, onColor, onPattern }: MemberMarkSet
         </span>
         <p className="text-ink-soft">Suas tarefas enchem o favo assim</p>
       </div>
+      <Field label="Bichinho">
+        <AvatarChoices avatar={member.avatar} color={member.color} onAvatar={onAvatar} />
+      </Field>
       <Field label="Cor">
         <ColorPicker color={member.color} onColor={onColor} />
       </Field>
