@@ -9,7 +9,7 @@ import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } f
 import { awardedPoints, MAX_RATING } from "../domain/points";
 import type {
   AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput,
-  HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
+  HouseholdUpdate, HouseholdWithMembers, Member, MemberInput, ReviewInput, Season, SeasonInput, SeasonUpdate,
   ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
 import type { ColmeiaApi, CompleteTaskResult, CompletionQuery, DemoColmeia, StoredHousehold } from "./client";
@@ -303,10 +303,16 @@ export class LocalApi implements ColmeiaApi {
 
   household = {
     get: (): Promise<Household> => this.read((state) => state.household),
-    update: (input: Pick<Household, "name">): Promise<Household> =>
+    update: (input: HouseholdUpdate): Promise<Household> =>
       this.mutate((state) => {
         validateName(input.name, LIMITS.householdName, "Dê um nome à colmeia");
-        state.household = { ...state.household, name: input.name.trim() };
+        // Each field is left alone unless it was sent, so renaming the colmeia
+        // never answers the lagartinhas question by accident.
+        state.household = {
+          ...state.household,
+          ...(input.name === undefined ? {} : { name: input.name.trim() }),
+          ...(input.lagartinhasEnabled === undefined ? {} : { lagartinhasEnabled: input.lagartinhasEnabled }),
+        };
         return state.household;
       }),
     reseed: (): Promise<Member> =>

@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { LIMITS } from "../../domain/limits";
 import { PRIORITIES, PRIORITY_OPTIONS } from "../../domain/priorities";
 import type { Member, Task, TaskInput } from "../../domain/types";
+import { useLagartinhasEnabled } from "../../hooks/useLagartinhas";
 import { Button } from "../ui/Button";
 import { Field } from "../ui/Field";
 import { Input, Textarea } from "../ui/Input";
@@ -28,6 +29,7 @@ const PRIORITY_SEGMENTS = PRIORITY_OPTIONS.map((priority) => ({ value: priority,
 
 export function TaskForm({ task, members, currentMemberId, seasonId, submitting, onSubmit, onDelete, onCancel }: TaskFormProps) {
   const form = useTaskForm(task);
+  const lagartinhasEnabled = useLagartinhasEnabled();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const submit = (event: FormEvent) => {
@@ -54,12 +56,14 @@ export function TaskForm({ task, members, currentMemberId, seasonId, submitting,
         label="Precisa de avaliação"
         hint="Outra pessoa dá uma nota de 1 a 5, e os pontos saem conforme a nota."
       />
-      <Toggle
-        checked={form.values.kidFriendly}
-        onChange={(checked) => form.set("kidFriendly", checked)}
-        label="Boa para lagartinhas"
-        hint="Uma criança dá conta desta tarefa sozinha."
-      />
+      {lagartinhasEnabled && (
+        <Toggle
+          checked={form.values.kidFriendly}
+          onChange={(checked) => form.set("kidFriendly", checked)}
+          label="Boa para lagartinhas"
+          hint="Uma criança dá conta desta tarefa sozinha."
+        />
+      )}
       <Field label="Detalhes" htmlFor="task-description">
         <Textarea id="task-description" value={form.values.description} onChange={(event) => form.set("description", event.target.value)} placeholder="Onde está o material, o que observar…" />
       </Field>

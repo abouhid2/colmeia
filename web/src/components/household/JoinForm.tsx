@@ -14,13 +14,16 @@ import { Segmented } from "../ui/Segmented";
 const KIND_SEGMENTS = MEMBER_KIND_OPTIONS.map((kind) => ({ value: kind, label: MEMBER_KINDS[kind].label }));
 
 interface JoinFormProps {
+  /** Read off the colmeia in the invite: this browser has no session yet, so
+   *  the setting cannot come from the usual hook. */
+  lagartinhasEnabled: boolean;
   submitting: boolean;
   onSubmit(input: MemberInput): void;
   onCancel(): void;
 }
 
 /** "Sou outra pessoa": the list did not have me, so I add myself. */
-export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
+export function JoinForm({ lagartinhasEnabled, submitting, onSubmit, onCancel }: JoinFormProps) {
   const [ name, setName ] = useState("");
   const [ avatar, setAvatar ] = useState("🐝");
   const [ color, setColor ] = useState<MemberColor>("honey");
@@ -41,9 +44,11 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
           </Field>
         </div>
         <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />
-        <Field label="É abelha ou lagartinha?" hint={MEMBER_KINDS[kind].hint}>
-          <Segmented label="Tipo de pessoa" options={KIND_SEGMENTS} value={kind} onChange={setKind} />
-        </Field>
+        {lagartinhasEnabled && (
+          <Field label="É abelha ou lagartinha?" hint={MEMBER_KINDS[kind].hint}>
+            <Segmented label="Tipo de pessoa" options={KIND_SEGMENTS} value={kind} onChange={setKind} />
+          </Field>
+        )}
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
           <Button type="submit" loading={submitting} disabled={name.trim() === ""}>Entrar na colmeia</Button>
