@@ -95,7 +95,7 @@ RSpec.describe "Households API", type: :request do
       expect(json_body["household"]).to include("demo" => true, "lagartinhas_enabled" => true)
       expect(json_body["household"]["members"].map { |member| member["name"] }).to eq(%w[ Ana Bruno Clara Duda ])
       expect(household.tasks.count).to eq(12)
-      expect(household.goals.count).to eq(4)
+      expect(household.goals.count).to eq(7)
     end
 
     it "answers with Ana, claimed, so the visitor is already somebody" do

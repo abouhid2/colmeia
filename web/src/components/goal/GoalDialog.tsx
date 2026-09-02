@@ -1,7 +1,9 @@
 import { Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
+import { errorMessage } from "../../api/errors";
 import { LIMITS } from "../../domain/limits";
-import type { Goal } from "../../domain/types";
+import type { Goal, Season } from "../../domain/types";
 import { useGoalMutations } from "../../hooks/useGoals";
 import { useSeason } from "../../hooks/useSeasonContext";
 import { useSession } from "../../hooks/useSession";
@@ -9,23 +11,26 @@ import { useToast } from "../../hooks/useToast";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
 import { Field } from "../ui/Field";
-import { Input, Select } from "../ui/Input";
-import { goalPreviewSentence } from "./goalCopy";
+import { Input } from "../ui/Input";
+import { GoalPeopleField } from "./GoalPeopleField";
+import { GoalWindowField } from "./GoalWindowField";
+import { goalPreviewSentence, participantsLabel } from "./goalCopy";
+import { useGoalForm } from "./useGoalForm";
 import type { GoalDialogState } from "./useGoalDialog";
 
 export function GoalDialog({ dialog }: { dialog: GoalDialogState }) {
-  const { isOpen, goal, defaultMemberId, close } = dialog;
-  const { currentSeason } = useSeason();
-  if (currentSeason === null) return null;
+  const { isOpen, goal, defaultMemberIds, defaultSeasonId, close } = dialog;
+  const { seasons, currentSeason } = useSeason();
+  const season = seasons.find((candidate) => candidate.id === (goal?.seasonId ?? defaultSeasonId)) ?? currentSeason;
+  if (season === null) return null;
 
   return (
     <Dialog open={isOpen} onClose={close} title={goal ? "Ajustar a meta" : "Nova meta"}>
       <GoalForm
-        key={`${goal?.id ?? "new"}-${defaultMemberId ?? "all"}`}
+        key={`${goal?.id ?? "new"}-${season.id}-${defaultMemberIds.join("-")}`}
         goal={goal}
-        defaultMemberId={defaultMemberId}
-        seasonId={goal?.seasonId ?? currentSeason.id}
-        seasonName={currentSeason.name}
+        defaultMemberIds={defaultMemberIds}
+        season={season}
         onDone={close}
       />
     </Dialog>
@@ -34,27 +39,34 @@ export function GoalDialog({ dialog }: { dialog: GoalDialogState }) {
 
 interface GoalFormProps {
   goal: Goal | null;
-  defaultMemberId: number | null;
-  seasonId: number;
-  seasonName: string;
+  defaultMemberIds: number[];
+  season: Season;
   onDone(): void;
 }
 
-function GoalForm({ goal, defaultMemberId, seasonId, seasonName, onDone }: GoalFormProps) {
+function GoalForm({ goal, defaultMemberIds, season, onDone }: GoalFormProps) {
   const { members } = useSession();
-  const [title, setTitle] = useState(goal?.title ?? "");
-  const [target, setTarget] = useState(goal?.targetPoints ?? 300);
-  const [owner, setOwner] = useState(goal ? String(goal.memberId ?? "") : String(defaultMemberId ?? ""));
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const form = useGoalForm(goal, defaultMemberIds, season);
+  const [ confirmingDelete, setConfirmingDelete ] = useState(false);
   const { create, update, remove } = useGoalMutations();
   const { notify } = useToast();
 
-  const ownerName = members.find((member) => String(member.id) === owner)?.name ?? null;
-  const preview = goalPreviewSentence({ ownerName, targetPoints: target, seasonName, reward: title });
+  const { title, target, memberIds, ownWindow, startsOn, endsOn } = form.values;
+  // A rule the save broke belongs next to the fields that broke it: the toast
+  // that also carries it lands behind the dialog.
+  const saveError = create.error ?? update.error ?? remove.error;
+  const picked = members.filter((member) => memberIds.includes(member.id));
+  const preview = goalPreviewSentence({
+    ownerName: picked.length === 0 ? null : participantsLabel(picked),
+    plural: picked.length > 1,
+    targetPoints: target,
+    seasonName: season.name,
+    reward: title,
+  });
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    const input = { title, targetPoints: target, seasonId, memberId: owner === "" ? null : Number(owner) };
+    const input = form.toInput(season.id);
     const onSuccess = () => { notify({ tone: "success", message: "Meta salva" }); onDone(); };
     if (goal) update.mutate({ id: goal.id, input }, { onSuccess });
     else create.mutate(input, { onSuccess });
@@ -67,24 +79,26 @@ function GoalForm({ goal, defaultMemberId, seasonId, seasonName, onDone }: GoalF
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Field label="Para quem" htmlFor="goal-owner" hint={owner === "" ? "Os pontos de todo mundo contam." : "Só os pontos dessa pessoa contam."}>
-        <Select id="goal-owner" value={owner} onChange={(event) => setOwner(event.target.value)}>
-          <option value="">A colmeia inteira</option>
-          {members.map((member) => (
-            <option key={member.id} value={member.id}>{member.avatar} {member.name}</option>
-          ))}
-        </Select>
-      </Field>
+      <GoalPeopleField members={members} selected={memberIds} onToggle={form.toggleMember} onEveryone={form.clearMembers} />
+      <GoalWindowField
+        season={season} ownWindow={ownWindow} startsOn={startsOn} endsOn={endsOn}
+        onOwnWindow={form.setOwnWindow} onStartsOn={form.setStartsOn} onEndsOn={form.setEndsOn}
+      />
       <Field label="Meta em pontos" htmlFor="goal-target">
-        <Input id="goal-target" type="number" min={1} max={LIMITS.goalTarget} step={1} value={target} onChange={(event) => setTarget(Number(event.target.value))} required />
+        <Input id="goal-target" type="number" min={1} max={LIMITS.goalTarget} step={1} value={target} onChange={(event) => form.setTarget(Number(event.target.value))} required />
       </Field>
       <Field label="Recompensa" htmlFor="goal-title">
-        <Input id="goal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ex.: pizza e filme no sábado" maxLength={LIMITS.goalTitle} required autoFocus />
+        <Input id="goal-title" value={title} onChange={(event) => form.setTitle(event.target.value)} placeholder="Ex.: pizza e filme no sábado" maxLength={LIMITS.goalTitle} required />
       </Field>
       <div className="rounded-card border border-line bg-paper p-3">
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">Como fica</p>
         <p className="mt-1 text-sm">{preview}</p>
       </div>
+      {saveError && (
+        <p role="alert" className="rounded-card bg-berry-100 px-3 py-2 text-sm font-semibold text-berry-700">
+          {errorMessage(saveError)}
+        </p>
+      )}
       <div className="flex items-center justify-between gap-2 pt-2">
         {goal ? (
           <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? destroy() : setConfirmingDelete(true))} loading={remove.isPending}>

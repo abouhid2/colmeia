@@ -74,8 +74,12 @@ export type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type StoredMember = Older<
   Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements" | "navPreferences" | "pattern"
 >;
-/** Goals used to carry a weekly or monthly period instead of belonging to an estação. */
-type StoredGoal = Older<Goal, "seasonId"> & { period?: string };
+/** Goals used to carry a weekly or monthly period instead of belonging to an
+ *  estação, and then a single owner instead of a list of participants. */
+export type StoredGoal = Older<Goal, "seasonId" | "memberIds" | "startsOn" | "endsOn"> & {
+  period?: string;
+  memberId?: number | null;
+};
 
 export type StoredState = Omit<
   LocalState,
@@ -131,7 +135,14 @@ export function normalizeState(state: StoredState, now: Date): LocalState {
       multiplier: completion.multiplier ?? 1,
       seasonId: completion.seasonId ?? first.id,
     })),
-    goals: state.goals.map(({ period: _period, ...goal }) => ({ ...goal, seasonId: goal.seasonId ?? first.id })),
+    goals: state.goals.map(({ period: _period, memberId, ...goal }) => ({
+      ...goal,
+      seasonId: goal.seasonId ?? first.id,
+      // One owner became a list of participants; the whole colmeia stays an empty one.
+      memberIds: goal.memberIds ?? (memberId == null ? [] : [ memberId ]),
+      startsOn: goal.startsOn ?? null,
+      endsOn: goal.endsOn ?? null,
+    })),
     awards: state.awards ?? [],
   };
 }

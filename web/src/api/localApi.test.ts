@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { LIMITS } from "../domain/limits";
 import { ApiError } from "./errors";
+import type { GoalInput } from "../domain/types";
 import { DEMO_INVITE_CODE, LocalApi, type KeyValueStore } from "./localApi";
 import { HOUSEHOLD_INDEX_KEY } from "./localStore";
 import { buildDemoState } from "./seed";
@@ -29,6 +30,10 @@ describe("LocalApi", () => {
     await api.households.createDemo();
     api.setInviteCode(DEMO_INVITE_CODE);
   });
+
+  /** A goal the demo would accept, so a test only has to say what is wrong with it. */
+  const newGoal = (overrides: Partial<GoalInput> = {}) =>
+    api.goals.create({ title: "Nova", targetPoints: 10, seasonId: SEASON_ID, memberIds: [], startsOn: null, endsOn: null, ...overrides });
 
   it("closes one-off tasks and pays out right away", async () => {
     const { task, completion } = await api.tasks.complete(13, 2);
@@ -155,12 +160,12 @@ describe("LocalApi", () => {
     });
 
     it("refuses a moment from before the estação started", async () => {
-      await expect(api.tasks.complete(13, 2, { completedAt: new Date(2026, 2, 8, 20).toISOString() }))
+      await expect(api.tasks.complete(13, 2, { completedAt: new Date(2026, 2, 5, 20).toISOString() }))
         .rejects.toMatchObject({ status: 422, details: [ "Essa data é de antes da estação começar" ] });
     });
 
     it("accepts a moment from the very day the estação started", async () => {
-      const openingDay = new Date(2026, 2, 9, 8, 0);
+      const openingDay = new Date(2026, 2, 6, 8, 0);
       const { completion } = await api.tasks.complete(13, 2, { completedAt: openingDay.toISOString() });
 
       expect(completion.completedAt).toBe(openingDay.toISOString());
@@ -230,19 +235,43 @@ describe("LocalApi", () => {
     expect((await api.members.list()).map((member) => member.id)).toEqual([2, 3, 4]);
   });
 
-  it("drops personal goals with their owner but keeps household ones", async () => {
+  it("keeps a shared goal when one of its people leaves, and drops the ones only they were in", async () => {
     await api.members.remove(4);
-    expect((await api.goals.list(SEASON_ID)).map((goal) => goal.title)).toEqual(["Pizza e filme no sábado", "Escolher o filme do sábado"]);
+    const goals = await api.goals.list(SEASON_ID);
+
+    // "Sorvete na sexta" was Duda's alone; "Sorvete duplo" was hers with Ana.
+    expect(goals.map((goal) => goal.title)).not.toContain("Sorvete na sexta");
+    expect(goals.find((goal) => goal.title === "Sorvete duplo")?.memberIds).toEqual([ 1 ]);
+    expect(goals.find((goal) => goal.title === "Pizza e filme no sábado")?.memberIds).toEqual([]);
   });
 
   it("creates, edits and removes goals", async () => {
-    const goal = await api.goals.create({ title: "Passeio", targetPoints: 100, seasonId: SEASON_ID, memberId: 1 });
-    expect(goal.memberId).toBe(1);
-    const edited = await api.goals.update(goal.id, { targetPoints: 120 });
-    expect(edited.targetPoints).toBe(120);
+    const goal = await api.goals.create({ title: "Passeio", targetPoints: 100, seasonId: SEASON_ID, memberIds: [ 2, 1, 1 ], startsOn: null, endsOn: null });
+    expect(goal.memberIds).toEqual([ 1, 2 ]);
+    const edited = await api.goals.update(goal.id, { targetPoints: 120, memberIds: [] });
+    expect(edited).toMatchObject({ targetPoints: 120, memberIds: [] });
     await api.goals.remove(goal.id);
     expect((await api.goals.list(SEASON_ID)).some((item) => item.id === goal.id)).toBe(false);
-    await expect(api.goals.create({ title: "", targetPoints: 10, seasonId: SEASON_ID, memberId: null })).rejects.toMatchObject({ status: 422 });
+    await expect(newGoal({ title: "" })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("refuses a participant who does not live here", async () => {
+    await expect(newGoal({ memberIds: [ 999 ] })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("keeps a goal's own days inside its estação", async () => {
+    const [ current ] = await api.seasons.list();
+    if (current.endsOn === null) throw new Error("the demo estação needs an end");
+
+    const windowed = await api.goals.create({
+      title: "Primeira semana", targetPoints: 50, seasonId: SEASON_ID,
+      memberIds: [], startsOn: current.startsOn, endsOn: current.endsOn,
+    });
+    expect(windowed).toMatchObject({ startsOn: current.startsOn, endsOn: current.endsOn });
+
+    await expect(newGoal({ startsOn: "2020-01-01" })).rejects.toMatchObject({ status: 422 });
+    await expect(newGoal({ startsOn: current.endsOn, endsOn: current.startsOn })).rejects.toMatchObject({ status: 422 });
+    await expect(api.goals.update(windowed.id, { endsOn: "2099-01-01" })).rejects.toMatchObject({ status: 422 });
   });
 
   it("migrates a v1 store into the goal list, inside a first estação", async () => {
@@ -253,7 +282,9 @@ describe("LocalApi", () => {
 
     const [ season ] = await migrated.seasons.list();
     expect(season.name).toBe("Primeira estação");
-    expect(await migrated.goals.list(null)).toEqual([{ id: 9, title: "Antiga", targetPoints: 50, memberId: null, seasonId: season.id }]);
+    expect(await migrated.goals.list(null)).toEqual([
+      { id: 9, title: "Antiga", targetPoints: 50, memberIds: [], startsOn: null, endsOn: null, seasonId: season.id },
+    ]);
     expect(store.getItem("colmeia.db.v1")).toBeNull();
   });
 
@@ -266,7 +297,10 @@ describe("LocalApi", () => {
       ...seasonless,
       tasks: stored.tasks.map(({ seasonId: _taskSeason, ...task }) => task),
       completions: stored.completions.map(({ seasonId: _completionSeason, ...completion }) => completion),
-      goals: stored.goals.map(({ seasonId: _goalSeason, ...goal }) => ({ ...goal, period: "week" })),
+      // A v3 store held one owner per goal instead of a list of participants.
+      goals: stored.goals.map(({ seasonId: _goalSeason, memberIds, startsOn: _startsOn, endsOn: _endsOn, ...goal }) => ({
+        ...goal, period: "week", memberId: memberIds[0] ?? null,
+      })),
     }));
 
     const migrated = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
@@ -440,7 +474,7 @@ describe("LocalApi", () => {
       const seasons = await api.seasons.list();
 
       expect(seasons.map((season) => season.name)).toEqual([ "Estação atual", "Estação passada" ]);
-      expect(seasons[0]).toMatchObject({ tasksCount: 12, completionsCount: 6, closedAt: null, endsOn: null });
+      expect(seasons[0]).toMatchObject({ tasksCount: 12, completionsCount: 6, closedAt: null, startsOn: "2026-03-06", endsOn: "2026-06-04" });
       expect(seasons[1]).toMatchObject({ tasksCount: 0, completionsCount: 10 });
     });
 
@@ -476,7 +510,7 @@ describe("LocalApi", () => {
       await expect(api.seasons.close(SEASON_ID)).rejects.toMatchObject({ status: 409 });
 
       await expect(openTask(SEASON_ID)).rejects.toMatchObject({ status: 409 });
-      await expect(api.goals.create({ title: "Tarde demais", targetPoints: 10, seasonId: SEASON_ID, memberId: null })).rejects.toMatchObject({ status: 409 });
+      await expect(newGoal({ title: "Tarde demais" })).rejects.toMatchObject({ status: 409 });
       await expect(api.tasks.complete(13, 2)).rejects.toMatchObject({ status: 409 });
 
       const reopened = await api.seasons.reopen(SEASON_ID);

@@ -10,7 +10,7 @@ RSpec.describe Households::SeedExample do
     expect(household.members.pluck(:name)).to eq(%w[ Ana Bruno Clara Duda ])
     expect(household.tasks.count).to eq(12)
     expect(household.completions.count).to eq(16)
-    expect(household.goals.count).to eq(4)
+    expect(household.goals.count).to eq(7)
     expect(household.shopping_items.count).to eq(6)
   end
 
@@ -39,7 +39,7 @@ RSpec.describe Households::SeedExample do
 
     expect(household.completions.where(status: "pending").count).to eq(1)
     running = household.seasons.find_by!(closed_at: nil)
-    goal = household.goals.find_by!(member_id: nil, season: running)
+    goal = household.goals.for_household.where(season: running).order(:starts_on).first
     expect(running.completions.sum(:points_awarded)).to be < goal.target_points
   end
 
@@ -52,6 +52,24 @@ RSpec.describe Households::SeedExample do
     hers = household.completions.where(member: duda)
     expect(hers.count).to be > 0
     expect(hers.pluck(:multiplier).uniq).to eq([ 1.5 ])
+  end
+
+  it "spreads three metas da colmeia across the three months of the running estação" do
+    described_class.new(household, now: now).call
+    running = household.seasons.find_by!(closed_at: nil)
+
+    windows = household.goals.for_household.where(season: running).order(:starts_on).pluck(:starts_on, :ends_on)
+    expect(windows.size).to eq(3)
+    expect(windows.map(&:first)).to eq(windows.map(&:first).sort)
+    expect(windows.flatten).to all(be_between(running.starts_on, running.ends_on))
+  end
+
+  it "gives Ana and Duda a reward only the two of them work towards" do
+    described_class.new(household, now: now).call
+    goal = household.goals.find_by!(title: "Sorvete duplo")
+
+    expect(goal.members.pluck(:name)).to contain_exactly("Ana", "Duda")
+    expect(goal.target_points).to eq(40)
   end
 
   it "runs from db/seeds.rb, twice, without duplicating the example" do

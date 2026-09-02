@@ -1,12 +1,13 @@
 import { Gift, PartyPopper, Pencil } from "lucide-react";
+import type { GoalWithProgress } from "../../domain/goalBoard";
 import { formatPoints } from "../../domain/points";
-import type { GoalWithProgress } from "../../hooks/useGoalOverview";
 import { MemberMark } from "../members/MemberMark";
 import { Avatar } from "../ui/Avatar";
+import { AvatarStack } from "../ui/AvatarStack";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Honeycomb } from "./Honeycomb";
-import { seasonEnding } from "./goalCopy";
+import { goalStretchPhrase, participantsLabel } from "./goalCopy";
 
 interface GoalCardProps {
   item: GoalWithProgress;
@@ -15,24 +16,31 @@ interface GoalCardProps {
   readOnly?: boolean;
 }
 
-/** The colmeia's goal: how many points to reach, then what reaching it pays. */
+/** The goal in the spotlight: how many points to reach, then what reaching it pays. */
 export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
-  const { goal, progress, season, standings } = item;
-  const contributors = standings.filter((standing) => standing.points > 0);
-  const contributions = contributors.map(({ member, points }) => ({ memberId: member.id, points }));
+  const { goal, progress, season, members, contributions } = item;
+  // The chips are the legend for the comb, so both read the same list: this
+  // goal's own people, over this goal's own window.
+  const painters = contributions.map(({ member }) => member);
   const summary = `${progress.earned} de ${progress.target} pontos`;
 
   return (
     <Card className="p-5 md:p-7">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-            Meta da estação · {season.name} · {seasonEnding(season)}
+            Meta da estação · {season.name}
           </p>
           <h2 className="mt-1 text-4xl font-bold leading-tight tracking-tight tabular-nums md:text-5xl">
             {formatPoints(progress.target)}
           </h2>
-          <p className="text-ink-soft">para juntar nesta estação</p>
+          <p className="text-ink-soft">para juntar {goalStretchPhrase(goal, season)}</p>
+          {members.length > 0 && (
+            <p className="mt-2 flex items-center gap-2 text-sm font-semibold">
+              <AvatarStack members={members} />
+              <span className="min-w-0">{participantsLabel(members)}</span>
+            </p>
+          )}
         </div>
         {!readOnly && <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar meta</Button>}
       </div>
@@ -52,8 +60,8 @@ export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
           earned={progress.earned}
           target={progress.target}
           label={`Favo da meta: ${summary}`}
-          contributions={contributions}
-          members={contributors.map(({ member }) => member)}
+          contributions={contributions.map(({ member, points }) => ({ memberId: member.id, points }))}
+          members={painters}
         />
       </div>
 
@@ -72,9 +80,9 @@ export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
         )}
       </div>
 
-      {contributors.length > 0 && (
+      {contributions.length > 0 && (
         <ul className="mt-5 flex flex-wrap gap-2" aria-label="Quem já ajudou">
-          {contributors.map(({ member, points }) => (
+          {contributions.map(({ member, points }) => (
             <li key={member.id} className="flex items-center gap-1.5 rounded-full border border-line py-1 pl-1 pr-3 text-sm">
               <MemberMark member={member} className="size-4" />
               <Avatar member={member} size="xs" />

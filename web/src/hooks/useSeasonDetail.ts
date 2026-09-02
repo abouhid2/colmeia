@@ -1,11 +1,11 @@
 import { differenceInCalendarDays } from "date-fns";
 import { useMemo } from "react";
 import { seasonCrown, type SeasonCrown } from "../domain/crown";
+import { byWindowStart, goalsWithProgress, type GoalWithProgress } from "../domain/goalBoard";
 import { rankMembers, type Standing } from "../domain/leaderboard";
-import { approvedCompletions, goalProgress, seasonBounds } from "../domain/progress";
+import { approvedCompletions, seasonBounds } from "../domain/progress";
 import { completionsInSeason, isClosed } from "../domain/seasons";
 import type { Season } from "../domain/types";
-import type { GoalWithProgress } from "./useGoalOverview";
 import { useCompletions } from "./useCompletions";
 import { useAllGoals } from "./useGoals";
 import { useMembers } from "./useMembers";
@@ -54,16 +54,8 @@ export function useSeasonDetail(seasonId: number | null): SeasonDetail {
       isCurrent: season.id === currentSeason?.id,
       closed: isClosed(season),
       standings: rankMembers(members, scored),
-      crown: seasonCrown(season, { members, completions, goals }),
-      goals: goals
-        .filter((goal) => goal.seasonId === season.id)
-        .map((goal) => ({
-          goal,
-          progress: goalProgress(goal, completions, season, now),
-          season,
-          member: members.find((member) => member.id === goal.memberId) ?? null,
-          standings: rankMembers(members, scored),
-        })),
+      crown: seasonCrown(season, { members, completions, goals, now }),
+      goals: byWindowStart(goalsWithProgress(goals, completions, members, season, now)),
       points: scored.reduce((sum, completion) => sum + completion.pointsAwarded, 0),
       days: differenceInCalendarDays(bounds.end, bounds.start) + 1,
     };

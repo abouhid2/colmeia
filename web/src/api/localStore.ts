@@ -1,5 +1,8 @@
-import type { Goal, Household } from "../domain/types";
-import { DEMO_INVITE_CODE, normalizeState, type LocalState, type Older, type StoredMember, type StoredState } from "./localState";
+import type { Household } from "../domain/types";
+import {
+  DEMO_INVITE_CODE, normalizeState,
+  type LocalState, type Older, type StoredGoal, type StoredMember, type StoredState,
+} from "./localState";
 import { parseJson, type KeyValueStore } from "./storage";
 
 export const HOUSEHOLD_INDEX_KEY = "colmeia.households.v4";
@@ -21,7 +24,6 @@ export type HouseholdIndex = Record<string, HouseholdEntry>;
 type StoredIndex = Record<string, Older<HouseholdEntry, "demo">>;
 
 type LegacyMember = Omit<StoredMember, "claimedAt">;
-type StoredGoal = StoredState["goals"][number];
 
 /** v2 held one colmeia per browser, with no invite code and nobody to claim. */
 interface LegacyV2State extends Omit<StoredState, "household" | "members"> {
@@ -31,7 +33,7 @@ interface LegacyV2State extends Omit<StoredState, "household" | "members"> {
 
 /** v1 held a single household goal instead of a list. */
 interface LegacyV1State extends Omit<LegacyV2State, "goals"> {
-  goal: Omit<StoredGoal, "memberId"> | null;
+  goal: StoredGoal | null;
 }
 
 function storageKey(inviteCode: string): string {
@@ -46,7 +48,7 @@ function normalizeIndex(stored: StoredIndex): HouseholdIndex {
 }
 
 function fromV1({ goal, ...rest }: LegacyV1State): LegacyV2State {
-  return { ...rest, goals: goal ? [ { ...goal, memberId: null } as Goal ] : [] };
+  return { ...rest, goals: goal === null ? [] : [ goal ] };
 }
 
 /** v2 had no notion of who this browser was, so everybody stays a placeholder:

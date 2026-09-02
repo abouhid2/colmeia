@@ -5,8 +5,11 @@ import { completionsInSeason } from "../domain/seasons";
 import type { Season } from "../domain/types";
 import { useCompletions } from "../hooks/useCompletions";
 import { useSeason } from "../hooks/useSeasonContext";
+import { useNow } from "../hooks/useNow";
+import { useSeasonBoards } from "../hooks/useSeasonBoards";
 import { useSeasonMutations } from "../hooks/useSeasons";
 import { useToast } from "../hooks/useToast";
+import { SeasonRoadmap } from "../components/goal/SeasonRoadmap";
 import { CloseSeasonDialog } from "../components/season/CloseSeasonDialog";
 import { SeasonCard } from "../components/season/SeasonCard";
 import { SeasonDialog } from "../components/season/SeasonDialog";
@@ -15,7 +18,9 @@ import { Button } from "../components/ui/Button";
 import { EmptyState } from "../components/ui/EmptyState";
 
 export function SeasonsPage() {
+  const now = useNow();
   const { seasons, currentSeason } = useSeason();
+  const boards = useSeasonBoards();
   const { completions } = useCompletions();
   const { close, reopen, remove } = useSeasonMutations();
   const { notify } = useToast();
@@ -69,6 +74,7 @@ export function SeasonsPage() {
               onClose={() => setClosing(season)}
               onReopen={() => reopen.mutate(season.id, { onSuccess: () => notify({ message: `${season.name} reaberta` }) })}
               onDelete={() => askDelete(season)}
+              roadmap={<SeasonRoadmap goals={boards[season.id] ?? []} now={now} />}
             />
           ))}
         </ul>

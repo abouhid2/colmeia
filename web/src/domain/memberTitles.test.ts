@@ -35,7 +35,8 @@ const vote = (id: number, seasonId: number, titleId: number, voterId: number, vo
   id, seasonId, seasonTitleId: titleId, voterId, voteeId,
 });
 
-const base = { seasons: [ older, past, running ], titles, members, goals: [] as Goal[] };
+const now = new Date(2026, 2, 11, 15);
+const base = { seasons: [ older, past, running ], titles, members, goals: [] as Goal[], now };
 
 describe("memberTitles", () => {
   it("lists the crown under the name the winner picked for themselves", () => {
@@ -93,7 +94,7 @@ describe("memberTitles", () => {
   it("says nothing when the colmeia goal of that estação was missed", () => {
     const awards = memberTitles({
       ...base, memberId: bruno.id, votes: [],
-      goals: [ { id: 9, seasonId: past.id, title: "Pizza", targetPoints: 500, memberId: null } ],
+      goals: [ { id: 9, seasonId: past.id, title: "Pizza", targetPoints: 500, memberIds: [], startsOn: null, endsOn: null } ],
       completions: [ completion({ memberId: bruno.id, pointsAwarded: 90 }) ],
     });
 

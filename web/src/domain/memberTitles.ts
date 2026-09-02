@@ -19,6 +19,7 @@ export interface MemberTitlesInput {
   members: Member[];
   completions: Completion[];
   goals: Goal[];
+  now: Date;
 }
 
 /**
@@ -26,12 +27,12 @@ export interface MemberTitlesInput {
  * closed estação has anything to say: while one runs, nothing is decided.
  */
 export function memberTitles(
-  { memberId, seasons, titles, votes, members, completions, goals }: MemberTitlesInput,
+  { memberId, seasons, titles, votes, members, completions, goals, now }: MemberTitlesInput,
 ): MemberTitleAward[] {
   const crown = crownTitle(titles);
 
   return seasonsNewestFirst(seasons.filter(isClosed)).flatMap((season) => {
-    const { winner } = seasonCrown(season, { members, completions, goals });
+    const { winner } = seasonCrown(season, { members, completions, goals, now });
     const crowned = crown !== null && winner?.member.id === memberId
       ? [ { season, emoji: crown.emoji, label: winner.member.crownTitle } ]
       : [];

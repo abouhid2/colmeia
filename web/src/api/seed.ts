@@ -13,6 +13,8 @@ import {
 /** The estação that closed, and the one running now. */
 const PAST_SEASON_ID = 70;
 const SEASON_ID = 71;
+/** Three months of championship, long enough to hold metas with windows. */
+const SEASON_LENGTH_DAYS = 90;
 /** The colmeia's títulos, numbered in the order the default list has them. */
 const FIRST_TITLE_ID = 80;
 
@@ -29,17 +31,21 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   const lastWeekStart = startOfWeek(subWeeks(now, 1), { weekStartsOn: 1 });
   const lastWeek = (weekday: number) => addHours(addDays(lastWeekStart, weekday), 10).toISOString();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  // A few days back, so today already sits inside the first window of the roteiro.
+  const seasonStart = addDays(weekStart, -3);
+  const inSeason = (days: number) => toIsoDate(addDays(seasonStart, days));
 
   // Two estações, so the demo opens with a championship already decided and
-  // another one running: the crown comes from the closed one.
+  // another one running: the crown comes from the closed one. The running one
+  // lasts three months, which is what gives the roteiro something to draw.
   const seasons: StoredSeason[] = [
     {
       id: PAST_SEASON_ID, name: "Estação passada", startsOn: toIsoDate(lastWeekStart),
       endsOn: toIsoDate(addDays(lastWeekStart, 6)), closedAt: weekStart.toISOString(), createdAt: lastWeekStart.toISOString(),
     },
     {
-      id: SEASON_ID, name: "Estação atual", startsOn: toIsoDate(weekStart),
-      endsOn: null, closedAt: null, createdAt: weekStart.toISOString(),
+      id: SEASON_ID, name: "Estação atual", startsOn: inSeason(0),
+      endsOn: inSeason(SEASON_LENGTH_DAYS), closedAt: null, createdAt: seasonStart.toISOString(),
     },
   ];
 
@@ -147,11 +153,16 @@ export function buildDemoState(now: Date = new Date()): LocalState {
     seasonTitles,
     titleVotes,
     awards: [],
+    // The running estação carries three metas da colmeia spread across its three
+    // months, so the roteiro shows one em andamento, one adiante and one no fim.
     goals: [
-      { id: 53, seasonId: PAST_SEASON_ID, title: "Pizza e filme no sábado", targetPoints: 300, memberId: null },
-      { id: 50, seasonId: SEASON_ID, title: "Pizza e filme no sábado", targetPoints: 300, memberId: null },
-      { id: 51, seasonId: SEASON_ID, title: "Sorvete na sexta", targetPoints: 30, memberId: 4 },
-      { id: 52, seasonId: SEASON_ID, title: "Escolher o filme do sábado", targetPoints: 60, memberId: 2 },
+      { id: 53, seasonId: PAST_SEASON_ID, title: "Pizza e filme no sábado", targetPoints: 300, memberIds: [], startsOn: null, endsOn: null },
+      { id: 50, seasonId: SEASON_ID, title: "Pizza e filme no sábado", targetPoints: 300, memberIds: [], startsOn: inSeason(0), endsOn: inSeason(29) },
+      { id: 54, seasonId: SEASON_ID, title: "Fim de semana na praia", targetPoints: 250, memberIds: [], startsOn: inSeason(35), endsOn: inSeason(41) },
+      { id: 55, seasonId: SEASON_ID, title: "Jantar fora para fechar a estação", targetPoints: 200, memberIds: [], startsOn: inSeason(83), endsOn: inSeason(SEASON_LENGTH_DAYS) },
+      { id: 56, seasonId: SEASON_ID, title: "Sorvete duplo", targetPoints: 40, memberIds: [ 1, 4 ], startsOn: null, endsOn: null },
+      { id: 51, seasonId: SEASON_ID, title: "Sorvete na sexta", targetPoints: 30, memberIds: [ 4 ], startsOn: null, endsOn: null },
+      { id: 52, seasonId: SEASON_ID, title: "Escolher o filme do sábado", targetPoints: 60, memberIds: [ 2 ], startsOn: null, endsOn: null },
     ],
     nextId: 100,
   };

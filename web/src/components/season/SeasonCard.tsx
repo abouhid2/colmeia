@@ -1,4 +1,5 @@
 import { Check, ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { isClosed } from "../../domain/seasons";
 import type { Season } from "../../domain/types";
@@ -16,9 +17,11 @@ interface SeasonCardProps {
   onClose(): void;
   onReopen(): void;
   onDelete(): void;
+  /** The roteiro of this estação, when it has metas worth drawing. */
+  roadmap?: ReactNode;
 }
 
-export function SeasonCard({ season, points, isCurrent, confirmingDelete, onEdit, onClose, onReopen, onDelete }: SeasonCardProps) {
+export function SeasonCard({ season, points, isCurrent, confirmingDelete, onEdit, onClose, onReopen, onDelete, roadmap }: SeasonCardProps) {
   const { search } = useLocation();
   const to = { pathname: `/estacoes/${season.id}`, search };
 
@@ -50,6 +53,8 @@ export function SeasonCard({ season, points, isCurrent, confirmingDelete, onEdit
           Ver esta estação <ChevronRight className="size-4" aria-hidden />
         </Link>
       </div>
+
+      {roadmap && <div className="mt-4 border-t border-line pt-3">{roadmap}</div>}
 
       <div className="mt-4 border-t border-line pt-3">
         <SeasonActions

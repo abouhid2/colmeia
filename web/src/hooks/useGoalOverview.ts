@@ -1,27 +1,29 @@
 import { useMemo } from "react";
+import {
+  byWindowStart, goalAudience, goalsWithPeople, goalsWithProgress, householdGoals, type GoalWithProgress,
+} from "../domain/goalBoard";
 import { rankMembers, type Standing } from "../domain/leaderboard";
-import { goalProgress, type GoalProgress } from "../domain/progress";
 import { completionsInSeason } from "../domain/seasons";
-import type { Goal, Member, Season } from "../domain/types";
+import type { Season } from "../domain/types";
 import { useCompletions } from "./useCompletions";
 import { useGoals } from "./useGoals";
 import { useMembers } from "./useMembers";
 import { useNow } from "./useNow";
 import { useSeason } from "./useSeasonContext";
 
-export interface GoalWithProgress {
-  goal: Goal;
-  progress: GoalProgress;
-  /** The estação the goal belongs to, for the dates on its card. */
-  season: Season;
-  member: Member | null;
-  /** Who contributed inside this goal's own estação. */
-  standings: Standing[];
-}
+export type { GoalWithProgress } from "../domain/goalBoard";
 
 export interface GoalOverview {
+  /** Every goal of the estação on screen, earliest window first. */
+  all: GoalWithProgress[];
+  /** The ones the whole colmeia works towards. */
   household: GoalWithProgress[];
+  /** One person named. */
   personal: GoalWithProgress[];
+  /** Two or more people named. */
+  shared: GoalWithProgress[];
+  /** Everything somebody is named in, personal and em grupo together. */
+  withPeople: GoalWithProgress[];
   /** The estação every number here belongs to. */
   season: Season | null;
   standings: Standing[];
@@ -41,24 +43,24 @@ export function useGoalOverview(): GoalOverview {
 
   return useMemo(() => {
     const isLoading = loadingSeasons || loadingGoals || loadingCompletions || loadingMembers;
-    const inSeason = completionsInSeason(completions, currentSeason?.id ?? null);
     if (currentSeason === null) {
-      return { household: NO_GOALS, personal: NO_GOALS, season: null, standings: [], allTimeStandings: [], isLoading };
+      return {
+        all: NO_GOALS, household: NO_GOALS, personal: NO_GOALS, shared: NO_GOALS, withPeople: NO_GOALS,
+        season: null, standings: [], allTimeStandings: [], isLoading,
+      };
     }
 
-    const withProgress = goals.map((goal) => ({
-      goal,
-      progress: goalProgress(goal, completions, currentSeason, now),
-      season: currentSeason,
-      member: members.find((member) => member.id === goal.memberId) ?? null,
-      standings: rankMembers(members, completionsInSeason(completions, goal.seasonId)),
-    }));
+    const all = byWindowStart(goalsWithProgress(goals, completions, members, currentSeason, now));
+    const withPeople = goalsWithPeople(all);
 
     return {
-      household: withProgress.filter((item) => item.goal.memberId === null),
-      personal: withProgress.filter((item) => item.goal.memberId !== null && item.member !== null),
+      all,
+      household: householdGoals(all),
+      personal: withPeople.filter((item) => goalAudience(item.goal) === "personal"),
+      shared: withPeople.filter((item) => goalAudience(item.goal) === "group"),
+      withPeople,
       season: currentSeason,
-      standings: rankMembers(members, inSeason),
+      standings: rankMembers(members, completionsInSeason(completions, currentSeason.id)),
       allTimeStandings: rankMembers(members, completions),
       isLoading,
     };

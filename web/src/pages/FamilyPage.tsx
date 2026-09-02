@@ -37,7 +37,7 @@ export function FamilyPage() {
   const { members } = useSession();
   const { currentSeason, isLoading: loadingSeasons } = useSeason();
   const { memberId } = useMemberFilter();
-  const { household, personal, standings, allTimeStandings } = useGoalOverview();
+  const { all, standings, allTimeStandings } = useGoalOverview();
   const crown = useCrown();
   const [scope, setScope] = useState<Scope>("season");
   const [editing, setEditing] = useState<Member | null>(null);
@@ -50,7 +50,10 @@ export function FamilyPage() {
   const openMember = (member: Member | null) => { setEditing(member); memberDialog.open(); };
   const findStanding = (list: typeof standings, member: Member) => list.find((standing) => standing.member.id === member.id);
   const shownMembers = memberId === null ? members : members.filter((member) => member.id === memberId);
-  const shownGoals = [...household, ...personal].filter((item) => memberId === null || item.goal.memberId === memberId || item.goal.memberId === null);
+  // Filtering by a person keeps the metas da colmeia: those are hers too.
+  const shownGoals = memberId === null
+    ? all
+    : all.filter((item) => item.goal.memberIds.length === 0 || item.goal.memberIds.includes(memberId));
 
   return (
     <div className="space-y-8 animate-rise">

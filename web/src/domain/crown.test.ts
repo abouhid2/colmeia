@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crownHolder, seasonCrown } from "./crown";
+import { crownHolder, decidingGoal, seasonCrown } from "./crown";
 import { emptyNavPreferences } from "./navigation";
 import type { Completion, Goal, Member, Season } from "./types";
 
@@ -26,11 +26,15 @@ const completion = (overrides: Partial<Completion>): Completion => ({
   pointsAwarded: 10, multiplier: 1, taskTitle: "x", taskPoints: 10, completedAt: "2026-03-04T10:00:00.000Z", reviewedAt: null, ...overrides,
 });
 
-const goal: Goal = { id: 9, seasonId: past.id, title: "Pizza", targetPoints: 100, memberId: null };
+const goal: Goal = { id: 9, seasonId: past.id, title: "Pizza", targetPoints: 100, memberIds: [], startsOn: null, endsOn: null };
+
+/** After the closed estação ended, so every window in it is already settled. */
+const now = new Date(2026, 2, 11, 15);
 
 describe("crownHolder", () => {
   it("crowns whoever scored most in the estação that closed last", () => {
     const crown = crownHolder({
+      now,
       members,
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 60 }),
@@ -47,6 +51,7 @@ describe("crownHolder", () => {
 
   it("ignores points scored in the estação that is still running", () => {
     const crown = crownHolder({
+      now,
       members,
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 120 }),
@@ -61,6 +66,7 @@ describe("crownHolder", () => {
 
   it("counts only approved points, for the winner and for the goal", () => {
     const crown = crownHolder({
+      now,
       members,
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 120 }),
@@ -75,6 +81,7 @@ describe("crownHolder", () => {
 
   it("crowns nobody when only unreviewed work would have reached the goal", () => {
     const crown = crownHolder({
+      now,
       members,
       completions: [completion({ memberId: 2, pointsAwarded: 900, status: "pending" })],
       seasons,
@@ -85,13 +92,14 @@ describe("crownHolder", () => {
   });
 
   it("crowns nobody when the household goal of that estação was missed", () => {
-    const crown = crownHolder({ members, completions: [completion({ memberId: 2, pointsAwarded: 99 })], seasons, goals: [goal] });
+    const crown = crownHolder({ now, members, completions: [completion({ memberId: 2, pointsAwarded: 99 })], seasons, goals: [goal] });
 
     expect(crown).toBeNull();
   });
 
   it("ignores the goal of another estação", () => {
     const crown = crownHolder({
+      now,
       members,
       completions: [completion({ memberId: 2, pointsAwarded: 40 })],
       seasons,
@@ -102,13 +110,14 @@ describe("crownHolder", () => {
   });
 
   it("crowns the top scorer when that estação had no household goal", () => {
-    const crown = crownHolder({ members, completions: [completion({ memberId: 3, pointsAwarded: 12 })], seasons, goals: [] });
+    const crown = crownHolder({ now, members, completions: [completion({ memberId: 3, pointsAwarded: 12 })], seasons, goals: [] });
 
     expect(crown?.member.id).toBe(3);
   });
 
   it("crowns nobody while no estação has been closed", () => {
     const crown = crownHolder({
+      now,
       members,
       completions: [completion({ memberId: 1, pointsAwarded: 500, seasonId: current.id })],
       seasons: [current],
@@ -120,6 +129,7 @@ describe("crownHolder", () => {
 
   it("breaks a points tie with the number of tasks", () => {
     const crown = crownHolder({
+      now,
       members,
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 60 }),
@@ -136,6 +146,7 @@ describe("crownHolder", () => {
 
   it("crowns nobody on a dead heat", () => {
     const crown = crownHolder({
+      now,
       members,
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 60 }),
@@ -149,11 +160,12 @@ describe("crownHolder", () => {
   });
 
   it("crowns nobody when the estação was empty", () => {
-    expect(crownHolder({ members, completions: [], seasons, goals: [] })).toBeNull();
+    expect(crownHolder({ now, members, completions: [], seasons, goals: [] })).toBeNull();
   });
 
   it("leaves the crown unworn when the winner wants none, instead of passing it down", () => {
     const crown = crownHolder({
+      now,
       members: [member(1, "Ana", ""), member(2, "Bruno"), member(3, "Clara")],
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 200 }),
@@ -168,6 +180,7 @@ describe("crownHolder", () => {
 
   it("treats a whitespace-only title as no title at all", () => {
     const crown = crownHolder({
+      now,
       members: [member(1, "Ana", "   "), member(2, "Bruno"), member(3, "Clara")],
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 200 }),
@@ -182,6 +195,7 @@ describe("crownHolder", () => {
 
   it("crowns the top scorer under their own title, even when someone else wants no crown", () => {
     const crown = crownHolder({
+      now,
       members: [member(1, "Ana", ""), member(2, "Bruno", "Rei da Louça"), member(3, "Clara")],
       completions: [
         completion({ id: 1, memberId: 1, pointsAwarded: 40 }),
@@ -199,6 +213,7 @@ describe("crownHolder", () => {
     const older = season({ id: 5, name: "Mais antiga", startsOn: "2026-02-01", endsOn: "2026-02-28", closedAt: "2026-03-01T00:00:00.000Z" });
 
     const crown = crownHolder({
+      now,
       members,
       completions: [
         completion({ id: 1, memberId: 3, pointsAwarded: 900, seasonId: older.id }),
@@ -213,6 +228,68 @@ describe("crownHolder", () => {
   });
 });
 
+describe("decidingGoal", () => {
+  it("takes the meta da colmeia whose window closes last", () => {
+    const first = { ...goal, id: 1, startsOn: "2026-03-02", endsOn: "2026-03-04" };
+    const last = { ...goal, id: 2, startsOn: "2026-03-05", endsOn: "2026-03-08" };
+
+    expect(decidingGoal([ last, first ], past)?.id).toBe(2);
+  });
+
+  it("treats a meta without days of its own as running to the estação's end", () => {
+    const slice = { ...goal, id: 1, startsOn: "2026-03-02", endsOn: "2026-03-04" };
+    const whole = { ...goal, id: 2 };
+
+    expect(decidingGoal([ whole, slice ], past)?.id).toBe(2);
+  });
+
+  it("hands a dead heat to the newest", () => {
+    const older = { ...goal, id: 1, endsOn: "2026-03-08" };
+    const newer = { ...goal, id: 4, endsOn: "2026-03-08" };
+
+    expect(decidingGoal([ newer, older ], past)?.id).toBe(4);
+  });
+
+  it("ignores metas somebody is named in, and metas of another estação", () => {
+    const personal = { ...goal, id: 1, memberIds: [ 2 ], endsOn: "2026-03-08" };
+    const elsewhere = { ...goal, id: 2, seasonId: current.id };
+
+    expect(decidingGoal([ personal, elsewhere ], past)).toBeNull();
+  });
+});
+
+describe("crownHolder with several metas da colmeia", () => {
+  const opening = { ...goal, id: 1, targetPoints: 10, startsOn: "2026-03-02", endsOn: "2026-03-04" };
+  const closing = { ...goal, id: 2, targetPoints: 100, startsOn: "2026-03-05", endsOn: "2026-03-08" };
+
+  it("asks only the last one, counting the points of its own window", () => {
+    const crown = crownHolder({
+      now,
+      members,
+      completions: [
+        completion({ id: 1, memberId: 1, pointsAwarded: 60, completedAt: "2026-03-06T10:00:00.000Z" }),
+        completion({ id: 2, memberId: 2, pointsAwarded: 40, completedAt: "2026-03-07T10:00:00.000Z" }),
+      ],
+      seasons,
+      goals: [ opening, closing ],
+    });
+
+    expect(crown?.member.id).toBe(1);
+  });
+
+  it("crowns nobody when the points landed before the last meta opened", () => {
+    const crown = crownHolder({
+      now,
+      members,
+      completions: [ completion({ id: 1, memberId: 1, pointsAwarded: 300, completedAt: "2026-03-03T10:00:00.000Z" }) ],
+      seasons,
+      goals: [ opening, closing ],
+    });
+
+    expect(crown).toBeNull();
+  });
+});
+
 describe("seasonCrown", () => {
   const scored = [
     completion({ id: 1, memberId: 1, pointsAwarded: 60 }),
@@ -222,26 +299,26 @@ describe("seasonCrown", () => {
   it("answers about the estação it is handed, not the last one closed", () => {
     const inCurrent = [ completion({ id: 3, memberId: 3, pointsAwarded: 500, seasonId: current.id }) ];
 
-    expect(seasonCrown(current, { members, completions: [ ...scored, ...inCurrent ], goals: [] }).winner?.member.id).toBe(3);
-    expect(seasonCrown(past, { members, completions: [ ...scored, ...inCurrent ], goals: [] }).winner?.member.id).toBe(1);
+    expect(seasonCrown(current, { now, members, completions: [ ...scored, ...inCurrent ], goals: [] }).winner?.member.id).toBe(3);
+    expect(seasonCrown(past, { now, members, completions: [ ...scored, ...inCurrent ], goals: [] }).winner?.member.id).toBe(1);
   });
 
   it("says the colmeia goal was reached, and crowns the winner" , () => {
-    const crown = seasonCrown(past, { members, completions: scored, goals: [ goal ] });
+    const crown = seasonCrown(past, { now, members, completions: scored, goals: [ goal ] });
 
     expect(crown.goalReached).toBe(true);
     expect(crown.winner?.member.id).toBe(1);
   });
 
   it("says the colmeia goal was missed, and crowns nobody", () => {
-    const crown = seasonCrown(past, { members, completions: [ completion({ memberId: 2, pointsAwarded: 30 }) ], goals: [ goal ] });
+    const crown = seasonCrown(past, { now, members, completions: [ completion({ memberId: 2, pointsAwarded: 30 }) ], goals: [ goal ] });
 
     expect(crown.goalReached).toBe(false);
     expect(crown.winner).toBeNull();
   });
 
   it("has no goal to talk about when the estação had none", () => {
-    const crown = seasonCrown(past, { members, completions: scored, goals: [] });
+    const crown = seasonCrown(past, { now, members, completions: scored, goals: [] });
 
     expect(crown.goalReached).toBeNull();
     expect(crown.winner?.member.id).toBe(1);
@@ -249,6 +326,7 @@ describe("seasonCrown", () => {
 
   it("keeps the goal met while a draw leaves the crown unworn", () => {
     const crown = seasonCrown(past, {
+      now,
       members,
       completions: [ completion({ id: 1, memberId: 1, pointsAwarded: 60 }), completion({ id: 2, memberId: 2, pointsAwarded: 60 }) ],
       goals: [ goal ],
