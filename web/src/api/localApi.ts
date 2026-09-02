@@ -5,7 +5,7 @@ import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { completedAtError } from "../domain/completionMoment";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
 import { seasonsNewestFirst } from "../domain/seasons";
-import { AUTO_TITLE, ownVote, VOTE_TITLE, votesInSeason } from "../domain/seasonTitles";
+import { AUTO_TITLE, ownVote, titlesInOrder, VOTE_TITLE, votesInSeason } from "../domain/seasonTitles";
 import { LIMITS } from "../domain/limits";
 import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } from "../domain/memberKinds";
 import { awardedPoints, MAX_RATING } from "../domain/points";
@@ -122,10 +122,6 @@ function validateSeasonTitle(input: Partial<SeasonTitleInput>): void {
 /** New títulos land at the end of the list. */
 function nextPosition(titles: SeasonTitle[]): number {
   return titles.reduce((highest, title) => Math.max(highest, title.position + 1), 0);
-}
-
-function titlesInOrder(titles: SeasonTitle[]): SeasonTitle[] {
-  return [ ...titles ].sort((left, right) => left.position - right.position || left.id - right.id);
 }
 
 function validateGoal(input: Partial<GoalInput>): void {

@@ -1,9 +1,10 @@
-import { Check, LockOpen, Pencil, Square, Trash2 } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
+import { Link, useLocation } from "react-router";
 import { isClosed } from "../../domain/seasons";
 import type { Season } from "../../domain/types";
 import { seasonRange } from "../goal/goalCopy";
 import { Badge } from "../ui/Badge";
-import { Button } from "../ui/Button";
+import { SeasonActions } from "./SeasonActions";
 
 interface SeasonCardProps {
   season: Season;
@@ -11,24 +12,25 @@ interface SeasonCardProps {
   points: number;
   isCurrent: boolean;
   confirmingDelete: boolean;
-  onSelect(): void;
   onEdit(): void;
   onClose(): void;
   onReopen(): void;
   onDelete(): void;
 }
 
-export function SeasonCard({ season, points, isCurrent, confirmingDelete, onSelect, onEdit, onClose, onReopen, onDelete }: SeasonCardProps) {
-  const closed = isClosed(season);
-  const canDelete = season.completionsCount === 0;
+export function SeasonCard({ season, points, isCurrent, confirmingDelete, onEdit, onClose, onReopen, onDelete }: SeasonCardProps) {
+  const { search } = useLocation();
+  const to = { pathname: `/estacoes/${season.id}`, search };
 
   return (
     <li className="rounded-card border border-line bg-surface p-4 shadow-card">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg font-bold tracking-tight">{season.name}</h3>
-            {closed ? (
+            <h3 className="text-lg font-bold tracking-tight">
+              <Link to={to} className="hover:underline">{season.name}</Link>
+            </h3>
+            {isClosed(season) ? (
               <Badge>Encerrada</Badge>
             ) : (
               <Badge tone="bg-leaf-100 text-leaf-700">Em andamento</Badge>
@@ -44,26 +46,20 @@ export function SeasonCard({ season, points, isCurrent, confirmingDelete, onSele
             <span className="font-semibold text-ink tabular-nums">{points}</span> pontos
           </p>
         </div>
-        {!isCurrent && <Button variant="secondary" size="sm" onClick={onSelect}>Ver esta estação</Button>}
+        <Link to={to} className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-honey-700 hover:underline">
+          Ver esta estação <ChevronRight className="size-4" aria-hidden />
+        </Link>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
-        <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar</Button>
-        {closed ? (
-          <Button variant="ghost" size="sm" icon={<LockOpen className="size-4" />} onClick={onReopen}>Reabrir</Button>
-        ) : (
-          <Button variant="ghost" size="sm" icon={<Square className="size-4" />} onClick={onClose}>Encerrar</Button>
-        )}
-        {canDelete && (
-          <Button
-            variant={confirmingDelete ? "danger" : "ghost"}
-            size="sm"
-            icon={<Trash2 className="size-4" />}
-            onClick={onDelete}
-          >
-            {confirmingDelete ? "Confirmar exclusão" : "Excluir"}
-          </Button>
-        )}
+      <div className="mt-4 border-t border-line pt-3">
+        <SeasonActions
+          season={season}
+          confirmingDelete={confirmingDelete}
+          onEdit={onEdit}
+          onClose={onClose}
+          onReopen={onReopen}
+          onDelete={onDelete}
+        />
       </div>
     </li>
   );

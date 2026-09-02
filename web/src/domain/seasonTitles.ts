@@ -27,6 +27,29 @@ export function defaultSeasonTitles(firstId: number): SeasonTitle[] {
   return DEFAULT_SEASON_TITLES.map((seed, position) => ({ ...seed, id: firstId + position, position, active: true }));
 }
 
+/** The list as the family arranged it. */
+export function titlesInOrder(titles: SeasonTitle[]): SeasonTitle[] {
+  return [ ...titles ].sort((left, right) => left.position - right.position || left.id - right.id);
+}
+
+/**
+ * One title moved a step up or down, as the new positions to save. The whole
+ * list is renumbered from zero, so a list that drifted out of shape lands
+ * straight again instead of refusing to move.
+ */
+export function reorderTitles(titles: SeasonTitle[], id: number, step: -1 | 1): { id: number; position: number }[] {
+  const ordered = titlesInOrder(titles);
+  const from = ordered.findIndex((title) => title.id === id);
+  const to = from + step;
+  if (from === -1 || to < 0 || to >= ordered.length) return [];
+
+  const moved = [ ...ordered ];
+  [ moved[from], moved[to] ] = [ moved[to], moved[from] ];
+  return moved
+    .map((title, position) => ({ id: title.id, position }))
+    .filter((entry) => ordered.find((title) => title.id === entry.id)?.position !== entry.position);
+}
+
 /** The crown: the one title nobody votes on and nobody can drop. */
 export function crownTitle(titles: SeasonTitle[]): SeasonTitle | null {
   return titles.find((title) => title.kind === AUTO_TITLE) ?? null;

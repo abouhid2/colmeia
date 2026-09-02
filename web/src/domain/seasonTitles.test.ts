@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { crownTitle, defaultSeasonTitles, ownVote, votedTitles, votedTitlesIn, votesInSeason } from "./seasonTitles";
+import { crownTitle, defaultSeasonTitles, ownVote, reorderTitles, votedTitles, votedTitlesIn, votesInSeason } from "./seasonTitles";
 import type { SeasonTitle, SeasonTitleVote } from "./types";
 
 const titles = defaultSeasonTitles(10);
@@ -54,5 +54,40 @@ describe("votesInSeason and ownVote", () => {
     expect(ownVote(cast, 11, 2)?.id).toBe(2);
     expect(ownVote(cast, 11, 3)).toBeNull();
     expect(ownVote(cast, 11, null)).toBeNull();
+  });
+});
+
+describe("reorderTitles", () => {
+  it("moves one title a step down and renumbers only what changed", () => {
+    expect(reorderTitles(titles, titles[1].id, 1)).toEqual([
+      { id: titles[2].id, position: 1 },
+      { id: titles[1].id, position: 2 },
+    ]);
+  });
+
+  it("moves one title a step up", () => {
+    expect(reorderTitles(titles, titles[3].id, -1)).toEqual([
+      { id: titles[3].id, position: 2 },
+      { id: titles[2].id, position: 3 },
+    ]);
+  });
+
+  it("refuses to walk off either end, and shrugs at a title that is not there", () => {
+    expect(reorderTitles(titles, titles[0].id, -1)).toEqual([]);
+    expect(reorderTitles(titles, titles[5].id, 1)).toEqual([]);
+    expect(reorderTitles(titles, 999, 1)).toEqual([]);
+  });
+
+  it("straightens a list whose positions drifted apart", () => {
+    const drifted = titles.map((title, index) => ({ ...title, position: index * 10 }));
+
+    expect(reorderTitles(drifted, drifted[0].id, 1)).toEqual([
+      { id: titles[1].id, position: 0 },
+      { id: titles[0].id, position: 1 },
+      { id: titles[2].id, position: 2 },
+      { id: titles[3].id, position: 3 },
+      { id: titles[4].id, position: 4 },
+      { id: titles[5].id, position: 5 },
+    ]);
   });
 });
