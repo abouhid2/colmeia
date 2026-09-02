@@ -25,6 +25,16 @@ describe("roadmapSpan", () => {
     expect(span.end).toEqual(new Date(2026, 9, 16, 23, 59, 59, 999));
     expect(OPEN_SEASON_DAYS).toBe(30);
   });
+
+  it("stops on the day a closed estação was frozen, and no longer draws ahead", () => {
+    const frozen = season({ endsOn: null, closedAt: "2026-09-10T18:00:00.000Z" });
+
+    const span = roadmapSpan(frozen, now);
+
+    expect(span.openEnded).toBe(false);
+    expect(span.end).toEqual(new Date("2026-09-10T18:00:00.000Z"));
+    expect(roadmapMarker(now, span)).toBeNull();
+  });
 });
 
 describe("roadmapBar", () => {

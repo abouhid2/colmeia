@@ -7,7 +7,7 @@ import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
 import { useCompletions } from "./useCompletions";
 import { useScopedQuery } from "./useScopedQuery";
-import { useTasks } from "./useTasks";
+import { useAllTasks } from "./useTasks";
 
 const EMPTY: AchievementAward[] = [];
 const NOTHING_MISSING: AchievementAwardInput[] = [];
@@ -39,7 +39,8 @@ function useRecordAwards() {
  */
 export function useAchievementSync(memberId: number | null): void {
   const { completions } = useCompletions();
-  const { tasks } = useTasks();
+  // Badges are colmeia-wide, so the ledger reads every estação, the way the profile does.
+  const { tasks } = useAllTasks();
   const { isPending } = useAchievementAwards();
   const stored = useMemberAwards(memberId);
   const { mutate } = useRecordAwards();

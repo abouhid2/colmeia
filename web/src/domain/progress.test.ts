@@ -27,6 +27,24 @@ describe("seasonBounds", () => {
 
     expect(seasonBounds(season(), now).end).toEqual(now);
   });
+
+  it("keeps counting past the planned last day while nobody has closed it", () => {
+    const now = new Date(2026, 9, 5, 15);
+
+    expect(seasonBounds(season({ startsOn: "2026-09-01", endsOn: "2026-09-30" }), now).end).toEqual(now);
+  });
+
+  it("stops at the day it was closed when it never had an end", () => {
+    const closed = season({ startsOn: "2026-03-01", closedAt: "2026-03-01T18:00:00.000Z" });
+
+    expect(seasonBounds(closed, new Date(2026, 8, 1)).end).toEqual(new Date("2026-03-01T18:00:00.000Z"));
+  });
+
+  it("stops at the day it was closed even with a planned end still ahead", () => {
+    const closed = season({ startsOn: "2026-03-01", endsOn: "2026-05-31", closedAt: "2026-03-10T18:00:00.000Z" });
+
+    expect(seasonBounds(closed, new Date(2026, 8, 1)).end).toEqual(new Date("2026-03-10T18:00:00.000Z"));
+  });
 });
 
 describe("goalWindow", () => {
@@ -101,7 +119,24 @@ describe("goalProgress", () => {
 
     expect(progress.earned).toBe(40);
     expect(progress.reached).toBe(true);
-    expect(progress.window.end).toEqual(new Date(2026, 2, 8, 23, 59, 59, 999));
+    expect(progress.window.end).toEqual(new Date("2026-03-09T00:00:00.000Z"));
+  });
+
+  it("keeps counting what came after the planned last day while the estação is open", () => {
+    const september = season({ startsOn: "2026-09-01", endsOn: "2026-09-30" });
+
+    const progress = goalProgress(goal, [
+      completion({ id: 1, pointsAwarded: 60, completedAt: "2026-09-20T10:00:00.000Z" }),
+      completion({ id: 2, pointsAwarded: 80, completedAt: "2026-10-03T10:00:00.000Z" }),
+    ], september, new Date(2026, 9, 5, 12));
+
+    expect(progress).toMatchObject({ earned: 140, reached: true, status: "reached" });
+  });
+
+  it("is over once the estação was closed, even without a last day of its own", () => {
+    const closed = season({ startsOn: "2026-03-01", closedAt: "2026-03-01T18:00:00.000Z" });
+
+    expect(goalProgress(goal, [], closed, new Date(2026, 8, 1)).status).toBe("missed");
   });
 
   describe("inside a window of its own", () => {

@@ -1,8 +1,17 @@
+import { parseISO } from "date-fns";
 import { toIsoDate } from "../lib/dates";
 import type { Completion, Season } from "./types";
 
 export function isClosed(season: Season): boolean {
   return season.closedAt !== null;
+}
+
+/**
+ * The moment an estação stopped counting, or null while it is still running.
+ * The ranking freezes the day it was closed, whatever its planned last day said.
+ */
+export function frozenAt(season: Season): Date | null {
+  return season.closedAt === null ? null : parseISO(season.closedAt);
 }
 
 /** Whether an ISO day falls inside the estação, an open end included. */

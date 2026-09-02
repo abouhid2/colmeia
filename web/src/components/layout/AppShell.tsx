@@ -64,6 +64,15 @@ export function AppShell() {
               <div className="flex items-center gap-1">
                 <InviteButton compact />
                 <MemberSwitcher compact />
+                {/* The only way to Meus ajustes that no arrangement of the navigation can take away. */}
+                <Link
+                  to={{ pathname: SETTINGS_PATH, search }}
+                  aria-label={SETTINGS_LABEL}
+                  title={SETTINGS_LABEL}
+                  className="grid size-9 shrink-0 place-items-center rounded-full text-ink-faint transition-colors hover:bg-dune-100 hover:text-ink"
+                >
+                  <Settings2 className="size-5" aria-hidden />
+                </Link>
               </div>
             </div>
             <SeasonSwitcher />
