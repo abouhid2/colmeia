@@ -82,6 +82,72 @@ describe("LocalApi", () => {
     await expect(api.tasks.complete(19, 1)).rejects.toMatchObject({ status: 409 });
   });
 
+  describe("a completion registered after the fact", () => {
+    const twoDaysAgo = new Date(2026, 2, 9, 18, 30);
+
+    it("closes a one-off task on the day the work happened, not today", async () => {
+      const { task, completion } = await api.tasks.complete(13, 2, { completedAt: twoDaysAgo.toISOString() });
+
+      expect(completion.completedAt).toBe(twoDaysAgo.toISOString());
+      expect(task.completedAt).toBe(twoDaysAgo.toISOString());
+      expect(task.status).toBe("done");
+    });
+
+    it("rolls a recurring task forward from the day the work happened", async () => {
+      const { task } = await api.tasks.complete(16, 1, { completedAt: twoDaysAgo.toISOString() });
+
+      expect(task.dueOn).toBe("2026-03-16");
+    });
+
+    it("keeps the due date when the completion belongs to a cycle already closed", async () => {
+      const { task } = await api.tasks.complete(16, 1, { completedAt: new Date(2026, 1, 1, 10).toISOString() });
+
+      expect(task.dueOn).toBe("2026-03-13");
+    });
+
+    it("leaves a reviewed task pending, dated when the work happened", async () => {
+      const { completion } = await api.tasks.complete(10, 3, { completedAt: twoDaysAgo.toISOString() });
+
+      expect(completion).toMatchObject({ status: "pending", pointsAwarded: 0 });
+      expect(completion.completedAt).toBe(twoDaysAgo.toISOString());
+    });
+
+    it("refuses a moment in the future", async () => {
+      await expect(api.tasks.complete(13, 2, { completedAt: new Date(2026, 2, 12, 9).toISOString() }))
+        .rejects.toMatchObject({ status: 422, details: [ "Essa data está no futuro" ] });
+    });
+
+    it("tolerates a clock a minute ahead of the server's", async () => {
+      const ahead = new Date(2026, 2, 11, 15, 1);
+      const { completion } = await api.tasks.complete(13, 2, { completedAt: ahead.toISOString() });
+
+      expect(completion.completedAt).toBe(ahead.toISOString());
+    });
+
+    it("refuses a moment more than a year back", async () => {
+      await expect(api.tasks.complete(13, 2, { completedAt: new Date(2025, 0, 1, 10).toISOString() }))
+        .rejects.toMatchObject({ status: 422, details: [ "Só dá para registrar até um ano atrás" ] });
+    });
+
+    it("accepts a moment exactly a year back", async () => {
+      const aYearBack = new Date(2025, 2, 11, 15);
+      const { completion } = await api.tasks.complete(13, 2, { completedAt: aYearBack.toISOString() });
+
+      expect(completion.completedAt).toBe(aYearBack.toISOString());
+    });
+
+    it("refuses a moment it cannot read", async () => {
+      await expect(api.tasks.complete(13, 2, { completedAt: "ontem à noite" }))
+        .rejects.toMatchObject({ status: 422, details: [ "Não deu para entender essa data" ] });
+    });
+
+    it("counts as done now when no moment comes with it", async () => {
+      const { completion } = await api.tasks.complete(13, 2, {});
+
+      expect(completion.completedAt).toBe(now.toISOString());
+    });
+  });
+
   it("reopens a finished task and clears its completion date", async () => {
     const reopened = await api.tasks.reopen(19);
     expect(reopened).toMatchObject({ status: "open", completedAt: null });

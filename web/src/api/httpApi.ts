@@ -2,7 +2,7 @@ import type {
   Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
   ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskResult, DemoColmeia } from "./client";
+import type { ColmeiaApi, CompleteTaskOptions, CompleteTaskResult, DemoColmeia } from "./client";
 import { ApiError } from "./errors";
 import { toCamelKeys, toSnakeKeys } from "./keys";
 
@@ -103,8 +103,8 @@ export class HttpApi implements ColmeiaApi {
     create: (input: TaskInput): Promise<Task> => this.request("POST", "/tasks", { task: input }),
     update: (id: number, input: Partial<TaskInput>): Promise<Task> => this.request("PATCH", `/tasks/${id}`, { task: input }),
     remove: (id: number): Promise<void> => this.request("DELETE", `/tasks/${id}`),
-    complete: (id: number, memberId: number): Promise<CompleteTaskResult> =>
-      this.request("POST", `/tasks/${id}/complete`, { memberId }),
+    complete: (id: number, memberId: number, options: CompleteTaskOptions = {}): Promise<CompleteTaskResult> =>
+      this.request("POST", `/tasks/${id}/complete`, { memberId, completedAt: options.completedAt }),
     reopen: (id: number): Promise<Task> => this.request("POST", `/tasks/${id}/reopen`),
   };
 

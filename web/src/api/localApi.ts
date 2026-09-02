@@ -1,6 +1,7 @@
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { generateInviteCode } from "../domain/inviteCode";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
+import { completedAtError } from "../domain/completionMoment";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
 import { LIMITS } from "../domain/limits";
 import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } from "../domain/memberKinds";
@@ -9,7 +10,7 @@ import type {
   Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
   ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskResult, DemoColmeia, StoredHousehold } from "./client";
+import type { ColmeiaApi, CompleteTaskOptions, CompleteTaskResult, DemoColmeia, StoredHousehold } from "./client";
 import { ApiError } from "./errors";
 import { DEMO_INVITE_CODE, EXAMPLE_ENTRY_MEMBER, emptyState, withMembers, type LocalState } from "./localState";
 import { LocalStore } from "./localStore";
@@ -46,6 +47,23 @@ function validateName(value: string | undefined, max: number, blankMessage: stri
   if (value === undefined) return;
   if (value.trim() === "") invalid(blankMessage);
   if (value.trim().length > max) invalid(`Use no máximo ${max} letras`);
+}
+
+/** When the work happened: what the person said, or now if they said nothing. */
+function resolveMoment(completedAt: string | undefined, now: Date): Date {
+  if (completedAt === undefined || completedAt === "") return now;
+  const moment = new Date(completedAt);
+  const error = completedAtError(moment, now);
+  if (error !== null) invalid(error);
+  return moment;
+}
+
+/** The cycle counts from the day the work happened, but a completion from a
+ *  cycle already closed must not drag the next date backwards. */
+function rolledDueOn(task: Task, moment: Date): string | null {
+  const rolled = nextDueOn(task.recurrence, task.intervalDays, moment);
+  if (rolled === null || task.dueOn === null) return rolled;
+  return rolled < task.dueOn ? task.dueOn : rolled;
 }
 
 /** The completion that closed the task, the one reopening it undoes. */
@@ -324,11 +342,12 @@ export class LocalApi implements ColmeiaApi {
         state.tasks = state.tasks.filter((task) => task.id !== id);
         state.completions.forEach((completion) => { if (completion.taskId === id) completion.taskId = null; });
       }),
-    complete: (id: number, memberId: number): Promise<CompleteTaskResult> =>
+    complete: (id: number, memberId: number, options: CompleteTaskOptions = {}): Promise<CompleteTaskResult> =>
       this.mutate((state, now) => {
         const task = findOrFail(state.tasks, id, "Essa tarefa");
         const doer = findOrFail(state.members, memberId, "Essa pessoa");
         if (task.status === "done") conflict("Essa tarefa já foi concluída");
+        const moment = resolveMoment(options.completedAt, now);
         const completion: Completion = {
           id: this.nextId(state),
           taskId: task.id,
@@ -340,15 +359,15 @@ export class LocalApi implements ColmeiaApi {
           multiplier: doer.pointsMultiplier,
           taskTitle: task.title,
           taskPoints: task.points,
-          completedAt: now.toISOString(),
+          completedAt: moment.toISOString(),
           reviewedAt: null,
         };
         state.completions.push(completion);
         if (isRecurring(task.recurrence)) {
-          task.dueOn = nextDueOn(task.recurrence, task.intervalDays, now);
+          task.dueOn = rolledDueOn(task, moment);
         } else {
           task.status = "done";
-          task.completedAt = now.toISOString();
+          task.completedAt = moment.toISOString();
         }
         return { task, completion };
       }),

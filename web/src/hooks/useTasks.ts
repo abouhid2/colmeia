@@ -8,6 +8,13 @@ const EMPTY: Task[] = [];
 
 export type TaskUpdate = Partial<TaskInput>;
 
+export interface CompleteTaskVariables {
+  id: number;
+  memberId: number;
+  /** When the work happened, ISO 8601. Absent means right now. */
+  completedAt?: string;
+}
+
 export function useTasks() {
   const api = useApi();
   const query = useScopedQuery(queryKeys.tasks, () => api.tasks.list());
@@ -25,7 +32,7 @@ export function useTaskMutations() {
     invalidates: [queryKeys.tasks, queryKeys.completions],
   });
   const complete = useAppMutation(
-    ({ id, memberId }: { id: number; memberId: number }) => api.tasks.complete(id, memberId),
+    ({ id, memberId, completedAt }: CompleteTaskVariables) => api.tasks.complete(id, memberId, { completedAt }),
     { invalidates: [queryKeys.tasks, queryKeys.completions] },
   );
   const reopen = useAppMutation((id: number) => api.tasks.reopen(id), {
