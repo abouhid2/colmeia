@@ -1,3 +1,4 @@
+import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
 import { LIMITS } from "../domain/limits";
 import { MAX_RATING, pointsForRating } from "../domain/points";
@@ -24,14 +25,26 @@ interface LocalApiOptions {
 export const LOCAL_STORAGE_KEY = "colmeia.db.v2";
 const LEGACY_STORAGE_KEY = "colmeia.db.v1";
 
-interface LegacyState extends Omit<LocalState, "goals"> {
+/** What a browser may actually hold: fields added later can be missing. */
+type StoredMember = Omit<Member, "crownTitle"> & Partial<Pick<Member, "crownTitle">>;
+type StoredState = Omit<LocalState, "members"> & { members: StoredMember[] };
+
+interface LegacyState extends Omit<StoredState, "goals"> {
   goal: Omit<Goal, "memberId"> | null;
 }
 
 /** v1 kept a single household goal; v2 keeps a list with optional owners. */
-function migrateLegacy(raw: string): LocalState {
+function migrateLegacy(raw: string): StoredState {
   const { goal, ...rest } = JSON.parse(raw) as LegacyState;
   return { ...rest, goals: goal ? [{ ...goal, memberId: null }] : [] };
+}
+
+/** Anyone stored before crown titles existed reads with the default title. */
+function normalize(state: StoredState): LocalState {
+  return {
+    ...state,
+    members: state.members.map((member) => ({ ...member, crownTitle: member.crownTitle ?? DEFAULT_CROWN_TITLE })),
+  };
 }
 
 function invalid(...details: string[]): never {
@@ -46,6 +59,11 @@ function findOrFail<T extends { id: number }>(items: T[], id: number, label: str
   const found = items.find((item) => item.id === id);
   if (!found) throw new ApiError(404, [`${label} não encontrado`]);
   return found;
+}
+
+/** Blank is allowed on purpose: it is how someone says they want no crown. */
+function validateCrownTitle(value: string | undefined): void {
+  if (value !== undefined && value.trim().length > LIMITS.crownTitle) invalid(`O título cabe em ${LIMITS.crownTitle} caracteres`);
 }
 
 function validateName(value: string | undefined, max: number, blankMessage: string): void {
@@ -87,9 +105,9 @@ export class LocalApi implements ColmeiaApi {
 
   private load(): LocalState {
     const raw = this.store.getItem(this.storageKey);
-    if (raw) return JSON.parse(raw) as LocalState;
+    if (raw) return normalize(JSON.parse(raw) as StoredState);
     const legacy = this.storageKey === LOCAL_STORAGE_KEY ? this.store.getItem(LEGACY_STORAGE_KEY) : null;
-    const fresh = legacy ? migrateLegacy(legacy) : this.seed();
+    const fresh = legacy ? normalize(migrateLegacy(legacy)) : this.seed();
     this.persist(fresh);
     if (legacy) this.store.removeItem(LEGACY_STORAGE_KEY);
     return fresh;
@@ -138,7 +156,11 @@ export class LocalApi implements ColmeiaApi {
     create: (input: MemberInput): Promise<Member> =>
       this.mutate((state, now) => {
         validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
-        const member: Member = { ...input, name: input.name.trim(), id: this.nextId(state), createdAt: now.toISOString() };
+        validateCrownTitle(input.crownTitle);
+        const member: Member = {
+          ...input, name: input.name.trim(), crownTitle: input.crownTitle.trim(),
+          id: this.nextId(state), createdAt: now.toISOString(),
+        };
         state.members.push(member);
         return member;
       }),
@@ -146,7 +168,9 @@ export class LocalApi implements ColmeiaApi {
       this.mutate((state) => {
         const member = findOrFail(state.members, id, "Membro");
         validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
+        validateCrownTitle(input.crownTitle);
         Object.assign(member, input);
+        if (input.crownTitle !== undefined) member.crownTitle = input.crownTitle.trim();
         return member;
       }),
     remove: (id: number): Promise<void> =>

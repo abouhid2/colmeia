@@ -2,11 +2,13 @@ import { Plus, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import type { MemberColor, MemberInput } from "../domain/types";
 import { LIMITS } from "../domain/limits";
+import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { useRenameHousehold } from "../hooks/useHousehold";
 import { useMemberMutations } from "../hooks/useMembers";
 import { BrandMark } from "../components/layout/BrandMark";
 import { AvatarPicker } from "../components/members/AvatarPicker";
+import { CrownTitleField } from "../components/members/CrownTitleField";
 import { Avatar } from "../components/ui/Avatar";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -20,6 +22,7 @@ export function OnboardingPage() {
   const [name, setName] = useState("");
   const [avatar, setAvatar] = useState("🐝");
   const [color, setColor] = useState<MemberColor>("honey");
+  const [crownTitle, setCrownTitle] = useState(DEFAULT_CROWN_TITLE);
   const [starting, setStarting] = useState(false);
   const rename = useRenameHousehold();
   const { create } = useMemberMutations();
@@ -27,7 +30,7 @@ export function OnboardingPage() {
   const addDraft = (event: FormEvent) => {
     event.preventDefault();
     if (name.trim() === "") return;
-    setDrafts((current) => [...current, { name: name.trim(), avatar, color }]);
+    setDrafts((current) => [...current, { name: name.trim(), avatar, color, crownTitle }]);
     setName("");
     setColor(MEMBER_COLOR_OPTIONS[(drafts.length + 1) % MEMBER_COLOR_OPTIONS.length]);
   };
@@ -72,6 +75,7 @@ export function OnboardingPage() {
             <Button type="submit" variant="secondary" icon={<Plus className="size-4" />} disabled={name.trim() === ""}>Adicionar</Button>
           </div>
           <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />
+          <CrownTitleField id="onboarding-crown-title" value={crownTitle} onChange={setCrownTitle} />
         </form>
 
         <Button size="lg" className="w-full" disabled={drafts.length === 0} loading={starting} onClick={start}>

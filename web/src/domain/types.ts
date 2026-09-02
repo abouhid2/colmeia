@@ -15,6 +15,8 @@ export interface Member {
   name: string;
   avatar: string;
   color: MemberColor;
+  /** What they want to be called when they win a period. Blank means they never wear the crown. */
+  crownTitle: string;
   createdAt: string;
 }
 
@@ -69,7 +71,7 @@ export interface Goal {
   memberId: number | null;
 }
 
-export type MemberInput = Pick<Member, "name" | "avatar" | "color">;
+export type MemberInput = Pick<Member, "name" | "avatar" | "color" | "crownTitle">;
 
 export interface TaskInput {
   title: string;

@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { LIMITS } from "../../domain/limits";
+import { DEFAULT_CROWN_TITLE } from "../../domain/crownTitles";
 import type { Member, MemberColor } from "../../domain/types";
 import { useMemberMutations } from "../../hooks/useMembers";
 import { useToast } from "../../hooks/useToast";
@@ -10,6 +11,7 @@ import { Dialog } from "../ui/Dialog";
 import { Field } from "../ui/Field";
 import { Input } from "../ui/Input";
 import { AvatarPicker } from "./AvatarPicker";
+import { CrownTitleField } from "./CrownTitleField";
 
 interface MemberDialogProps {
   open: boolean;
@@ -29,13 +31,14 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
   const [name, setName] = useState(member?.name ?? "");
   const [avatar, setAvatar] = useState(member?.avatar ?? "🐝");
   const [color, setColor] = useState<MemberColor>(member?.color ?? "honey");
+  const [crownTitle, setCrownTitle] = useState(member?.crownTitle ?? DEFAULT_CROWN_TITLE);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const { create, update, remove } = useMemberMutations();
   const { notify } = useToast();
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    const input = { name, avatar, color };
+    const input = { name, avatar, color, crownTitle };
     const onSuccess = () => { notify({ tone: "success", message: member ? "Pessoa salva" : `${name} entrou na colmeia` }); onDone(); };
     if (member) update.mutate({ id: member.id, input }, { onSuccess });
     else create.mutate(input, { onSuccess });
@@ -55,6 +58,7 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
         </Field>
       </div>
       <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />
+      <CrownTitleField id="member-crown-title" value={crownTitle} onChange={setCrownTitle} />
       <div className="flex items-center justify-between gap-2 pt-2">
         {member ? (
           <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? destroy() : setConfirmingDelete(true))} loading={remove.isPending}>

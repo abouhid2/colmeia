@@ -81,6 +81,39 @@ describe("LocalApi", () => {
     expect(store.getItem("colmeia.db.v1")).toBeNull();
   });
 
+  it("reads members stored before crown titles existed with the default title", async () => {
+    const store = new MemoryStore();
+    const stored = buildDemoState(now);
+    const bare = stored.members.map(({ crownTitle: _crownTitle, ...member }) => member);
+    store.setItem("colmeia.db.v2", JSON.stringify({ ...stored, members: bare }));
+
+    const upgraded = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
+
+    expect((await upgraded.members.list()).map((member) => member.crownTitle)).toEqual(
+      ["Abelha Rainha", "Abelha Rainha", "Abelha Rainha", "Abelha Rainha"],
+    );
+  });
+
+  it("keeps the crown title a member chose, trimmed", async () => {
+    expect((await api.members.list()).find((member) => member.id === 2)?.crownTitle).toBe("Abelhão");
+
+    const changed = await api.members.update(2, { crownTitle: "  Rei da Louça  " });
+    expect(changed.crownTitle).toBe("Rei da Louça");
+  });
+
+  it("takes a blank crown title as opting out of the crown", async () => {
+    const changed = await api.members.update(2, { crownTitle: "   " });
+
+    expect(changed.crownTitle).toBe("");
+  });
+
+  it("refuses a crown title too long to sit next to a name", async () => {
+    await expect(api.members.update(2, { crownTitle: "a".repeat(31) })).rejects.toMatchObject({ status: 422 });
+    await expect(
+      api.members.create({ name: "Novo", avatar: "🐝", color: "honey", crownTitle: "a".repeat(31) }),
+    ).rejects.toMatchObject({ status: 422 });
+  });
+
   it("stamps purchases and clears bought items", async () => {
     const bought = await api.shopping.update(40, { purchased: true, purchasedById: 2 });
     expect(bought.purchasedAt).toBe(now.toISOString());
