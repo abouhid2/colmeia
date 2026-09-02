@@ -11,9 +11,9 @@ import type {
   HouseholdWithMembers, Member, MemberInput, ReviewInput, ShoppingItem, ShoppingItemInput,
   ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskResult, StoredHousehold } from "./client";
+import type { ColmeiaApi, CompleteTaskResult, DemoColmeia, StoredHousehold } from "./client";
 import { ApiError } from "./errors";
-import { DEMO_INVITE_CODE, emptyState, withMembers, type LocalState } from "./localState";
+import { DEMO_INVITE_CODE, EXAMPLE_ENTRY_MEMBER, emptyState, withMembers, type LocalState } from "./localState";
 import { LocalStore } from "./localStore";
 import type { KeyValueStore } from "./storage";
 
@@ -34,16 +34,34 @@ function conflict(detail: string): never {
   throw new ApiError(409, [ detail ]);
 }
 
+function requireRoom(state: LocalState): void {
+  if (state.members.length >= LIMITS.householdMembers) invalid(`Esta colmeia já tem ${LIMITS.householdMembers} pessoas`);
+}
+
 function findOrFail<T extends { id: number }>(items: T[], id: number, label: string): T {
   const found = items.find((item) => item.id === id);
-  if (!found) throw new ApiError(404, [`${label} não encontrado`]);
+  if (!found) throw new ApiError(404, [`${label} não está mais aqui. Atualize a página.`]);
   return found;
 }
 
 function validateName(value: string | undefined, max: number, blankMessage: string): void {
   if (value === undefined) return;
   if (value.trim() === "") invalid(blankMessage);
-  if (value.trim().length > max) invalid(`Use no máximo ${max} caracteres`);
+  if (value.trim().length > max) invalid(`Use no máximo ${max} letras`);
+}
+
+/** The completion that closed the task, the one reopening it undoes. */
+function lastCompletionFor(completions: Completion[], taskId: number): Completion | null {
+  return completions
+    .filter((completion) => completion.taskId === taskId)
+    .reduce<Completion | null>((latest, completion) => (
+      latest === null || Date.parse(completion.completedAt) >= Date.parse(latest.completedAt) ? completion : latest
+    ), null);
+}
+
+function validateShoppingItem(input: { name?: string; quantity?: string | null }): void {
+  validateName(input.name, LIMITS.shoppingItemName, "Escreva o que está faltando");
+  if (input.quantity && input.quantity.length > LIMITS.shoppingQuantity) invalid(`A quantidade cabe em ${LIMITS.shoppingQuantity} letras`);
 }
 
 /** The same three rules the Rails validation applies to a pinned badge. */
@@ -59,7 +77,7 @@ function validateMember(input: Partial<MemberInput>): void {
   validateFavorites(input.favoriteAchievements);
   // A blank crown title is allowed on purpose: it is how someone says they want no crown.
   if (input.crownTitle !== undefined && input.crownTitle.trim().length > LIMITS.crownTitle) {
-    invalid(`O título cabe em ${LIMITS.crownTitle} caracteres`);
+    invalid(`O título cabe em ${LIMITS.crownTitle} letras`);
   }
   const multiplier = input.pointsMultiplier;
   if (multiplier === undefined) return;
@@ -70,15 +88,15 @@ function validateMember(input: Partial<MemberInput>): void {
 
 function validateGoal(input: Partial<GoalInput>): void {
   validateName(input.title, LIMITS.goalTitle, "Diga qual é a recompensa");
-  if (input.targetPoints !== undefined && (!Number.isInteger(input.targetPoints) || input.targetPoints <= 0)) invalid("A meta precisa ser maior que zero");
+  if (input.targetPoints !== undefined && (!Number.isInteger(input.targetPoints) || input.targetPoints <= 0)) invalid("A meta precisa de pelo menos 1 ponto");
   if (input.targetPoints !== undefined && input.targetPoints > LIMITS.goalTarget) invalid(`A meta vai até ${LIMITS.goalTarget} pontos`);
 }
 
 function validateTask(input: Partial<TaskInput>): void {
   validateName(input.title, LIMITS.taskTitle, "Dê um nome à tarefa");
-  if (input.points !== undefined && (!Number.isInteger(input.points) || input.points <= 0)) invalid("Os pontos precisam ser um número maior que zero");
+  if (input.points !== undefined && (!Number.isInteger(input.points) || input.points <= 0)) invalid("A tarefa vale pelo menos 1 ponto");
   if (input.points !== undefined && input.points > LIMITS.taskPoints) invalid(`Uma tarefa vale no máximo ${LIMITS.taskPoints} pontos`);
-  if (input.recurrence === "custom" && !(input.intervalDays && input.intervalDays > 0)) invalid("Informe a cada quantos dias a tarefa se repete");
+  if (input.recurrence === "custom" && !(input.intervalDays && input.intervalDays > 0)) invalid("Diga a cada quantos dias a tarefa se repete");
 }
 
 /** Defaults a new person the way the Rails model does, handicap included. */
@@ -124,11 +142,6 @@ export class LocalApi implements ColmeiaApi {
 
   setInviteCode(inviteCode: string | null): void {
     this.inviteCode = inviteCode;
-  }
-
-  reset(): Promise<void> {
-    this.store.resetDemo();
-    return Promise.resolve();
   }
 
   listStoredHouseholds(): Promise<StoredHousehold[]> {
@@ -186,10 +199,18 @@ export class LocalApi implements ColmeiaApi {
     return state.nextId++;
   }
 
+  /** The example opens with Ana already in it, so nobody has to claim a place
+   *  before touching anything. */
+  private claimExampleMember(state: LocalState): Member {
+    const member = state.members.find((person) => person.name === EXAMPLE_ENTRY_MEMBER) ?? state.members[0];
+    if (member === undefined) invalid("O exemplo está vazio");
+    member.claimedAt = this.clock().toISOString();
+    return member;
+  }
+
   private freshInviteCode(): string {
-    const index = this.store.index();
     let candidate = this.newCode();
-    while (candidate in index) candidate = this.newCode();
+    while (this.store.resolve(candidate) !== null) candidate = this.newCode();
     return candidate;
   }
 
@@ -211,30 +232,36 @@ export class LocalApi implements ColmeiaApi {
   households = {
     create: (input: HouseholdInput): Promise<HouseholdWithMembers> =>
       this.attempt(() => {
-        const name = input.name.trim();
-        if (name === "") invalid("Dê um nome à colmeia");
+        validateName(input.name, LIMITS.householdName, "Dê um nome à colmeia");
+        const memberNames = input.memberNames.map((value) => value.trim()).filter((value) => value !== "");
+        if (memberNames.length > LIMITS.initialMembers) invalid(`Uma colmeia começa com no máximo ${LIMITS.initialMembers} pessoas`);
+        memberNames.forEach((memberName) => validateName(memberName, LIMITS.memberName, "Dê um nome à pessoa"));
         const now = this.clock();
-        const state = emptyState(this.freshInviteCode(), name);
-        input.memberNames
-          .map((value) => value.trim())
-          .filter((value) => value !== "")
-          .forEach((memberName, position) => state.members.push(this.placeholder(state, memberName, position, now)));
+        const state = emptyState(this.freshInviteCode(), input.name.trim());
+        memberNames.forEach((memberName, position) => state.members.push(this.placeholder(state, memberName, position, now)));
         this.store.save(state);
         return structuredClone(withMembers(state));
+      }),
+    createDemo: (): Promise<DemoColmeia> =>
+      this.attempt(() => {
+        const state = this.store.example(this.freshInviteCode());
+        const member = this.claimExampleMember(state);
+        this.store.save(state);
+        return structuredClone({ household: withMembers(state), member });
       }),
     lookup: (inviteCode: string): Promise<HouseholdWithMembers> =>
       this.attempt(() => structuredClone(withMembers(this.invitedState(inviteCode)))),
     claim: (inviteCode: string, memberId: number): Promise<Member> =>
       this.mutateInvited(inviteCode, (state, now) => {
-        const member = findOrFail(state.members, memberId, "Membro");
+        const member = findOrFail(state.members, memberId, "Essa pessoa");
         if (member.claimedAt !== null) conflict("Essa pessoa já entrou na colmeia");
         member.claimedAt = now.toISOString();
         return member;
       }),
     join: (inviteCode: string, input: MemberInput): Promise<Member> =>
       this.mutateInvited(inviteCode, (state, now) => {
-        if (input.name.trim() === "") invalid("Dê um nome à pessoa");
         validateMember(input);
+        requireRoom(state);
         const member: Member = {
           ...newMember(input), id: this.nextId(state),
           claimedAt: now.toISOString(), createdAt: now.toISOString(),
@@ -252,6 +279,15 @@ export class LocalApi implements ColmeiaApi {
         state.household = { ...state.household, name: input.name.trim() };
         return state.household;
       }),
+    reseed: (): Promise<Member> =>
+      this.attempt(() => {
+        const current = this.currentState();
+        if (!current.household.demo) conflict("Só uma colmeia de exemplo pode ser recomeçada");
+        const state = this.store.example(current.household.inviteCode);
+        const member = this.claimExampleMember(state);
+        this.store.save(state);
+        return structuredClone(member);
+      }),
   };
 
   members = {
@@ -259,6 +295,7 @@ export class LocalApi implements ColmeiaApi {
     create: (input: MemberInput): Promise<Member> =>
       this.mutate((state, now) => {
         validateMember(input);
+        requireRoom(state);
         const member: Member = {
           ...newMember(input), id: this.nextId(state), claimedAt: null, createdAt: now.toISOString(),
         };
@@ -267,7 +304,7 @@ export class LocalApi implements ColmeiaApi {
       }),
     update: (id: number, input: Partial<MemberInput>): Promise<Member> =>
       this.mutate((state) => {
-        const member = findOrFail(state.members, id, "Membro");
+        const member = findOrFail(state.members, id, "Essa pessoa");
         validateMember(input);
         const wasLagartinha = member.kind === "lagartinha";
         Object.assign(member, input);
@@ -277,7 +314,7 @@ export class LocalApi implements ColmeiaApi {
       }),
     remove: (id: number): Promise<void> =>
       this.mutate((state) => {
-        findOrFail(state.members, id, "Membro");
+        findOrFail(state.members, id, "Essa pessoa");
         state.members = state.members.filter((member) => member.id !== id);
         const nullify = (value: number | null) => (value === id ? null : value);
         state.tasks.forEach((task) => { task.assigneeId = nullify(task.assigneeId); task.createdById = nullify(task.createdById); });
@@ -300,21 +337,21 @@ export class LocalApi implements ColmeiaApi {
       }),
     update: (id: number, input: Partial<TaskInput>): Promise<Task> =>
       this.mutate((state) => {
-        const task = findOrFail(state.tasks, id, "Tarefa");
+        const task = findOrFail(state.tasks, id, "Essa tarefa");
         validateTask({ ...task, ...input });
         Object.assign(task, input);
         return task;
       }),
     remove: (id: number): Promise<void> =>
       this.mutate((state) => {
-        findOrFail(state.tasks, id, "Tarefa");
+        findOrFail(state.tasks, id, "Essa tarefa");
         state.tasks = state.tasks.filter((task) => task.id !== id);
         state.completions.forEach((completion) => { if (completion.taskId === id) completion.taskId = null; });
       }),
     complete: (id: number, memberId: number): Promise<CompleteTaskResult> =>
       this.mutate((state, now) => {
-        const task = findOrFail(state.tasks, id, "Tarefa");
-        const doer = findOrFail(state.members, memberId, "Membro");
+        const task = findOrFail(state.tasks, id, "Essa tarefa");
+        const doer = findOrFail(state.members, memberId, "Essa pessoa");
         if (task.status === "done") conflict("Essa tarefa já foi concluída");
         const completion: Completion = {
           id: this.nextId(state),
@@ -341,8 +378,10 @@ export class LocalApi implements ColmeiaApi {
       }),
     reopen: (id: number): Promise<Task> =>
       this.mutate((state) => {
-        const task = findOrFail(state.tasks, id, "Tarefa");
+        const task = findOrFail(state.tasks, id, "Essa tarefa");
         if (task.status !== "done") conflict("Essa tarefa já está aberta");
+        const closing = lastCompletionFor(state.completions, task.id);
+        state.completions = state.completions.filter((completion) => completion !== closing);
         task.status = "open";
         task.completedAt = null;
         return task;
@@ -350,12 +389,15 @@ export class LocalApi implements ColmeiaApi {
   };
 
   completions = {
-    list: (): Promise<Completion[]> =>
-      this.read((state) => [ ...state.completions ].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))),
+    list: (limit?: number): Promise<Completion[]> =>
+      this.read((state) => {
+        const recent = [ ...state.completions ].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt));
+        return limit === undefined ? recent : recent.slice(0, limit);
+      }),
     review: (id: number, input: ReviewInput): Promise<Completion> =>
       this.mutate((state, now) => {
-        const completion = findOrFail(state.completions, id, "Conclusão");
-        findOrFail(state.members, input.reviewerId, "Membro");
+        const completion = findOrFail(state.completions, id, "Essa tarefa feita");
+        findOrFail(state.members, input.reviewerId, "Essa pessoa");
         if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > MAX_RATING) invalid("A nota vai de 1 a 5 estrelas");
         if (completion.status !== "pending") conflict("Essa tarefa já foi avaliada");
         if (completion.memberId === input.reviewerId) conflict("Quem fez a tarefa não pode avaliar o próprio trabalho");
@@ -395,8 +437,7 @@ export class LocalApi implements ColmeiaApi {
     list: (): Promise<ShoppingItem[]> => this.read((state) => state.shoppingItems),
     create: (input: ShoppingItemInput): Promise<ShoppingItem> =>
       this.mutate((state, now) => {
-        validateName(input.name, LIMITS.shoppingItemName, "Escreva o que está faltando");
-        if (input.quantity && input.quantity.length > LIMITS.shoppingQuantity) invalid(`A quantidade cabe em ${LIMITS.shoppingQuantity} caracteres`);
+        validateShoppingItem(input);
         const item: ShoppingItem = {
           ...input, name: input.name.trim(), id: this.nextId(state), purchased: false, purchasedById: null, purchasedAt: null, createdAt: now.toISOString(),
         };
@@ -405,7 +446,8 @@ export class LocalApi implements ColmeiaApi {
       }),
     update: (id: number, input: ShoppingItemUpdate): Promise<ShoppingItem> =>
       this.mutate((state, now) => {
-        const item = findOrFail(state.shoppingItems, id, "Item");
+        const item = findOrFail(state.shoppingItems, id, "Esse item");
+        validateShoppingItem(input);
         Object.assign(item, input);
         if (input.purchased === true) item.purchasedAt = now.toISOString();
         if (input.purchased === false) { item.purchasedAt = null; item.purchasedById = null; }
@@ -413,7 +455,7 @@ export class LocalApi implements ColmeiaApi {
       }),
     remove: (id: number): Promise<void> =>
       this.mutate((state) => {
-        findOrFail(state.shoppingItems, id, "Item");
+        findOrFail(state.shoppingItems, id, "Esse item");
         state.shoppingItems = state.shoppingItems.filter((item) => item.id !== id);
       }),
     clearPurchased: (): Promise<void> =>
@@ -434,14 +476,14 @@ export class LocalApi implements ColmeiaApi {
       }),
     update: (id: number, input: Partial<GoalInput>): Promise<Goal> =>
       this.mutate((state) => {
-        const goal = findOrFail(state.goals, id, "Meta");
+        const goal = findOrFail(state.goals, id, "Essa meta");
         validateGoal(input);
         Object.assign(goal, input);
         return goal;
       }),
     remove: (id: number): Promise<void> =>
       this.mutate((state) => {
-        findOrFail(state.goals, id, "Meta");
+        findOrFail(state.goals, id, "Essa meta");
         state.goals = state.goals.filter((goal) => goal.id !== id);
       }),
   };

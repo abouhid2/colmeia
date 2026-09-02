@@ -17,7 +17,7 @@ export function ActivityFeed({ completions, lookup }: ActivityFeedProps) {
 
   return (
     <section>
-      <SectionHeading title="Últimas conquistas" />
+      <SectionHeading title="Últimas tarefas feitas" />
       {completions.length === 0 ? (
         <EmptyState icon={<Sparkles className="size-6" />} title="Nada concluído ainda" hint="A primeira tarefa feita aparece aqui." />
       ) : (

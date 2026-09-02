@@ -34,10 +34,10 @@ export function ReviewCard({ completion, doer, canReview, submitting, onReview }
         <StarRating value={rating} onChange={setRating} disabled={!canReview} />
         <div className="flex items-center gap-3">
           {preview !== null && <span className="text-sm tabular-nums text-ink-soft">= {preview} pontos</span>}
-          <Button size="sm" disabled={!canReview || rating === null} loading={submitting} onClick={() => rating !== null && onReview(rating)}>Aprovar</Button>
+          <Button size="sm" disabled={!canReview || rating === null} loading={submitting} onClick={() => rating !== null && onReview(rating)}>Confirmar nota</Button>
         </div>
       </div>
-      {!canReview && <p className="mt-2 text-xs text-ink-soft">Quem fez não avalia o próprio trabalho. Troque de pessoa no topo para avaliar.</p>}
+      {!canReview && <p className="mt-2 text-xs text-ink-soft">Ninguém avalia o próprio trabalho. Troque de pessoa lá em cima para dar a nota.</p>}
     </li>
   );
 }

@@ -29,13 +29,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [ api, queryClient, session ]);
 
   const setCurrentMemberId = useCallback((memberId: number) => {
-    setSession((current) => {
-      if (current === null) return current;
-      const next = { ...current, memberId };
-      writeSession(store, next);
-      return next;
-    });
-  }, []);
+    if (session === null) return;
+    const next = { ...session, memberId };
+    writeSession(store, next);
+    setSession(next);
+    setMemberships(readMemberships(store));
+  }, [session]);
 
   const value = useMemo(
     () => ({ session, memberships, enter: apply, leave: () => apply(null), setCurrentMemberId }),

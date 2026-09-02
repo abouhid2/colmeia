@@ -58,7 +58,7 @@ RSpec.describe Task do
       task = household.tasks.build(title: "Louça", points: 5, assignee: stranger)
 
       expect(task).not_to be_valid
-      expect(task.errors[:assignee]).to include("is from another colmeia")
+      expect(task.errors[:assignee]).to include("não é desta colmeia")
     end
   end
 end

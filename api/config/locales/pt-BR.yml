@@ -1,15 +1,17 @@
 pt-BR:
   api:
     errors:
-      missing_reference: "Alguém ou algo referenciado aqui não existe mais. Atualize a página."
+      missing_reference: "Alguém ou alguma coisa daqui não existe mais. Atualize a página."
+      too_many_demos: "Tem muita gente conhecendo o app agora. Tente de novo daqui a pouco."
+      not_a_demo: "Só uma colmeia de exemplo pode ser recomeçada."
   activerecord:
     models:
       task: Tarefa
       member: Pessoa
-      completion: Conclusão
+      completion: Tarefa feita
       shopping_item: Item
       goal: Meta
-      household: Casa
+      household: Colmeia
       achievement_award: Conquista
     attributes:
       task:
@@ -46,7 +48,7 @@ pt-BR:
         target_points: Pontos da meta
         period: Período
       household:
-        name: Nome da casa
+        name: Nome da colmeia
       achievement_award:
         key: Conquista
         completion_id: Conclusão

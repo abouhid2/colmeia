@@ -13,7 +13,9 @@ import { Link2Off } from "lucide-react";
 export function InvitePage() {
   const { code = "" } = useParams();
   const navigate = useNavigate();
-  const { household, isLoading, isMissing, knownMemberId, resume, claim, join } = useInvite(code);
+  // Codes get typed by hand, so the link answers in any case and the browser
+  // files this colmeia under one name only.
+  const { household, isLoading, isMissing, knownMemberId, resume, claim, join } = useInvite(code.toLowerCase());
   const joining = useDisclosure();
 
   if (isLoading) {
@@ -26,7 +28,7 @@ export function InvitePage() {
         <EmptyState
           icon={<Link2Off className="size-6" />}
           title="Esse convite não existe"
-          hint="Confira o link com quem te chamou, ou crie a sua própria colmeia."
+          hint="Confira o link com quem te chamou. Ou crie a sua própria colmeia."
           action={<Button onClick={() => void navigate("/")}>Voltar ao início</Button>}
         />
       </PlainPage>

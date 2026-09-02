@@ -3,8 +3,13 @@ import type {
   AchievementAward, Completion, Goal, Household, HouseholdWithMembers, Member, ShoppingItem, Task,
 } from "../domain/types";
 
-/** The colmeia the demo lives in, and the one older single-store data becomes. */
+/** The colmeia older single-store data becomes, and the one earlier versions
+ *  of this app seeded on first use. New sandboxes get a code of their own. */
 export const DEMO_INVITE_CODE = "demo";
+
+export const EXAMPLE_HOUSEHOLD_NAME = "Família de exemplo";
+/** Whoever opens the example walks in as Ana: her place is claimed for her. */
+export const EXAMPLE_ENTRY_MEMBER = "Ana";
 
 export interface LocalState {
   household: Household;
@@ -20,7 +25,7 @@ export interface LocalState {
 
 export function emptyState(inviteCode: string, name: string): LocalState {
   return {
-    household: { id: 1, name, inviteCode },
+    household: { id: 1, name, inviteCode, demo: false },
     members: [],
     tasks: [],
     completions: [],
@@ -32,10 +37,11 @@ export function emptyState(inviteCode: string, name: string): LocalState {
 }
 
 /** A browser can hold a state written before crown titles or lagartinhas existed. */
-type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type Older<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type StoredMember = Older<Member, "crownTitle" | "kind" | "pointsMultiplier" | "favoriteAchievements">;
 
-export type StoredState = Omit<LocalState, "members" | "tasks" | "completions" | "awards"> & {
+export type StoredState = Omit<LocalState, "household" | "members" | "tasks" | "completions" | "awards"> & {
+  household: Older<Household, "demo">;
   members: StoredMember[];
   tasks: Older<Task, "kidFriendly">[];
   completions: Older<Completion, "multiplier">[];
@@ -47,6 +53,8 @@ export type StoredState = Omit<LocalState, "members" | "tasks" | "completions" |
 export function normalizeState(state: StoredState): LocalState {
   return {
     ...state,
+    // Anything stored before sandboxes existed is somebody's real colmeia.
+    household: { ...state.household, demo: state.household.demo ?? false },
     members: state.members.map((member) => ({
       ...member,
       kind: member.kind ?? "bee",

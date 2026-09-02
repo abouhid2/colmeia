@@ -2,7 +2,7 @@ import type {
   AchievementAward, AchievementAwardInput, Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
   ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskResult } from "./client";
+import type { ColmeiaApi, CompleteTaskResult, DemoColmeia } from "./client";
 import { ApiError } from "./errors";
 import { toCamelKeys, toSnakeKeys } from "./keys";
 
@@ -17,10 +17,10 @@ const HOUSEHOLD_HEADER = "X-Household-Code";
 
 const ERROR_LABELS: Record<string, string> = {
   not_found: "Isso não existe mais. Atualize a página.",
-  unauthorized: "Sem acesso a esta colmeia.",
-  conflict: "Alguém mexeu nisso antes de você.",
-  invalid: "Dados inválidos.",
-  bad_request: "Pedido inválido.",
+  unauthorized: "Você não está nesta colmeia. Abra o link do convite de novo.",
+  conflict: "Alguém mexeu nisso antes de você. Atualize a página.",
+  invalid: "Faltou alguma coisa. Confira o que você escreveu.",
+  bad_request: "Não deu para entender o pedido. Tente de novo.",
 };
 
 function parseJson(text: string): unknown {
@@ -69,7 +69,7 @@ export class HttpApi implements ColmeiaApi {
     const json = parseJson(await response.text());
     if (!response.ok) {
       const { details, error } = (json ?? {}) as ErrorBody;
-      const fallback = error ? (ERROR_LABELS[error] ?? error) : `O servidor respondeu com erro ${response.status}`;
+      const fallback = error ? (ERROR_LABELS[error] ?? error) : `O servidor respondeu com erro ${response.status}. Tente de novo em instantes.`;
       throw new ApiError(response.status, details ?? [fallback]);
     }
     return toCamelKeys<T>(json);
@@ -77,6 +77,7 @@ export class HttpApi implements ColmeiaApi {
 
   households = {
     create: (input: HouseholdInput): Promise<HouseholdWithMembers> => this.request("POST", "/households", { household: input }),
+    createDemo: (): Promise<DemoColmeia> => this.request("POST", "/households/demo"),
     lookup: (inviteCode: string): Promise<HouseholdWithMembers> => this.request("GET", `/households/${encodeURIComponent(inviteCode)}`),
     claim: (inviteCode: string, memberId: number): Promise<Member> =>
       this.request("POST", `/households/${encodeURIComponent(inviteCode)}/claim`, { memberId }),
@@ -87,6 +88,7 @@ export class HttpApi implements ColmeiaApi {
   household = {
     get: (): Promise<Household> => this.request("GET", "/household"),
     update: (input: Pick<Household, "name">): Promise<Household> => this.request("PATCH", "/household", { household: input }),
+    reseed: (): Promise<Member> => this.request("POST", "/household/reseed"),
   };
 
   members = {
@@ -107,7 +109,8 @@ export class HttpApi implements ColmeiaApi {
   };
 
   completions = {
-    list: (): Promise<Completion[]> => this.request("GET", "/completions"),
+    list: (limit?: number): Promise<Completion[]> =>
+      this.request("GET", limit === undefined ? "/completions" : `/completions?limit=${limit}`),
     review: (id: number, input: ReviewInput): Promise<Completion> => this.request("POST", `/completions/${id}/review`, input),
   };
 

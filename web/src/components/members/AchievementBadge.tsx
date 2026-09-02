@@ -17,15 +17,17 @@ const ICONS: Record<AchievementId, LucideIcon> = {
   sevenDays: CalendarCheck,
 };
 
-type Size = "sm" | "md" | "lg";
+type Size = "xs" | "sm" | "md" | "lg";
 
 const SIZE_CLASSES: Record<Size, string> = {
+  xs: "size-6",
   sm: "size-8",
   md: "size-10",
   lg: "size-14",
 };
 
 const ICON_CLASSES: Record<Size, string> = {
+  xs: "size-3.5",
   sm: "size-4",
   md: "size-5",
   lg: "size-6",

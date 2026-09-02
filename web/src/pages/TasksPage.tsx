@@ -19,6 +19,8 @@ import { Segmented } from "../components/ui/Segmented";
 
 type Status = "open" | "done";
 
+const HISTORY_PAGE = 50;
+
 export function TasksPage() {
   const now = useNow();
   const { tasks } = useTasks();
@@ -28,6 +30,7 @@ export function TasksPage() {
   const lookup = useMemberLookup();
   const dialogs = useTaskDialogs();
   const [status, setStatus] = useState<Status>("open");
+  const [shown, setShown] = useState(HISTORY_PAGE);
   const [kidOnly, setKidOnly] = useState(false);
 
   const open = sortOpenTasks(
@@ -38,6 +41,7 @@ export function TasksPage() {
     now,
   );
   const done = completionsForMember(completions, memberId);
+  const history = done.slice(0, shown);
   // Nothing to filter by until an adult has marked a task for the children.
   const hasKidFriendly = tasks.some((task) => task.kidFriendly);
 
@@ -66,29 +70,36 @@ export function TasksPage() {
         done.length === 0 ? (
           <EmptyState
             icon={<ListChecks className="size-6" />}
-            title={filtered ? `${filtered.name} ainda não concluiu nada` : "Nada concluído ainda"}
-            hint={filtered ? undefined : "Toda tarefa concluída aparece aqui, inclusive as recorrentes."}
+            title={filtered ? `${filtered.name} ainda não fez nada por aqui` : "Nada concluído ainda"}
+            hint={filtered ? undefined : "Toda tarefa feita aparece aqui, até as que se repetem."}
           />
         ) : (
-          <ul className="space-y-2">
-            {done.map((completion) => (
-              <CompletionRow
-                key={completion.id}
-                completion={completion}
-                doer={lookup(completion.memberId)}
-                canReopen={canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
-                onReopen={() => {
-                  if (completion.taskId !== null) reopen.mutate(completion.taskId);
-                }}
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-2">
+              {history.map((completion) => (
+                <CompletionRow
+                  key={completion.id}
+                  completion={completion}
+                  doer={lookup(completion.memberId)}
+                  canReopen={canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
+                  onReopen={() => {
+                    if (completion.taskId !== null) reopen.mutate(completion.taskId);
+                  }}
+                />
+              ))}
+            </ul>
+            {done.length > history.length && (
+              <Button variant="secondary" size="sm" className="mt-3" onClick={() => setShown((current) => current + HISTORY_PAGE)}>
+                Ver mais
+              </Button>
+            )}
+          </>
         )
       ) : open.length === 0 ? (
         <EmptyState
           icon={<ListChecks className="size-6" />}
-          title={kidOnly ? "Nenhuma tarefa para lagartinhas" : filtered ? `Nada atribuído a ${filtered.name}` : "Nenhuma tarefa aberta"}
-          hint={kidOnly ? "Marque \"boa para lagartinhas\" nas tarefas que uma criança dá conta." : filtered ? "Crie uma tarefa para essa pessoa ou veja todas." : "Crie a primeira: o que precisa ser feito na casa?"}
+          title={kidOnly ? "Nenhuma tarefa para lagartinhas" : filtered ? `${filtered.name} está sem tarefa` : "Nenhuma tarefa aberta"}
+          hint={kidOnly ? "Marque \"boa para lagartinhas\" nas tarefas que uma criança dá conta." : filtered ? "Crie uma tarefa para essa pessoa ou tire o filtro." : "Crie a primeira: o que precisa ser feito na casa?"}
           action={<Button size="sm" icon={<Plus className="size-4" />} onClick={dialogs.openCreate}>Nova tarefa</Button>}
         />
       ) : (

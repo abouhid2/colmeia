@@ -1,8 +1,8 @@
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { extractInviteCode } from "../domain/inviteCode";
-import { useColmeiaSwitcher, useStoredHouseholds } from "../hooks/useHouseholds";
+import { useColmeiaSwitcher, useEnterExample, useStoredHouseholds } from "../hooks/useHouseholds";
 import { BrandMark } from "../components/layout/BrandMark";
 import { PlainPage } from "../components/layout/PlainPage";
 import { Button } from "../components/ui/Button";
@@ -16,6 +16,7 @@ export function LandingPage() {
   const navigate = useNavigate();
   const { data: stored } = useStoredHouseholds();
   const switchTo = useColmeiaSwitcher();
+  const enterExample = useEnterExample();
   const [ pasted, setPasted ] = useState("");
   const [ error, setError ] = useState<string | null>(null);
 
@@ -61,9 +62,22 @@ export function LandingPage() {
         </form>
       </Card>
 
+      <div className="text-center">
+        <Button
+          variant="secondary"
+          className="w-full"
+          icon={<Sparkles className="size-4" />}
+          loading={enterExample.isPending}
+          onClick={() => enterExample.mutate()}
+        >
+          Experimentar com uma família de exemplo
+        </Button>
+        <p className="mt-2 text-sm text-ink-soft">Uma colmeia só sua, cheia de tarefas e pessoas de mentira, para você mexer à vontade.</p>
+      </div>
+
       {stored !== undefined && stored.length > 0 && (
         <section>
-          <SectionHeading title="Colmeias neste navegador" />
+          <SectionHeading title="Colmeias que você já abriu aqui" />
           <ul className="space-y-2">
             {stored.map((item) => (
               <li key={item.inviteCode}>

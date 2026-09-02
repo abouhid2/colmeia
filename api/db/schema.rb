@@ -60,9 +60,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_03_010616) do
 
   create_table "households", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.boolean "demo", default: false, null: false
     t.string "invite_code", null: false
     t.string "name", default: "Nossa casa", null: false
     t.datetime "updated_at", null: false
+    t.index ["demo"], name: "index_households_on_demo"
     t.index ["invite_code"], name: "index_households_on_invite_code", unique: true
   end
 

@@ -7,7 +7,7 @@ RSpec.describe "Households API", type: :request do
 
       expect(response).to have_http_status(:created)
       expect(json_body).to include("name" => "Família Silva")
-      expect(json_body["invite_code"]).to match(/\A[A-Za-z0-9]{10}\z/)
+      expect(json_body["invite_code"]).to match(/\A[a-z0-9]{#{Household::INVITE_CODE_LENGTH}}\z/)
       expect(json_body["members"].map { |member| member["name"] }).to eq(%w[ Ana Bruno Clara ])
       expect(json_body["members"].map { |member| member["claimed"] }).to all(be(false))
       expect(json_body["members"].map { |member| member["color"] }.uniq.size).to eq(3)
@@ -26,6 +26,23 @@ RSpec.describe "Households API", type: :request do
       expect(json_body["members"].map { |member| member["name"] }).to eq([ "Ana" ])
     end
 
+    it "trims the names it is given" do
+      post "/api/v1/households", params: { household: { name: "  Casa  ", member_names: [ "  Ana  " ] } }
+
+      expect(json_body["name"]).to eq("Casa")
+      expect(json_body["members"].map { |member| member["name"] }).to eq([ "Ana" ])
+    end
+
+    it "refuses a list longer than a house holds" do
+      names = Array.new(Households::Create::MAX_MEMBER_NAMES + 1) { |index| "Pessoa #{index}" }
+
+      post "/api/v1/households", params: { household: { name: "Multidão", member_names: names } }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json_body["details"].first).to include("no máximo #{Households::Create::MAX_MEMBER_NAMES} pessoas")
+      expect(Household.where(name: "Multidão")).to be_empty
+    end
+
     it "rejects a colmeia with no name" do
       post "/api/v1/households", params: { household: { name: "" } }
 
@@ -42,14 +59,89 @@ RSpec.describe "Households API", type: :request do
       get "/api/v1/households/#{household.invite_code}"
 
       expect(response).to have_http_status(:ok)
-      expect(json_body).to include("id" => household.id, "name" => "Casa", "invite_code" => household.invite_code)
+      expect(json_body).to include("id" => household.id, "name" => "Casa", "invite_code" => household.invite_code, "demo" => false)
       expect(json_body["members"].map { |member| [ member["name"], member["claimed"] ] }).to eq([ [ "Ana", true ], [ "Bruno", false ] ])
+    end
+
+    it "answers to the code however it was typed" do
+      household = create_household(name: "Casa")
+
+      get "/api/v1/households/#{household.invite_code.upcase}"
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body["invite_code"]).to eq(household.invite_code)
     end
 
     it "answers 404 for a code nobody owns" do
       get "/api/v1/households/naoexiste"
 
       expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "POST /api/v1/households/demo" do
+    it "hands out a colmeia of its own, already lived in, with nothing to sign up for" do
+      post "/api/v1/households/demo"
+
+      expect(response).to have_http_status(:created)
+      household = Household.find_by!(invite_code: json_body["household"]["invite_code"])
+      expect(household).to have_attributes(demo: true, name: Households::SeedExample::NAME)
+      expect(json_body["household"]).to include("demo" => true)
+      expect(json_body["household"]["members"].map { |member| member["name"] }).to eq(%w[ Ana Bruno Clara Duda ])
+      expect(household.tasks.count).to eq(12)
+      expect(household.goals.count).to eq(3)
+    end
+
+    it "answers with Ana, claimed, so the visitor is already somebody" do
+      post "/api/v1/households/demo"
+
+      expect(json_body["member"]).to include("name" => "Ana", "claimed" => true)
+      expect(json_body["household"]["members"].find { |member| member["name"] == "Ana" }["id"]).to eq(json_body["member"]["id"])
+    end
+
+    it "gives each visitor a colmeia nobody else can reach" do
+      post "/api/v1/households/demo"
+      first = json_body["household"]["invite_code"]
+      post "/api/v1/households/demo"
+      second = json_body["household"]["invite_code"]
+
+      expect(first).not_to eq(second)
+      expect(Household.demos.count).to eq(2)
+      expect(Household.demos.map(&:members).map(&:count)).to eq([ 4, 4 ])
+    end
+
+    it "needs no invite code and no header" do
+      post "/api/v1/households/demo"
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it "stops handing them out once the hour is full" do
+      limit = Api::V1::HouseholdsController::DEMO_LIMIT_PER_HOUR
+      limit.times { Household.create!(name: "Exemplo", demo: true) }
+
+      post "/api/v1/households/demo"
+
+      expect(response).to have_http_status(:too_many_requests)
+      expect(json_body["details"]).to eq([ "Tem muita gente conhecendo o app agora. Tente de novo daqui a pouco." ])
+      expect(Household.demos.count).to eq(limit)
+    end
+
+    it "counts only the last hour, so yesterday's visitors do not block today's" do
+      limit = Api::V1::HouseholdsController::DEMO_LIMIT_PER_HOUR
+      limit.times { Household.create!(name: "Exemplo", demo: true, created_at: 2.hours.ago) }
+
+      post "/api/v1/households/demo"
+
+      expect(response).to have_http_status(:created)
+    end
+
+    it "does not count the colmeias people actually live in" do
+      Api::V1::HouseholdsController::DEMO_LIMIT_PER_HOUR.times { create_household }
+
+      post "/api/v1/households/demo"
+
+      expect(response).to have_http_status(:created)
     end
   end
 
@@ -94,10 +186,25 @@ RSpec.describe "Households API", type: :request do
       expect(household.members.count).to eq(1)
     end
 
+    it "trims the name it is given" do
+      post "/api/v1/households/#{household.invite_code}/join", params: { member: { name: "  Duda  " } }
+
+      expect(json_body["name"]).to eq("Duda")
+    end
+
     it "rejects a person with no name" do
       post "/api/v1/households/#{household.invite_code}/join", params: { member: { name: "" } }
 
       expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "refuses to add someone to a colmeia that is already full" do
+      Member::MAX_PER_HOUSEHOLD.times { |index| household.members.create!(name: "Pessoa #{index}") }
+
+      post "/api/v1/households/#{household.invite_code}/join", params: { member: { name: "Duda" } }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json_body["details"].first).to include("já tem #{Member::MAX_PER_HOUSEHOLD} pessoas")
     end
 
     it "answers 404 for a code nobody owns" do

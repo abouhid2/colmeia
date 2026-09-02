@@ -22,6 +22,13 @@ RSpec.describe "Household scoping", type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
 
+    it "finds the colmeia however the code was typed" do
+      get "/api/v1/household", headers: { "X-Household-Code" => house.invite_code.upcase }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body["id"]).to eq(house.id)
+    end
+
     it "rejects a blank code" do
       get "/api/v1/tasks", headers: { "X-Household-Code" => "" }
 
@@ -40,7 +47,7 @@ RSpec.describe "Household scoping", type: :request do
     it "returns the colmeia behind the code" do
       get "/api/v1/household", headers: headers
 
-      expect(json_body).to eq("id" => house.id, "name" => "Nossa casa", "invite_code" => house.invite_code)
+      expect(json_body).to eq("id" => house.id, "name" => "Nossa casa", "invite_code" => house.invite_code, "demo" => false)
     end
 
     it "renames it" do
@@ -48,6 +55,47 @@ RSpec.describe "Household scoping", type: :request do
 
       expect(json_body["name"]).to eq("Apê 42")
       expect(other.reload.name).to eq("Casa alheia")
+    end
+  end
+
+  describe "POST /api/v1/household/reseed" do
+    it "puts a sandbox colmeia back the way it was handed out" do
+      sandbox, = Households::SeedExample.create_household
+      sandbox.tasks.destroy_all
+      sandbox.members.find_by!(name: "Bruno").update!(name: "Estraguei tudo")
+
+      post "/api/v1/household/reseed", headers: headers_for(sandbox)
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body).to include("name" => Households::SeedExample::ENTRY_MEMBER_NAME, "claimed" => true)
+      expect(sandbox.members.reload.pluck(:name)).to eq(%w[ Ana Bruno Clara Duda ])
+      expect(sandbox.tasks.count).to eq(12)
+    end
+
+    it "answers with the member to carry on as, because the old ids are gone" do
+      sandbox, ana = Households::SeedExample.create_household
+
+      post "/api/v1/household/reseed", headers: headers_for(sandbox)
+
+      expect(json_body["id"]).not_to eq(ana.id)
+      expect(Member.find_by(id: ana.id)).to be_nil
+      expect(sandbox.members.find(json_body["id"]).name).to eq("Ana")
+    end
+
+    it "refuses a colmeia somebody actually lives in" do
+      house.tasks.create!(title: "Louça", points: 5)
+
+      post "/api/v1/household/reseed", headers: headers
+
+      expect(response).to have_http_status(:conflict)
+      expect(json_body["details"]).to eq([ "Só uma colmeia de exemplo pode ser recomeçada." ])
+      expect(house.tasks.count).to eq(1)
+    end
+
+    it "needs the header like every other scoped endpoint" do
+      post "/api/v1/household/reseed"
+
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 
@@ -120,7 +168,7 @@ RSpec.describe "Household scoping", type: :request do
       post "/api/v1/tasks", params: { task: { title: "Louça", points: 5, assignee_id: stranger.id } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(json_body["details"]).to include(a_string_matching(/another colmeia/))
+      expect(json_body["details"]).to include(a_string_matching(/não é desta colmeia/))
     end
 
     it "cannot let an outsider complete a task" do

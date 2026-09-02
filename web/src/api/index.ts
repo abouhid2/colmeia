@@ -15,5 +15,4 @@ export function createApi(): ColmeiaApi {
   return api;
 }
 
-export type { ColmeiaApi, StoredHousehold } from "./client";
-export { DEMO_INVITE_CODE } from "./localState";
+export type { ColmeiaApi, DemoColmeia, StoredHousehold } from "./client";

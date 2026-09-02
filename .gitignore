@@ -3,3 +3,11 @@
 .env
 .env.*
 !.env.example
+
+# Claude Code local configuration.
+# CLAUDE.md and docs/claude-setup.md are tracked on purpose: they are the rules
+# of this repo and anyone cloning it should get them.
+#
+# Everything under .claude/ stays local. It is distilled from private work
+# setups, and nothing in CLAUDE.md depends on it existing.
+.claude/

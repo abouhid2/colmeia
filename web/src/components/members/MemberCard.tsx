@@ -2,6 +2,7 @@ import { Pencil } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import type { Standing } from "../../domain/leaderboard";
 import type { GoalPeriod, Member } from "../../domain/types";
+import { periodScopeLabel } from "../goal/goalCopy";
 import { Avatar } from "../ui/Avatar";
 import { IconButton } from "../ui/IconButton";
 import { CrownMark } from "./CrownMark";
@@ -33,7 +34,7 @@ export function MemberCard({ member, periodStanding, allTimeStanding, crowned, p
             {crowned && <CrownMark member={member} period={period} />}
           </p>
           <p className="text-sm text-ink-soft">
-            <span className="font-semibold text-ink tabular-nums">{periodStanding?.points ?? 0}</span> no período · {allTimeStanding?.points ?? 0} no total
+            <span className="font-semibold text-ink tabular-nums">{periodStanding?.points ?? 0}</span> {periodScopeLabel(period).toLowerCase()} · {allTimeStanding?.points ?? 0} no total
           </p>
           {member.claimedAt === null && <p className="text-xs text-ink-faint">Ainda não entrou</p>}
         </div>

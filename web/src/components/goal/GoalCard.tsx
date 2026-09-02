@@ -28,11 +28,11 @@ export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
           </p>
           <h2 className="mt-1 text-2xl font-bold leading-tight tracking-tight md:text-3xl">{goal.title}</h2>
         </div>
-        <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar</Button>
+        <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar meta</Button>
       </div>
 
       <div className="my-6">
-        <Honeycomb earned={progress.earned} target={progress.target} label={`Progresso da meta: ${summary}`} />
+        <Honeycomb earned={progress.earned} target={progress.target} label={`Favo da meta: ${summary}`} />
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
@@ -42,7 +42,7 @@ export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
         </p>
         {progress.reached ? (
           <p className="inline-flex items-center gap-1.5 font-semibold text-leaf-700">
-            <PartyPopper className="size-4" aria-hidden /> Meta batida. A recompensa está garantida.
+            <PartyPopper className="size-4" aria-hidden /> Meta batida. A recompensa é de vocês.
           </p>
         ) : (
           <p className="text-ink-soft">Faltam <span className="font-semibold text-ink">{progress.remaining}</span> pontos</p>
@@ -50,7 +50,7 @@ export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
       </div>
 
       {contributors.length > 0 && (
-        <ul className="mt-5 flex flex-wrap gap-2" aria-label="Quem já contribuiu">
+        <ul className="mt-5 flex flex-wrap gap-2" aria-label="Quem já ajudou">
           {contributors.map(({ member, points }) => (
             <li key={member.id} className="flex items-center gap-1.5 rounded-full border border-line py-1 pl-1 pr-3 text-sm">
               <Avatar member={member} size="xs" />
