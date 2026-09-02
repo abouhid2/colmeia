@@ -1,6 +1,6 @@
-import { ArrowRight, Plus, Sun, Target } from "lucide-react";
+import { ArrowRight, Plus, Sun } from "lucide-react";
 import { Link, useLocation } from "react-router";
-import { finishedGoal, goalsOf, runningGoal, upcomingGoal } from "../domain/goalBoard";
+import { finishedGoal, runningGoal, upcomingGoal } from "../domain/goalBoard";
 import { isClosed } from "../domain/seasons";
 import { sortOpenTasks } from "../domain/taskSort";
 import { useCompletions } from "../hooks/useCompletions";
@@ -15,10 +15,9 @@ import { useTasks } from "../hooks/useTasks";
 import { GoalCard } from "../components/goal/GoalCard";
 import { GoalDialog } from "../components/goal/GoalDialog";
 import { GoalEmptyCard } from "../components/goal/GoalEmptyCard";
-import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
 import { GoalUpcomingCard } from "../components/goal/GoalUpcomingCard";
 import { SeasonRoadmap } from "../components/goal/SeasonRoadmap";
-import { hasOwnWindow, IN_SEASON_HINT } from "../components/goal/goalCopy";
+import { IN_SEASON_HINT } from "../components/goal/goalCopy";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ActivityFeed } from "../components/home/ActivityFeed";
 import { Greeting } from "../components/home/Greeting";
@@ -44,7 +43,7 @@ export function HomePage() {
   const { currentMember } = useSession();
   const { currentSeason, isLoading: loadingSeasons } = useSeason();
   const { memberId, member: filtered } = useMemberFilter();
-  const { all, household, withPeople, standings } = useGoalOverview();
+  const { all, household, standings } = useGoalOverview();
   const { tasks } = useTasks();
   const { completions } = useCompletions();
   const lookup = useMemberLookup();
@@ -60,9 +59,8 @@ export function HomePage() {
   const running = runningGoal(household, now);
   const upcoming = upcomingGoal(household, now);
   const hero = running ?? (upcoming === null ? finishedGoal(household, now) : null);
-  const showRoadmap = all.length > 1 || all.some((item) => hasOwnWindow(item.goal));
-  const peopleGoals = goalsOf(withPeople, memberId);
-  const openTasks = tasks.filter((task) => task.status === "open" && (memberId === null || task.assigneeId === memberId));
+  const hasGoals = all.length > 0;
+  const openTasks = tasks.filter((task) => task.status === "open" && (memberId === null || task.assigneeIds.includes(memberId)));
   const spotlight = sortOpenTasks(openTasks, now).slice(0, SPOTLIGHT_SIZE);
   const recent = completions
     .filter((completion) => completion.status === "approved" && completion.seasonId === currentSeason.id && (memberId === null || completion.memberId === memberId))
@@ -80,34 +78,18 @@ export function HomePage() {
         <GoalUpcomingCard item={upcoming} now={now} readOnly={closed} onEdit={() => goalDialog.openEdit(upcoming.goal)} />
       )}
 
-      {showRoadmap && (
+      {hasGoals && (
         <section>
           <SectionHeading
             title="Roteiro da estação"
             action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(null, currentSeason.id)}>Nova meta</Button>}
           />
           <SeasonRoadmap goals={all} now={now} onSelect={closed ? undefined : goalDialog.openEdit} />
+          <Link to={{ pathname: "/metas", search }} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-honey-700 hover:underline">
+            Ver todas as metas <ArrowRight className="size-4" />
+          </Link>
         </section>
       )}
-
-      <section>
-        <SectionHeading
-          title="Metas de pessoas e grupos"
-          action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(memberId ?? currentMember?.id ?? null)}>Nova meta</Button>}
-        />
-        {peopleGoals.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title={filtered ? `${filtered.name} não está em nenhuma meta` : "Ninguém está em uma meta ainda"} />
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {peopleGoals.map((item) => (
-              <GoalSummaryCard key={item.goal.id} item={item} readOnly={closed} onEdit={() => goalDialog.openEdit(item.goal)} />
-            ))}
-          </ul>
-        )}
-        <Link to={{ pathname: "/metas", search }} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-honey-700 hover:underline">
-          Ver todas as metas <ArrowRight className="size-4" />
-        </Link>
-      </section>
 
       <PendingReviews readOnly={closed} />
 

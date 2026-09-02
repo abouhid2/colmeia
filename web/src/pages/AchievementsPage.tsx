@@ -78,7 +78,7 @@ export function AchievementsPage() {
       </section>
 
       <section>
-        <SectionHeading title="Ainda não" />
+        <SectionHeading title="A conquistar" />
         {badges.locked.length === 0 ? (
           <EmptyState icon={<Trophy className="size-6" />} title="Não falta nenhuma" />
         ) : (

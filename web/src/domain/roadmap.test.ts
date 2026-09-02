@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { roadmapBar, roadmapMarker, roadmapSpan, OPEN_SEASON_DAYS } from "./roadmap";
+import { markerAnchor, roadmapBar, roadmapMarker, roadmapSpan, OPEN_SEASON_DAYS } from "./roadmap";
 import type { Season } from "./types";
 
 const now = new Date(2026, 8, 16, 12);
@@ -68,5 +68,13 @@ describe("roadmapMarker", () => {
 
   it("says nothing when today is not on the roteiro at all", () => {
     expect(roadmapMarker(new Date(2026, 10, 1), roadmapSpan(season(), now))).toBeNull();
+  });
+});
+
+describe("markerAnchor", () => {
+  it("leans the label away from the edges of the roteiro", () => {
+    expect(markerAnchor(0)).toBe("start");
+    expect(markerAnchor(50)).toBe("center");
+    expect(markerAnchor(100)).toBe("end");
   });
 });

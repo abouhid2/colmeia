@@ -31,7 +31,7 @@ describe("GoalsPage", () => {
     // The roteiro only appears once the metas are in, so it is what to wait for.
     await waitFor(() => expect(screen.getByRole("heading", { name: "Roteiro da estação" })).not.toBeNull());
     expect(screen.getByRole("heading", { name: "Da colmeia inteira" })).not.toBeNull();
-    expect(screen.getByRole("heading", { name: "De pessoas e grupos" })).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Individuais e de grupos" })).not.toBeNull();
     // The reward of a meta da colmeia, and one of a meta somebody is named in.
     expect(screen.queryAllByText(/Pizza e filme no sábado/).length).toBeGreaterThan(0);
     expect(screen.queryAllByText(/Sorvete duplo/).length).toBeGreaterThan(0);

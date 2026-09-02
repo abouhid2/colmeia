@@ -1,11 +1,18 @@
 import type { GoalWithProgress } from "../../domain/goalBoard";
 import type { GoalStatus } from "../../domain/progress";
-import { roadmapBar, roadmapMarker, roadmapSpan, type RoadmapSpan } from "../../domain/roadmap";
+import { markerAnchor, roadmapBar, roadmapMarker, roadmapSpan, type MarkerAnchor, type RoadmapSpan } from "../../domain/roadmap";
 import type { Goal } from "../../domain/types";
 import { cn } from "../../lib/cn";
 import { dayPhrase } from "../../lib/dates";
 import { AvatarStack } from "../ui/AvatarStack";
 import { GOAL_STATUS_LABEL, goalWindowPhrase, participantsLabel } from "./goalCopy";
+
+/** The label leans away from the edge it would otherwise hang over. */
+const MARKER_SHIFT: Record<MarkerAnchor, string> = {
+  start: "translate-x-0",
+  center: "-translate-x-1/2",
+  end: "-translate-x-full",
+};
 
 const STATUS_BAR: Record<GoalStatus, string> = {
   upcoming: "bg-dune-500",
@@ -41,7 +48,7 @@ export function SeasonRoadmap({ goals, now, onSelect }: SeasonRoadmapProps) {
         </div>
         {marker !== null && (
           <div className="relative mb-1 h-5 text-xs font-semibold">
-            <span className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-honey-200 px-2 text-honey-900" style={{ left: `${marker}%` }}>
+            <span className={cn("absolute top-0 whitespace-nowrap rounded-full bg-honey-200 px-2 text-honey-900", MARKER_SHIFT[markerAnchor(marker)])} style={{ left: `${marker}%` }}>
               hoje
             </span>
           </div>
@@ -81,8 +88,12 @@ function RoadmapLane({ item, span, onSelect }: RoadmapLaneProps) {
         <span className="min-w-0 truncate font-semibold">{goal.title}</span>
         <span className="shrink-0 text-sm tabular-nums text-ink-soft">{points}</span>
       </span>
-      <span className="mt-1.5 block h-2.5 rounded-full bg-dune-100">
-        <span className={cn("block h-full rounded-full", STATUS_BAR[progress.status])} style={{ marginLeft: `${bar.left}%`, width: `${bar.width}%` }} />
+      {/* Two lanes in one: the pale stretch is the days the meta runs for, the
+          colored part inside it is how much of the target is already scored. */}
+      <span className="mt-1.5 block h-2.5">
+        <span className="block h-full rounded-full bg-dune-100" style={{ marginLeft: `${bar.left}%`, width: `${bar.width}%` }}>
+          <span className={cn("block h-full rounded-full", STATUS_BAR[progress.status])} style={{ width: `${progress.ratio * 100}%` }} />
+        </span>
       </span>
     </>
   );

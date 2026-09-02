@@ -40,6 +40,14 @@ export function roadmapBar(window: SeasonBounds, span: RoadmapSpan): RoadmapBar 
   return { left: Math.min(from, 1 - width) * 100, width: width * 100 };
 }
 
+/** How the "hoje" label hangs off its line, so neither end of the roteiro cuts it. */
+export type MarkerAnchor = "start" | "center" | "end";
+
+export function markerAnchor(marker: number): MarkerAnchor {
+  if (marker < 6) return "start";
+  return marker > 94 ? "end" : "center";
+}
+
 /** Where today falls on the roteiro, or null when it is not on it at all. */
 export function roadmapMarker(now: Date, span: RoadmapSpan): number | null {
   if (now < span.start || now > span.end) return null;

@@ -60,7 +60,10 @@ export function AppShell() {
         <div className="min-w-0">
           <header className="sticky top-0 z-10 space-y-2 border-b border-line bg-paper/90 px-4 py-2.5 backdrop-blur md:hidden">
             <div className="flex items-center justify-between">
-              <BrandMark />
+              {/* The way back to Início that no arrangement of the navigation can take away. */}
+              <Link to={{ pathname: "/", search }} aria-label="Início" className="rounded-full">
+                <BrandMark />
+              </Link>
               <div className="flex items-center gap-1">
                 <InviteButton compact />
                 <MemberSwitcher compact />

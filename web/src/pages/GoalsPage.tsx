@@ -80,7 +80,7 @@ export function GoalsPage() {
       </section>
 
       <section>
-        <SectionHeading title="De pessoas e grupos" />
+        <SectionHeading title="Individuais e de grupos" />
         {people.length === 0 ? (
           <EmptyState
             icon={<Target className="size-6" />}
