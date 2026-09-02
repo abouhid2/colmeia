@@ -10,6 +10,7 @@ A casa é a colmeia: cada tarefa concluída enche uma célula do favo. Quando o 
 - **Tarefas com pontos**: cada tarefa vale o que a família decidir (uma resistência de chuveiro queimada pode valer 50 pontos).
 - **Avaliação opcional**: tarefas marcadas "com avaliação" só liberam os pontos depois que outra pessoa dá uma nota de 1 a 5. Os pontos saem conforme a nota. Ninguém avalia o próprio trabalho.
 - **Recorrência**: diária, semanal, mensal ou a cada N dias. A próxima data conta a partir do dia em que a tarefa foi feita. Tarefas pontuais fecham ao concluir.
+- **Tarefas retroativas**: ao concluir, dá para dizer que foi em outro dia e horário, no calendário do próprio navegador, até um ano atrás. E o botão "Registrar algo já feito" cria e conclui de uma vez aquilo que ninguém tinha colocado na lista antes.
 - **Responsável**: qualquer tarefa pode ser atribuída a alguém ou deixada para "quem pegar primeiro".
 - **Prioridade**: baixa, normal, alta ou urgente. As vencidas e urgentes aparecem primeiro.
 - **Lista de compras** compartilhada, com quem pediu e quem comprou.
