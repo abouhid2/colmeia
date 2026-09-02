@@ -38,7 +38,7 @@ describe("navOrder", () => {
   it("appends a screen the app added after this person arranged theirs", () => {
     const arranged = normalizeNavPreferences({ order: [ "tasks", "home" ] });
 
-    expect(navOrder(arranged)).toEqual([ "tasks", "home", "shopping", "family", "achievements", "seasons" ]);
+    expect(navOrder(arranged)).toEqual([ "tasks", "home", "goals", "shopping", "family", "achievements", "seasons" ]);
   });
 });
 
@@ -52,14 +52,30 @@ describe("isNavKeyVisible", () => {
 
 describe("withNavKeyMoved", () => {
   it("swaps a screen with the one next to it and writes the whole order down", () => {
-    const moved = withNavKeyMoved(emptyNavPreferences(), "seasons", -1);
+    const moved = withNavKeyMoved(emptyNavPreferences(), [ ...NAV_KEYS ], "seasons", -1);
 
-    expect(moved.order).toEqual([ "home", "tasks", "shopping", "family", "seasons", "achievements" ]);
+    expect(moved.order).toEqual([ "home", "tasks", "goals", "shopping", "family", "seasons", "achievements" ]);
   });
 
   it("leaves the ends alone: nothing moves past the top or the bottom", () => {
-    expect(withNavKeyMoved(emptyNavPreferences(), "home", -1).order).toEqual([ ...NAV_KEYS ]);
-    expect(withNavKeyMoved(emptyNavPreferences(), "seasons", 1).order).toEqual([ ...NAV_KEYS ]);
+    expect(withNavKeyMoved(emptyNavPreferences(), [ ...NAV_KEYS ], "home", -1).order).toEqual([ ...NAV_KEYS ]);
+    expect(withNavKeyMoved(emptyNavPreferences(), [ ...NAV_KEYS ], "seasons", 1).order).toEqual([ ...NAV_KEYS ]);
+  });
+
+  it("steps over a screen this release does not have, and leaves its place alone", () => {
+    // Somebody on a release without Metas moves Compras up: it lands above
+    // Tarefas, the screen they can actually see, and Metas keeps its slot.
+    const withoutGoals = NAV_KEYS.filter((key) => key !== "goals");
+
+    const moved = withNavKeyMoved(emptyNavPreferences(), [ ...withoutGoals ], "shopping", -1);
+
+    expect(moved.order).toEqual([ "home", "shopping", "goals", "tasks", "family", "achievements", "seasons" ]);
+  });
+
+  it("leaves the ends of what is shown alone, whatever sits past them", () => {
+    const shown = [ "home", "tasks" ] as const;
+
+    expect(withNavKeyMoved(emptyNavPreferences(), [ ...shown ], "tasks", 1).order).toEqual([ ...NAV_KEYS ]);
   });
 });
 
@@ -77,6 +93,10 @@ describe("withNavKeyVisible", () => {
 
   it("writes the order down alongside, so today's arrangement is the one that sticks", () => {
     expect(withNavKeyVisible(emptyNavPreferences(), "shopping", false).order).toEqual([ ...NAV_KEYS ]);
+  });
+
+  it("keeps a screen this release does not have yet", () => {
+    expect(withNavKeyVisible(emptyNavPreferences(), "shopping", false).order).toContain("goals");
   });
 });
 

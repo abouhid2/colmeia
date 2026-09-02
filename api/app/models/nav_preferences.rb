@@ -6,7 +6,7 @@
 # in by the app in its default order. That is how a new screen shows up for
 # everyone without a backfill.
 module NavPreferences
-  KEYS = %w[ home tasks shopping family achievements seasons ].freeze
+  KEYS = %w[ home tasks goals shopping family achievements seasons ].freeze
   # Início is the way back to everything else, so it never leaves the bar.
   PINNED_KEY = "home"
 
