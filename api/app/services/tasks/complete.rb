@@ -44,16 +44,27 @@ module Tasks
     attr_reader :task, :member, :now
 
     # A backdated completion is the person's own memory of when they did it:
-    # taken at face value, but never in the future and never past a year back.
+    # taken at face value, but never in the future and never outside the
+    # estação it would score in. The estação comes before the one-year bound
+    # because it is almost always the tighter of the two, and naming it is the
+    # more useful answer.
     def resolve_moment
       return now if @completed_at.blank?
 
       moment = parse_moment(@completed_at)
       raise InvalidMoment, "Não deu para entender essa data" if moment.nil?
       raise InvalidMoment, "Essa data está no futuro" if moment > now + CLOCK_SKEW
+      raise InvalidMoment, "Essa data é de antes da estação começar" if before_season?(moment)
       raise InvalidMoment, "Só dá para registrar até um ano atrás" if moment < now - MAX_BACKDATE
 
       moment
+    end
+
+    # An estação scores what happened inside it. Work from before it opened
+    # belongs to whatever ran before, not here.
+    def before_season?(moment)
+      season = task.season
+      season.present? && moment.to_date < season.starts_on
     end
 
     def parse_moment(value)

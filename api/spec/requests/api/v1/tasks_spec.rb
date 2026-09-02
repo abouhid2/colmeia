@@ -120,6 +120,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "dates the completion when the work happened, if the request says so" do
+      season.update!(starts_on: 30.days.ago.to_date)
       task = household.tasks.create!(season: season, title: "Pendurar quadro", points: 15)
       done_at = 3.days.ago.change(usec: 0)
 
@@ -129,6 +130,18 @@ RSpec.describe "Tasks API", type: :request do
       expect(response).to have_http_status(:ok)
       expect(Time.zone.parse(json_body.dig("completion", "completed_at"))).to eq(done_at)
       expect(Time.zone.parse(json_body.dig("task", "completed_at"))).to eq(done_at)
+      expect(json_body.dig("completion", "season_id")).to eq(season.id)
+    end
+
+    it "responds with 422 when the moment is from before the estação started" do
+      task = household.tasks.create!(season: season, title: "Louça", points: 5)
+
+      post "/api/v1/tasks/#{task.id}/complete",
+        params: { member_id: member.id, completed_at: 3.days.ago.iso8601 }, headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json_body["details"]).to eq([ "Essa data é de antes da estação começar" ])
+      expect(household.completions.count).to eq(0)
     end
 
     it "responds with 422 and says why when the moment is in the future" do
@@ -143,6 +156,7 @@ RSpec.describe "Tasks API", type: :request do
     end
 
     it "responds with 422 when the moment is more than a year back" do
+      season.update!(starts_on: 500.days.ago.to_date)
       task = household.tasks.create!(season: season, title: "Louça", points: 5)
 
       post "/api/v1/tasks/#{task.id}/complete",
