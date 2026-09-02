@@ -80,7 +80,6 @@ export function MemberPage() {
       <MemberStatTiles stats={profile.stats} />
 
       <section>
-        <SectionHeading title="Conquistas" hint="Saem sozinhas do que essa pessoa já fez." />
         <AchievementList achievements={profile.achievements} />
       </section>
 
