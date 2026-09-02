@@ -10,7 +10,7 @@ export function MemberSwitcher({ compact = false }: { compact?: boolean }) {
   if (!currentMember) return null;
 
   return (
-    <label className="relative inline-flex items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-8 hover:bg-dune-100">
+    <label className="relative inline-flex items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-8 hover:bg-dune-100 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-honey-500 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-paper">
       <Avatar member={currentMember} size="sm" />
       {!compact && (
         <span className="text-sm leading-tight">
@@ -25,7 +25,7 @@ export function MemberSwitcher({ compact = false }: { compact?: boolean }) {
         aria-label="Quem está usando"
         value={currentMember.id}
         onChange={(event) => setCurrentMemberId(Number(event.target.value))}
-        className="absolute inset-0 cursor-pointer opacity-0"
+        className="absolute inset-0 cursor-pointer opacity-0 focus:outline-none"
       >
         {members.map((member) => (
           <option key={member.id} value={member.id}>{member.avatar} {member.name}</option>

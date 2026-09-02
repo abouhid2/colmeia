@@ -1,12 +1,14 @@
 import { ListChecks, Plus } from "lucide-react";
 import { useState } from "react";
-import { sortDoneTasks, sortOpenTasks } from "../domain/taskSort";
+import { canReopen, completionsForMember } from "../domain/history";
+import { sortOpenTasks } from "../domain/taskSort";
+import { useCompletions } from "../hooks/useCompletions";
 import { useMemberFilter } from "../hooks/useMemberFilter";
 import { useMemberLookup } from "../hooks/useMembers";
 import { useNow } from "../hooks/useNow";
 import { useTaskMutations, useTasks } from "../hooks/useTasks";
 import { MemberFilter } from "../components/members/MemberFilter";
-import { DoneTaskRow } from "../components/tasks/DoneTaskRow";
+import { CompletionRow } from "../components/tasks/CompletionRow";
 import { TaskDialogs } from "../components/tasks/TaskDialogs";
 import { TaskList } from "../components/tasks/TaskList";
 import { useTaskDialogs } from "../components/tasks/useTaskDialogs";
@@ -19,15 +21,18 @@ type Status = "open" | "done";
 export function TasksPage() {
   const now = useNow();
   const { tasks } = useTasks();
-  const { update } = useTaskMutations();
+  const { completions } = useCompletions();
+  const { reopen } = useTaskMutations();
   const { memberId, member: filtered } = useMemberFilter();
   const lookup = useMemberLookup();
   const dialogs = useTaskDialogs();
   const [status, setStatus] = useState<Status>("open");
 
-  const visible = tasks.filter((task) => memberId === null || task.assigneeId === memberId);
-  const open = sortOpenTasks(visible.filter((task) => task.status === "open"), now);
-  const done = sortDoneTasks(visible.filter((task) => task.status === "done"));
+  const open = sortOpenTasks(
+    tasks.filter((task) => task.status === "open" && (memberId === null || task.assigneeId === memberId)),
+    now,
+  );
+  const done = completionsForMember(completions, memberId);
 
   const options = [
     { value: "open" as const, label: `Abertas · ${open.length}` },
@@ -45,11 +50,23 @@ export function TasksPage() {
 
       {status === "done" ? (
         done.length === 0 ? (
-          <EmptyState icon={<ListChecks className="size-6" />} title="Nada concluído ainda" hint="Tarefas pontuais aparecem aqui quando terminam. As recorrentes só mudam de data." />
+          <EmptyState
+            icon={<ListChecks className="size-6" />}
+            title={filtered ? `${filtered.name} ainda não concluiu nada` : "Nada concluído ainda"}
+            hint={filtered ? undefined : "Toda tarefa concluída aparece aqui, inclusive as recorrentes."}
+          />
         ) : (
           <ul className="space-y-2">
-            {done.map((task) => (
-              <DoneTaskRow key={task.id} task={task} onReopen={(reopened) => update.mutate({ id: reopened.id, input: { status: "open" } })} />
+            {done.map((completion) => (
+              <CompletionRow
+                key={completion.id}
+                completion={completion}
+                doer={lookup(completion.memberId)}
+                canReopen={canReopen(completion, tasks.find((task) => task.id === completion.taskId) ?? null)}
+                onReopen={() => {
+                  if (completion.taskId !== null) reopen.mutate(completion.taskId);
+                }}
+              />
             ))}
           </ul>
         )

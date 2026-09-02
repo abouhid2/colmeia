@@ -6,6 +6,7 @@ module Api
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
       rescue_from ActiveRecord::RecordInvalid, with: :render_invalid
       rescue_from ActionController::ParameterMissing, with: :render_bad_request
+      rescue_from ActiveRecord::InvalidForeignKey, with: :render_missing_reference
 
       before_action :require_household!
 
@@ -30,6 +31,10 @@ module Api
 
       def render_invalid(exception)
         render json: { error: "invalid", details: exception.record.errors.full_messages }, status: :unprocessable_content
+      end
+
+      def render_missing_reference
+        render json: { error: "invalid", details: [ I18n.t("api.errors.missing_reference") ] }, status: :unprocessable_content
       end
 
       def render_bad_request(exception)

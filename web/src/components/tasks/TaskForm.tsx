@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { LIMITS } from "../../domain/limits";
 import { PRIORITIES, PRIORITY_OPTIONS } from "../../domain/priorities";
 import type { Member, Task, TaskInput } from "../../domain/types";
 import { Button } from "../ui/Button";
@@ -36,7 +37,7 @@ export function TaskForm({ task, members, currentMemberId, submitting, onSubmit,
   return (
     <form onSubmit={submit} className="space-y-4">
       <Field label="Tarefa" htmlFor="task-title" error={form.errors.title}>
-        <Input id="task-title" value={form.values.title} onChange={(event) => form.set("title", event.target.value)} placeholder="Ex.: trocar a resistência do chuveiro" autoFocus />
+        <Input id="task-title" value={form.values.title} onChange={(event) => form.set("title", event.target.value)} placeholder="Ex.: trocar a resistência do chuveiro" maxLength={LIMITS.taskTitle} autoFocus />
       </Field>
       <Field label="Vale quantos pontos" htmlFor="task-points" error={form.errors.points}>
         <PointsPicker value={form.values.points} onChange={(points) => form.set("points", points)} />

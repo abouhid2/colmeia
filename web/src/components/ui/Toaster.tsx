@@ -1,4 +1,5 @@
 import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import { useEffect, useRef } from "react";
 import type { Toast, ToastTone } from "../../hooks/useToast";
 import { cn } from "../../lib/cn";
 
@@ -15,9 +16,32 @@ interface ToasterProps {
   onDismiss(id: number): void;
 }
 
+/**
+ * A manual popover, so toasts join the browser's top layer and stay visible over
+ * an open <dialog>. Re-shown on every change to stay above dialogs opened later.
+ */
 export function Toaster({ toasts, onDismiss }: ToasterProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || typeof element.showPopover !== "function") return;
+    try {
+      if (element.matches(":popover-open")) element.hidePopover();
+      if (toasts.length > 0) element.showPopover();
+    } catch {
+      // Older browsers: the element simply stays a fixed layer.
+    }
+  }, [toasts]);
+
   return (
-    <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex flex-col items-center gap-2 px-4 md:bottom-6">
+    <div
+      ref={ref}
+      popover="manual"
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-0 bottom-24 top-auto z-50 m-0 flex h-auto w-auto max-w-none flex-col items-center gap-2 overflow-visible border-0 bg-transparent p-0 px-4 md:bottom-6"
+    >
       {toasts.map((toast) => {
         const Icon = TONE_ICONS[toast.tone];
         return (

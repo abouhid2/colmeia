@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { LIMITS } from "../../domain/limits";
 import type { Member, MemberColor } from "../../domain/types";
 import { useMemberMutations } from "../../hooks/useMembers";
 import { useToast } from "../../hooks/useToast";
@@ -50,7 +51,7 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
       <div className="flex items-center gap-4">
         <Avatar member={{ name: name || "Prévia", avatar, color }} size="lg" />
         <Field label="Nome" htmlFor="member-name">
-          <Input id="member-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Como chamam essa pessoa" required autoFocus className="w-56" />
+          <Input id="member-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Como chamam essa pessoa" maxLength={LIMITS.memberName} required autoFocus className="w-56" />
         </Field>
       </div>
       <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />

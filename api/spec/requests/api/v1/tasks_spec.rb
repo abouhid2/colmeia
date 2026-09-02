@@ -29,7 +29,35 @@ RSpec.describe "Tasks API", type: :request do
       post "/api/v1/tasks", params: { task: { title: "", points: 0 } }, headers: headers
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(json_body["details"]).to include("Title can't be blank")
+      expect(json_body["details"]).to include("Título não pode ficar em branco")
+    end
+  end
+
+  describe "POST /api/v1/tasks with a member that no longer exists" do
+    it "answers 422 in Portuguese instead of crashing" do
+      post "/api/v1/tasks", params: { task: { title: "Órfã", points: 5, assignee_id: 999_999 } }, headers: headers
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(json_body["details"].first).to include("não existe mais")
+    end
+  end
+
+  describe "POST /api/v1/tasks/:id/reopen" do
+    it "reopens a done task and clears completed_at" do
+      task = household.tasks.create!(title: "Feita", points: 5, status: "done", completed_at: Time.current)
+
+      post "/api/v1/tasks/#{task.id}/reopen", headers: headers
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body).to include("status" => "open", "completed_at" => nil)
+    end
+
+    it "ignores status through mass assignment" do
+      task = household.tasks.create!(title: "Aberta", points: 5)
+
+      patch "/api/v1/tasks/#{task.id}", params: { task: { status: "done" } }, headers: headers
+
+      expect(task.reload.status).to eq("open")
     end
   end
 

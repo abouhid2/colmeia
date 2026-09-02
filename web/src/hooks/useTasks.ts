@@ -1,4 +1,4 @@
-import type { Task, TaskInput, TaskStatus } from "../domain/types";
+import type { Task, TaskInput } from "../domain/types";
 import { queryKeys } from "./queryKeys";
 import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
@@ -6,7 +6,7 @@ import { useScopedQuery } from "./useScopedQuery";
 
 const EMPTY: Task[] = [];
 
-export type TaskUpdate = Partial<TaskInput> & { status?: TaskStatus };
+export type TaskUpdate = Partial<TaskInput>;
 
 export function useTasks() {
   const api = useApi();
@@ -28,5 +28,6 @@ export function useTaskMutations() {
     ({ id, memberId }: { id: number; memberId: number }) => api.tasks.complete(id, memberId),
     { invalidates: [queryKeys.tasks, queryKeys.completions] },
   );
-  return { create, update, remove, complete };
+  const reopen = useAppMutation((id: number) => api.tasks.reopen(id), { invalidates: [queryKeys.tasks] });
+  return { create, update, remove, complete, reopen };
 }

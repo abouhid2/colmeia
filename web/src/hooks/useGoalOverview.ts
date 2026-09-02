@@ -11,6 +11,8 @@ export interface GoalWithProgress {
   goal: Goal;
   progress: GoalProgress;
   member: Member | null;
+  /** Who contributed inside this goal's own period. */
+  standings: Standing[];
 }
 
 export interface GoalOverview {
@@ -31,11 +33,15 @@ export function useGoalOverview(): GoalOverview {
   const { members, isLoading: loadingMembers } = useMembers();
 
   return useMemo(() => {
-    const withProgress = goals.map((goal) => ({
-      goal,
-      progress: goalProgress(goal, completions, now),
-      member: members.find((member) => member.id === goal.memberId) ?? null,
-    }));
+    const withProgress = goals.map((goal) => {
+      const progress = goalProgress(goal, completions, now);
+      return {
+        goal,
+        progress,
+        member: members.find((member) => member.id === goal.memberId) ?? null,
+        standings: rankMembers(members, approvedInPeriod(completions, progress.bounds)),
+      };
+    });
     const household = withProgress.filter((item) => item.goal.memberId === null);
     const personal = withProgress.filter((item) => item.goal.memberId !== null && item.member !== null);
     const period = household[0]?.goal.period ?? "week";

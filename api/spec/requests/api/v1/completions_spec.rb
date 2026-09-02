@@ -28,9 +28,12 @@ RSpec.describe "Completions API", type: :request do
     expect(response).to have_http_status(:conflict)
   end
 
-  it "rejects a non-integer rating" do
+  it "rejects a non-integer rating instead of truncating it" do
     post "/api/v1/completions/#{completion.id}/review", params: { reviewer_id: reviewer.id, rating: "ótimo" }, headers: headers
-
     expect(response).to have_http_status(:bad_request)
+
+    post "/api/v1/completions/#{completion.id}/review", params: { reviewer_id: reviewer.id, rating: 3.9 }, as: :json, headers: headers
+    expect(response).to have_http_status(:bad_request)
+    expect(completion.reload).to be_pending
   end
 end

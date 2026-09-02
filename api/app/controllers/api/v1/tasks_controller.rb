@@ -32,6 +32,14 @@ module Api
         render_conflict(e.message)
       end
 
+      def reopen
+        task = tasks.find(params[:id])
+        return render_conflict("task is already open") unless task.done?
+
+        task.update!(status: "open", completed_at: nil)
+        render json: TaskSerializer.call(task)
+      end
+
       private
 
       def tasks
@@ -41,7 +49,7 @@ module Api
       def task_params
         params.require(:task).permit(
           :title, :description, :points, :priority, :recurrence, :interval_days,
-          :due_on, :requires_review, :assignee_id, :created_by_id, :status
+          :due_on, :requires_review, :assignee_id, :created_by_id
         )
       end
     end

@@ -1,3 +1,4 @@
+import { LIMITS } from "../../domain/limits";
 import { POINT_PRESETS } from "../../domain/points";
 import { cn } from "../../lib/cn";
 import { Input } from "../ui/Input";
@@ -26,7 +27,7 @@ export function PointsPicker({ value, onChange }: PointsPickerProps) {
           </button>
         ))}
       </div>
-      <Input id="task-points" type="number" min={1} max={1000} step={1} value={value} onChange={(event) => onChange(Number(event.target.value))} aria-label="Outro valor" className="w-24" />
+      <Input id="task-points" type="number" min={1} max={LIMITS.taskPoints} step={1} value={value} onChange={(event) => onChange(Number(event.target.value))} aria-label="Outro valor" className="w-24" />
     </div>
   );
 }
