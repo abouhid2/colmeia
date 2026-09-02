@@ -1,6 +1,6 @@
 import { endOfDay, parseISO, startOfDay } from "date-fns";
 import { fromIsoDate } from "../lib/dates";
-import { completionsInSeason } from "./seasons";
+import { completionsInSeason, frozenAt } from "./seasons";
 import type { Completion, Goal, Season } from "./types";
 
 export interface SeasonBounds {
@@ -27,10 +27,17 @@ export interface GoalProgress {
   window: SeasonBounds;
 }
 
-/** An estação runs from its first day to its last, or to right now while it has no end. */
+/**
+ * An estação runs from its first day to the day it was closed, and to right now
+ * while nobody has closed it: a planned last day that came and went does not stop
+ * an estação that is still taking tasks.
+ */
 export function seasonBounds(season: Season, now: Date): SeasonBounds {
   const start = startOfDay(fromIsoDate(season.startsOn));
-  return { start, end: season.endsOn === null ? now : endOfDay(fromIsoDate(season.endsOn)) };
+  const frozen = frozenAt(season);
+  if (frozen !== null) return { start, end: frozen };
+  const planned = season.endsOn === null ? null : endOfDay(fromIsoDate(season.endsOn));
+  return { start, end: planned !== null && planned > now ? planned : now };
 }
 
 /** A goal runs for its own stretch of days, or for the whole estação when it has none. */

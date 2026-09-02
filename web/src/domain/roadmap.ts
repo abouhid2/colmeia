@@ -1,6 +1,7 @@
 import { addDays, endOfDay, startOfDay } from "date-fns";
 import { fromIsoDate } from "../lib/dates";
 import type { SeasonBounds } from "./progress";
+import { frozenAt } from "./seasons";
 import type { Season } from "./types";
 
 /** How far ahead the roteiro of an estação with no end still draws. */
@@ -20,9 +21,14 @@ export interface RoadmapBar {
   width: number;
 }
 
-/** The stretch of days a roteiro covers: the estação, or a month ahead of today. */
+/**
+ * The stretch of days a roteiro covers: up to the day a closed estação was frozen,
+ * up to the last day of one that has an end, or a month ahead of today.
+ */
 export function roadmapSpan(season: Season, now: Date): RoadmapSpan {
   const start = startOfDay(fromIsoDate(season.startsOn));
+  const frozen = frozenAt(season);
+  if (frozen !== null) return { start, end: frozen, openEnded: false };
   if (season.endsOn !== null) return { start, end: endOfDay(fromIsoDate(season.endsOn)), openEnded: false };
   return { start, end: endOfDay(addDays(now, OPEN_SEASON_DAYS)), openEnded: true };
 }
