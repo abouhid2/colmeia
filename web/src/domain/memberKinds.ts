@@ -6,7 +6,7 @@ interface MemberKindMeta {
 }
 
 export const MEMBER_KINDS: Record<MemberKind, MemberKindMeta> = {
-  bee: { label: "Abelha", hint: "Ganha exatamente o que a tarefa vale." },
+  bee: { label: "Abelha", hint: "" },
   lagartinha: { label: "Lagartinha", hint: "Criança: ganha os pontos multiplicados para acompanhar o resto da colmeia." },
 };
 

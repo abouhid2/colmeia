@@ -44,7 +44,7 @@ export function SeasonSwitcher({ compact = false }: { compact?: boolean }) {
         )}
       </button>
 
-      <Dialog open={picker.isOpen} onClose={picker.close} title="Estações" description="Cada estação tem as suas tarefas, metas e ranking.">
+      <Dialog open={picker.isOpen} onClose={picker.close} title="Estações">
         <ul className="space-y-2">
           {seasons.map((season) => (
             <li key={season.id}>

@@ -49,7 +49,6 @@ export function AchievementsPage() {
     <div className="space-y-6 animate-rise">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Conquistas</h1>
-        <p className="mt-1 text-sm text-ink-soft">O que já foi ganho, e o que ainda falta.</p>
       </div>
 
       <MemberFilter allowAll={false} fallbackId={currentMember?.id ?? null} />
@@ -79,9 +78,9 @@ export function AchievementsPage() {
       </section>
 
       <section>
-        <SectionHeading title="Ainda não" hint="Falta pouco para algumas." />
+        <SectionHeading title="Ainda não" />
         {badges.locked.length === 0 ? (
-          <EmptyState icon={<Trophy className="size-6" />} title="Não falta nenhuma" hint={`${shown.name} já ganhou todas.`} />
+          <EmptyState icon={<Trophy className="size-6" />} title="Não falta nenhuma" />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {badges.locked.map((achievement) => (

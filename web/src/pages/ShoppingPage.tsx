@@ -34,7 +34,6 @@ export function ShoppingPage() {
     <div className="space-y-6 animate-rise">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Compras</h1>
-        <p className="text-sm text-ink-soft">Uma lista só, e todo mundo escreve nela.</p>
       </div>
       <AddItemForm submitting={add.isPending} onAdd={(name, quantity) => add.mutate({ name, quantity, addedById: currentMember?.id ?? null })} />
       <MemberFilter />

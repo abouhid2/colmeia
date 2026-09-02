@@ -14,7 +14,7 @@ export function CrownTitleField({ id, value, onChange }: CrownTitleFieldProps) {
   const chosen = value.trim();
 
   return (
-    <Field label="Quando vencer, vira" htmlFor={id} hint="Escolha o título que quiser. Deixe em branco para ficar de fora da coroa.">
+    <Field label="Quando vencer, vira" htmlFor={id} hint="Deixe em branco para ficar de fora da coroa.">
       <Input
         id={id}
         value={value}

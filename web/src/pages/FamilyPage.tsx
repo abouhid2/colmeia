@@ -35,7 +35,7 @@ export function FamilyPage() {
   const { search } = useLocation();
   const { members } = useSession();
   const { currentSeason, isLoading: loadingSeasons } = useSeason();
-  const { memberId, member: filtered } = useMemberFilter();
+  const { memberId } = useMemberFilter();
   const { household, personal, standings, allTimeStandings } = useGoalOverview();
   const crown = useCrown();
   const [scope, setScope] = useState<Scope>("season");
@@ -82,11 +82,10 @@ export function FamilyPage() {
       <section>
         <SectionHeading
           title="Metas e recompensas"
-          hint="Uma meta para a colmeia inteira e quantas individuais quiserem."
           action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(memberId)}>Nova meta</Button>}
         />
         {shownGoals.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title="Nenhuma meta ainda" hint={filtered ? `Combinem uma recompensa para ${filtered.name} e quantos pontos ela custa.` : "Combinem uma recompensa e quantos pontos ela custa."} />
+          <EmptyState icon={<Target className="size-6" />} title="Nenhuma meta ainda" hint="Combinem uma recompensa e quantos pontos ela custa." />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {shownGoals.map((item) => (
@@ -97,7 +96,7 @@ export function FamilyPage() {
       </section>
 
       <section>
-        <SectionHeading title="Estações" hint="Cada campeonato com as suas tarefas, metas e ranking." />
+        <SectionHeading title="Estações" />
         <Link
           to={{ pathname: "/estacoes", search }}
           className="flex items-center gap-3 rounded-card border border-line bg-surface p-4 shadow-card hover:bg-dune-100"
