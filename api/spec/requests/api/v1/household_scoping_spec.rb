@@ -21,6 +21,13 @@ RSpec.describe "Household scoping", type: :request do
       expect(response).to have_http_status(:unauthorized)
     end
 
+    it "finds the colmeia however the code was typed" do
+      get "/api/v1/household", headers: { "X-Household-Code" => house.invite_code.upcase }
+
+      expect(response).to have_http_status(:ok)
+      expect(json_body["id"]).to eq(house.id)
+    end
+
     it "rejects a blank code" do
       get "/api/v1/tasks", headers: { "X-Household-Code" => "" }
 

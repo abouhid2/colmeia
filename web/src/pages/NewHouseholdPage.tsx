@@ -1,6 +1,7 @@
 import { ArrowLeft, Plus, X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
+import { LIMITS } from "../domain/limits";
 import { useCreateHousehold } from "../hooks/useHouseholds";
 import { BrandMark } from "../components/layout/BrandMark";
 import { PlainPage } from "../components/layout/PlainPage";
@@ -45,7 +46,7 @@ export function NewHouseholdPage() {
 
       <Card className="space-y-5 p-6">
         <Field label="Nome da colmeia" htmlFor="household-name">
-          <Input id="household-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Família Silva, Apê 42" autoFocus />
+          <Input id="household-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Família Silva, Apê 42" maxLength={LIMITS.householdName} autoFocus />
         </Field>
 
         {people.length > 0 && (
@@ -67,7 +68,7 @@ export function NewHouseholdPage() {
         )}
 
         <form onSubmit={addPerson} className="flex gap-2">
-          <Input aria-label="Nome da pessoa" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Nome" />
+          <Input aria-label="Nome da pessoa" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Nome" maxLength={LIMITS.memberName} />
           <Button type="submit" variant="secondary" icon={<Plus className="size-4" />} disabled={draft.trim() === ""}>Adicionar</Button>
         </form>
 

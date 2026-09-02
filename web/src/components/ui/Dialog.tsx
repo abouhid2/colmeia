@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
-import { useEffect, useId, useRef, type MouseEvent, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import { IconButton } from "./IconButton";
+import { bringToastsToFront } from "./Toaster";
 
 interface DialogProps {
   open: boolean;
@@ -15,10 +16,15 @@ export function Dialog({ open, onClose, title, description, children }: DialogPr
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
-  useEffect(() => {
+  // Layout, not effect: children unmount with `open`, and an effect would let
+  // the browser paint one frame of an open dialog with nothing but its header.
+  useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
-    if (open && !element.open) element.showModal();
+    if (open && !element.open) {
+      element.showModal();
+      bringToastsToFront();
+    }
     if (!open && element.open) element.close();
   }, [open]);
 

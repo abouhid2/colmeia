@@ -17,7 +17,7 @@ module Api
       def current_household
         return @current_household if defined?(@current_household)
 
-        code = request.headers[HOUSEHOLD_HEADER]
+        code = request.headers[HOUSEHOLD_HEADER].to_s.downcase
         @current_household = code.present? ? Household.find_by(invite_code: code) : nil
       end
 
