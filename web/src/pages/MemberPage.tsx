@@ -91,7 +91,7 @@ export function MemberPage() {
 
       {profile.badges.history.length > 0 && (
         <section>
-          <SectionHeading title="Histórico de conquistas" hint="As últimas que caíram, com a data de cada uma." />
+          <SectionHeading title="Histórico de conquistas" hint="As mais recentes, com a data de cada uma." />
           <AchievementTimeline moments={profile.badges.history} achievements={profile.badges.records} />
         </section>
       )}

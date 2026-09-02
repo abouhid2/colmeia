@@ -49,7 +49,7 @@ export function AchievementsPage() {
     <div className="space-y-6 animate-rise">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Conquistas</h1>
-        <p className="mt-1 text-sm text-ink-soft">O que já foi destravado, e o que ainda falta.</p>
+        <p className="mt-1 text-sm text-ink-soft">O que já foi ganho, e o que ainda falta.</p>
       </div>
 
       <MemberFilter allowAll={false} fallbackId={currentMember?.id ?? null} />
@@ -65,7 +65,7 @@ export function AchievementsPage() {
       <section>
         <SectionHeading
           title="Conquistadas"
-          hint={isSelf ? `Fixe até ${MAX_FAVORITE_ACHIEVEMENTS} no seu perfil pela estrela.` : undefined}
+          hint={isSelf ? `Fixe até ${MAX_FAVORITE_ACHIEVEMENTS} no seu perfil com a estrela.` : undefined}
         />
         {badges.unlocked.length === 0 ? (
           <EmptyState
@@ -81,7 +81,7 @@ export function AchievementsPage() {
       <section>
         <SectionHeading title="Ainda não" hint="Falta pouco para algumas." />
         {badges.locked.length === 0 ? (
-          <EmptyState icon={<Trophy className="size-6" />} title="Não falta nenhuma" hint={`${shown.name} já destravou a colmeia inteira.`} />
+          <EmptyState icon={<Trophy className="size-6" />} title="Não falta nenhuma" hint={`${shown.name} já ganhou todas.`} />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {badges.locked.map((achievement) => (
