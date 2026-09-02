@@ -1,6 +1,7 @@
-import { AVATAR_OPTIONS, MEMBER_COLORS, MEMBER_COLOR_OPTIONS } from "../../domain/memberColors";
+import { AVATAR_OPTIONS, MEMBER_COLORS } from "../../domain/memberColors";
 import type { MemberColor } from "../../domain/types";
 import { cn } from "../../lib/cn";
+import { ColorPicker } from "./ColorPicker";
 
 interface AvatarPickerProps {
   avatar: string;
@@ -26,20 +27,7 @@ export function AvatarPicker({ avatar, color, onAvatar, onColor }: AvatarPickerP
           </button>
         ))}
       </div>
-      <div role="radiogroup" aria-label="Cor" className="flex gap-2">
-        {MEMBER_COLOR_OPTIONS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            role="radio"
-            aria-checked={color === option}
-            aria-label={MEMBER_COLORS[option].label}
-            title={MEMBER_COLORS[option].label}
-            onClick={() => onColor(option)}
-            className={cn("size-7 rounded-full transition-transform hover:scale-110", MEMBER_COLORS[option].swatch, color === option && "ring-2 ring-ink ring-offset-2 ring-offset-surface")}
-          />
-        ))}
-      </div>
+      <ColorPicker color={color} onColor={onColor} />
     </div>
   );
 }

@@ -1,50 +1,33 @@
-import { MEMBER_COLORS, MEMBER_COLOR_OPTIONS } from "../../domain/memberColors";
 import type { Member, MemberColor, MemberPattern } from "../../domain/types";
-import { useMemberMutations } from "../../hooks/useMembers";
-import { cn } from "../../lib/cn";
+import { Avatar } from "../ui/Avatar";
 import { Field } from "../ui/Field";
+import { ColorPicker } from "./ColorPicker";
 import { MemberMark } from "./MemberMark";
 import { PatternPicker } from "./PatternPicker";
 
 interface MemberMarkSettingsProps {
   member: Member;
+  onColor(color: MemberColor): void;
+  onPattern(pattern: MemberPattern): void;
 }
 
-/** How somebody's share of the honeycomb is drawn: their colour and their
- *  texture, saved the moment they pick one. Meant for a page of one's own
- *  settings; the dialog that edits a whole person has its own copy. */
-export function MemberMarkSettings({ member }: MemberMarkSettingsProps) {
-  const { update } = useMemberMutations();
-  const save = (input: { color: MemberColor } | { pattern: MemberPattern }) => update.mutate({ id: member.id, input });
-
+/** How somebody shows up in the colmeia: the colour they wear and the texture
+ *  their share of the favo is filled with, both live above the pickers. */
+export function MemberMarkSettings({ member, onColor, onPattern }: MemberMarkSettingsProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 rounded-card border border-line bg-surface p-4 shadow-card">
       <div className="flex items-center gap-3">
-        <MemberMark member={member} className="size-10" />
-        <p className="text-ink-soft">É assim que suas tarefas aparecem no favo</p>
+        <span className="relative shrink-0">
+          <Avatar member={member} size="lg" />
+          <MemberMark member={member} className="absolute -bottom-1 -right-1 size-6" />
+        </span>
+        <p className="text-ink-soft">Suas tarefas enchem o favo assim</p>
       </div>
       <Field label="Cor">
-        <div role="radiogroup" aria-label="Cor" className="flex gap-2">
-          {MEMBER_COLOR_OPTIONS.map((option) => (
-            <button
-              key={option}
-              type="button"
-              role="radio"
-              aria-checked={member.color === option}
-              aria-label={MEMBER_COLORS[option].label}
-              title={MEMBER_COLORS[option].label}
-              onClick={() => save({ color: option })}
-              className={cn(
-                "size-7 rounded-full transition-transform hover:scale-110",
-                MEMBER_COLORS[option].swatch,
-                member.color === option && "ring-2 ring-ink ring-offset-2 ring-offset-surface",
-              )}
-            />
-          ))}
-        </div>
+        <ColorPicker color={member.color} onColor={onColor} />
       </Field>
       <Field label="Textura">
-        <PatternPicker color={member.color} pattern={member.pattern} onPattern={(pattern) => save({ pattern })} />
+        <PatternPicker color={member.color} pattern={member.pattern} onPattern={onPattern} />
       </Field>
     </div>
   );
