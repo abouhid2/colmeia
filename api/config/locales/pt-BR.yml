@@ -20,16 +20,20 @@ pt-BR:
         interval_days: Intervalo em dias
         due_on: Prazo
         status: Situação
+        kid_friendly: Boa para lagartinhas
       member:
         name: Nome
         avatar: Bichinho
         color: Cor
+        kind: Tipo
+        points_multiplier: Multiplicador de pontos
       completion:
         rating: Nota
         status: Situação
         task_title: Tarefa
         task_points: Pontos da tarefa
         points_awarded: Pontos ganhos
+        multiplier: Multiplicador
         completed_at: Concluída em
       shopping_item:
         name: Item

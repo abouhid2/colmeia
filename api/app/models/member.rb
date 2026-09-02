@@ -1,6 +1,11 @@
 class Member < ApplicationRecord
   COLORS = %w[ honey pollen leaf berry sky plum ].freeze
   AVATARS = %w[ 🐝 🦊 🐻 🐼 🦉 🐸 🐙 🦁 🐨 🦄 🐧 🐢 ].freeze
+  KINDS = %w[ bee lagartinha ].freeze
+  MIN_MULTIPLIER = 0.5
+  MAX_MULTIPLIER = 3.0
+  # What a lagartinha earns until the family says otherwise.
+  DEFAULT_LAGARTINHA_MULTIPLIER = 1.5
 
   belongs_to :household
   has_many :assigned_tasks, class_name: "Task", foreign_key: :assignee_id,
@@ -18,8 +23,14 @@ class Member < ApplicationRecord
   validates :name, presence: true, length: { maximum: 40 }
   validates :avatar, presence: true, length: { maximum: 8 }
   validates :color, inclusion: { in: COLORS }
+  validates :kind, inclusion: { in: KINDS }
+  validates :points_multiplier,
+    numericality: { greater_than_or_equal_to: MIN_MULTIPLIER, less_than_or_equal_to: MAX_MULTIPLIER }
+
+  before_save :apply_lagartinha_multiplier
 
   scope :unclaimed, -> { where(claimed_at: nil) }
+  scope :lagartinhas, -> { where(kind: "lagartinha") }
 
   # A member starts as a placeholder ("espantalho"): a name on the list nobody
   # sits behind yet. Claiming through the invite link is what turns it into a
@@ -30,5 +41,26 @@ class Member < ApplicationRecord
 
   def claim!(now = Time.current)
     update!(claimed_at: now)
+  end
+
+  def lagartinha?
+    kind == "lagartinha"
+  end
+
+  # Scales points so a child moves the shared honeycomb. Kept as an integer:
+  # nobody wants half a point.
+  def award(base_points)
+    (base_points * points_multiplier).round
+  end
+
+  private
+
+  # Becoming a lagartinha suggests the default handicap, once. Going back to
+  # bee leaves whatever the family set: an adult may want one too.
+  def apply_lagartinha_multiplier
+    return unless kind_changed?(to: "lagartinha")
+    return unless points_multiplier == 1
+
+    self.points_multiplier = DEFAULT_LAGARTINHA_MULTIPLIER
   end
 end

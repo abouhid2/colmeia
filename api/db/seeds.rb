@@ -11,7 +11,7 @@ today = Date.current
 ana = household.members.create!(name: "Ana", avatar: "🦊", color: "pollen", claimed_at: now)
 bruno = household.members.create!(name: "Bruno", avatar: "🐻", color: "sky")
 clara = household.members.create!(name: "Clara", avatar: "🐼", color: "plum")
-duda = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf")
+duda = household.members.create!(name: "Duda", avatar: "🦉", color: "leaf", kind: "lagartinha")
 
 household.tasks.create!(
   title: "Trocar a resistência do chuveiro",
@@ -22,12 +22,12 @@ bathroom = household.tasks.create!(
   title: "Limpar o banheiro", points: 20, priority: "high", recurrence: "weekly",
   due_on: today + 7, requires_review: true, assignee: bruno
 )
-dishes = household.tasks.create!(title: "Lavar a louça do jantar", points: 5, priority: "medium", recurrence: "daily", due_on: today + 1)
+dishes = household.tasks.create!(title: "Lavar a louça do jantar", points: 5, priority: "medium", recurrence: "daily", due_on: today + 1, kid_friendly: true)
 household.tasks.create!(title: "Pendurar o quadro da sala", points: 15, priority: "low", assignee: bruno, created_by: clara)
-trash = household.tasks.create!(title: "Levar o lixo para fora", points: 5, priority: "medium", recurrence: "daily", due_on: today + 1)
+trash = household.tasks.create!(title: "Levar o lixo para fora", points: 5, priority: "medium", recurrence: "daily", due_on: today + 1, kid_friendly: true)
 household.tasks.create!(
   title: "Regar as plantas", points: 5, priority: "low", recurrence: "custom",
-  interval_days: 3, due_on: today + 1, assignee: duda
+  interval_days: 3, due_on: today + 1, assignee: duda, kid_friendly: true
 )
 household.tasks.create!(title: "Aspirar a sala e os quartos", points: 15, priority: "medium", recurrence: "weekly", due_on: today + 2)
 household.tasks.create!(
@@ -46,7 +46,7 @@ household.completions.create!(task: lunch, member: bruno, status: "approved", po
   task_title: lunch.title, task_points: 30, completed_at: now - 7.hours)
 household.completions.create!(task: ironing, member: clara, reviewer: ana, status: "approved", rating: 5, points_awarded: 20,
   task_title: ironing.title, task_points: 20, completed_at: now - 5.hours, reviewed_at: now - 4.hours)
-household.completions.create!(task: dishes, member: duda, status: "approved", points_awarded: 5,
+household.completions.create!(task: dishes, member: duda, status: "approved", points_awarded: 8, multiplier: 1.5,
   task_title: dishes.title, task_points: 5, completed_at: now - 3.hours)
 household.completions.create!(task: trash, member: ana, status: "approved", points_awarded: 5,
   task_title: trash.title, task_points: 5, completed_at: now - 2.hours)

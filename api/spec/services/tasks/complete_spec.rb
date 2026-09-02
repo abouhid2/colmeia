@@ -3,6 +3,7 @@ require "rails_helper"
 RSpec.describe Tasks::Complete do
   let(:household) { Household.create!(name: "Casa") }
   let(:member) { household.members.create!(name: "Ana") }
+  let(:lagartinha) { household.members.create!(name: "Duda", kind: "lagartinha") }
   let(:now) { Time.zone.local(2026, 3, 10, 15, 0) }
 
   it "closes a one-off task and awards full points right away" do
@@ -31,6 +32,22 @@ RSpec.describe Tasks::Complete do
     result = described_class.new(task: task, member: member, now: now).call
 
     expect(result.completion).to have_attributes(status: "pending", points_awarded: 0, task_points: 50)
+  end
+
+  it "multiplies the points a lagartinha earns and records the multiplier used" do
+    task = household.tasks.create!(title: "Lavar a louça", points: 5)
+
+    result = described_class.new(task: task, member: lagartinha, now: now).call
+
+    expect(result.completion).to have_attributes(points_awarded: 8, task_points: 5, multiplier: 1.5)
+  end
+
+  it "leaves a reviewed completion at zero points but keeps the multiplier for later" do
+    task = household.tasks.create!(title: "Trocar a roupa de cama", points: 10, requires_review: true)
+
+    result = described_class.new(task: task, member: lagartinha, now: now).call
+
+    expect(result.completion).to have_attributes(status: "pending", points_awarded: 0, multiplier: 1.5)
   end
 
   it "refuses to complete a task that is already done" do

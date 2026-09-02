@@ -15,6 +15,29 @@ RSpec.describe Completions::Review do
     expect(reviewed.reviewed_at).to be_present
   end
 
+  it "applies the doer's multiplier after the rating" do
+    child_work = household.completions.create!(
+      member: worker, status: "pending", task_title: "Regar as plantas", task_points: 20,
+      completed_at: Time.current, multiplier: 1.5
+    )
+
+    reviewed = described_class.new(completion: child_work, reviewer: reviewer, rating: 4).call
+
+    expect(reviewed.points_awarded).to eq(24)
+  end
+
+  it "pays the multiplier the work was done under, not the one in force today" do
+    child_work = household.completions.create!(
+      member: worker, status: "pending", task_title: "Regar as plantas", task_points: 20,
+      completed_at: Time.current, multiplier: 1.5
+    )
+    worker.update!(points_multiplier: 3)
+
+    reviewed = described_class.new(completion: child_work, reviewer: reviewer, rating: 5).call
+
+    expect(reviewed.points_awarded).to eq(30)
+  end
+
   it "does not let members grade their own work" do
     expect { described_class.new(completion: completion, reviewer: worker, rating: 5).call }
       .to raise_error(described_class::SelfReview)
