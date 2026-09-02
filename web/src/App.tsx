@@ -6,6 +6,7 @@ import { HomePage } from "./pages/HomePage";
 import { InvitePage } from "./pages/InvitePage";
 import { MemberPage } from "./pages/MemberPage";
 import { NewHouseholdPage } from "./pages/NewHouseholdPage";
+import { SeasonsPage } from "./pages/SeasonsPage";
 import { ShoppingPage } from "./pages/ShoppingPage";
 import { TasksPage } from "./pages/TasksPage";
 
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="compras" element={<ShoppingPage />} />
             <Route path="familia" element={<FamilyPage />} />
             <Route path="familia/:memberId" element={<MemberPage />} />
+            <Route path="estacoes" element={<SeasonsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

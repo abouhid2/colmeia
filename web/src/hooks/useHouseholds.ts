@@ -40,7 +40,7 @@ export function useColmeiaSwitcher() {
       void navigate(`/entrar/${inviteCode}`);
       return;
     }
-    enter({ inviteCode, memberId });
+    enter({ inviteCode, memberId, seasonId: null });
     void navigate("/");
   }, [ memberships, enter, navigate ]);
 }

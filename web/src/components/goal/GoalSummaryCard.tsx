@@ -3,16 +3,17 @@ import type { GoalWithProgress } from "../../hooks/useGoalOverview";
 import { cn } from "../../lib/cn";
 import { Avatar } from "../ui/Avatar";
 import { IconButton } from "../ui/IconButton";
-import { periodScopeLabel } from "./goalCopy";
 
 interface GoalSummaryCardProps {
   item: GoalWithProgress;
   onEdit(): void;
+  /** A closed estação is history: there is nothing left to adjust. */
+  readOnly?: boolean;
 }
 
 /** Compact goal: who it belongs to, what it pays, how close it is. */
-export function GoalSummaryCard({ item, onEdit }: GoalSummaryCardProps) {
-  const { goal, progress, member } = item;
+export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryCardProps) {
+  const { goal, progress, season, member } = item;
   return (
     <li className="flex items-start gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
       {member ? (
@@ -22,7 +23,7 @@ export function GoalSummaryCard({ item, onEdit }: GoalSummaryCardProps) {
       )}
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-          {member ? member.name : "Toda a casa"} · {periodScopeLabel(goal.period)}
+          {member ? member.name : "Toda a casa"} · {season.name}
         </p>
         <p className="truncate font-semibold">{goal.title}</p>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-honey-100" role="progressbar" aria-valuemin={0} aria-valuemax={progress.target} aria-valuenow={progress.earned} aria-label={`${goal.title}: ${progress.earned} de ${progress.target} pontos`}>
@@ -33,7 +34,9 @@ export function GoalSummaryCard({ item, onEdit }: GoalSummaryCardProps) {
           {progress.reached && <span className="ml-2 inline-flex items-center gap-1 font-semibold text-leaf-700"><PartyPopper className="size-3.5" /> batida</span>}
         </p>
       </div>
-      <IconButton label={`Ajustar meta: ${goal.title}`} icon={<Pencil className="size-4" />} onClick={onEdit} className="-mr-2 -mt-1" />
+      {!readOnly && (
+        <IconButton label={`Ajustar meta: ${goal.title}`} icon={<Pencil className="size-4" />} onClick={onEdit} className="-mr-2 -mt-1" />
+      )}
     </li>
   );
 }

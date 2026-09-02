@@ -28,18 +28,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (changedColmeia) queryClient.clear();
   }, [ api, queryClient, session ]);
 
-  const setCurrentMemberId = useCallback((memberId: number) => {
+  const remember = useCallback((change: (current: Session) => Session) => {
     setSession((current) => {
       if (current === null) return current;
-      const next = { ...current, memberId };
+      const next = change(current);
       writeSession(store, next);
       return next;
     });
   }, []);
 
+  const setCurrentMemberId = useCallback((memberId: number) => remember((current) => ({ ...current, memberId })), [ remember ]);
+  const setCurrentSeasonId = useCallback((seasonId: number) => remember((current) => ({ ...current, seasonId })), [ remember ]);
+
   const value = useMemo(
-    () => ({ session, memberships, enter: apply, leave: () => apply(null), setCurrentMemberId }),
-    [ session, memberships, apply, setCurrentMemberId ],
+    () => ({ session, memberships, enter: apply, leave: () => apply(null), setCurrentMemberId, setCurrentSeasonId }),
+    [ session, memberships, apply, setCurrentMemberId, setCurrentSeasonId ],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

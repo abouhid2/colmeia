@@ -1,21 +1,20 @@
 import { PartyPopper, Pencil } from "lucide-react";
-import type { Standing } from "../../domain/leaderboard";
-import type { GoalProgress } from "../../domain/progress";
-import type { Goal } from "../../domain/types";
+import type { GoalWithProgress } from "../../hooks/useGoalOverview";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Honeycomb } from "./Honeycomb";
-import { periodEnding, periodTitle } from "./goalCopy";
+import { SEASON_GOAL_TITLE, seasonEnding } from "./goalCopy";
 
 interface GoalCardProps {
-  goal: Goal;
-  progress: GoalProgress;
-  standings: Standing[];
+  item: GoalWithProgress;
   onEdit(): void;
+  /** A closed estação is history: there is nothing left to adjust. */
+  readOnly?: boolean;
 }
 
-export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
+export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
+  const { goal, progress, season, standings } = item;
   const contributors = standings.filter((standing) => standing.points > 0);
   const summary = `${progress.earned} de ${progress.target} pontos`;
 
@@ -24,11 +23,11 @@ export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-            {periodTitle(goal.period)} · {periodEnding(progress.bounds)}
+            {SEASON_GOAL_TITLE} · {season.name} · {seasonEnding(season)}
           </p>
           <h2 className="mt-1 text-2xl font-bold leading-tight tracking-tight md:text-3xl">{goal.title}</h2>
         </div>
-        <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar</Button>
+        {!readOnly && <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar</Button>}
       </div>
 
       <div className="my-6">

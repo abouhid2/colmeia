@@ -2,15 +2,16 @@ import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { generateInviteCode } from "../domain/inviteCode";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
+import { seasonsNewestFirst } from "../domain/seasons";
 import { LIMITS } from "../domain/limits";
 import { MAX_RATING, pointsForRating } from "../domain/points";
 import type {
   Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
-  ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
+  ReviewInput, Season, SeasonInput, SeasonUpdate, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
 import type { ColmeiaApi, CompleteTaskResult, StoredHousehold } from "./client";
 import { ApiError } from "./errors";
-import { DEMO_INVITE_CODE, emptyState, withMembers, type LocalState } from "./localState";
+import { DEMO_INVITE_CODE, emptyState, withCounts, withMembers, type LocalState, type StoredSeason } from "./localState";
 import { LocalStore } from "./localStore";
 import type { KeyValueStore } from "./storage";
 
@@ -54,6 +55,13 @@ function validateGoal(input: Partial<GoalInput>): void {
   if (input.targetPoints !== undefined && input.targetPoints > LIMITS.goalTarget) invalid(`A meta vai até ${LIMITS.goalTarget} pontos`);
 }
 
+function validateSeason(input: Partial<SeasonInput>): void {
+  validateName(input.name, LIMITS.seasonName, "Dê um nome à estação");
+  if (input.startsOn !== undefined && input.startsOn === "") invalid("Diga quando a estação começa");
+  const endsOn = input.endsOn ?? null;
+  if (input.startsOn !== undefined && endsOn !== null && endsOn < input.startsOn) invalid("O fim não pode ser antes do começo");
+}
+
 function validateTask(input: Partial<TaskInput>): void {
   validateName(input.title, LIMITS.taskTitle, "Dê um nome à tarefa");
   if (input.points !== undefined && (!Number.isInteger(input.points) || input.points <= 0)) invalid("Os pontos precisam ser um número maior que zero");
@@ -76,7 +84,7 @@ export class LocalApi implements ColmeiaApi {
   constructor(store: KeyValueStore, options: LocalApiOptions = {}) {
     this.clock = options.clock ?? (() => new Date());
     this.newCode = options.newCode ?? generateInviteCode;
-    this.store = new LocalStore(store, options.seed ?? (() => emptyState(DEMO_INVITE_CODE, "Nossa casa")), this.clock);
+    this.store = new LocalStore(store, options.seed ?? (() => emptyState(DEMO_INVITE_CODE, "Nossa casa", this.clock())), this.clock);
   }
 
   setInviteCode(inviteCode: string | null): void {
@@ -150,6 +158,25 @@ export class LocalApi implements ColmeiaApi {
     return candidate;
   }
 
+  /** Nothing is scored in a closed estação: it is a finished championship. */
+  private openSeason(state: LocalState, seasonId: number): StoredSeason {
+    const season = findOrFail(state.seasons, seasonId, "Estação");
+    if (season.closedAt !== null) conflict("Essa estação já foi encerrada");
+    return season;
+  }
+
+  /** The same chores come back every estação, only the score starts from zero. */
+  private copyOpenTasks(state: LocalState, sourceId: number, seasonId: number, now: Date): void {
+    const source = findOrFail(state.seasons, sourceId, "Estação");
+    state.tasks
+      .filter((task) => task.seasonId === source.id && task.status === "open")
+      .map((task): Task => ({
+        ...task, id: this.nextId(state), seasonId, dueOn: null, status: "open",
+        completedAt: null, createdAt: now.toISOString(),
+      }))
+      .forEach((task) => state.tasks.push(task));
+  }
+
   private placeholder(state: LocalState, name: string, position: number, now: Date): Member {
     return {
       id: this.nextId(state),
@@ -168,7 +195,7 @@ export class LocalApi implements ColmeiaApi {
         const name = input.name.trim();
         if (name === "") invalid("Dê um nome à colmeia");
         const now = this.clock();
-        const state = emptyState(this.freshInviteCode(), name);
+        const state = emptyState(this.freshInviteCode(), name, now);
         input.memberNames
           .map((value) => value.trim())
           .filter((value) => value !== "")
@@ -242,11 +269,60 @@ export class LocalApi implements ColmeiaApi {
       }),
   };
 
+  seasons = {
+    list: (): Promise<Season[]> =>
+      this.read((state) => seasonsNewestFirst(state.seasons.map((season) => withCounts(state, season)))),
+    create: (input: SeasonInput): Promise<Season> =>
+      this.mutate((state, now) => {
+        validateSeason(input);
+        const season: StoredSeason = {
+          id: this.nextId(state), name: input.name.trim(), startsOn: input.startsOn,
+          endsOn: input.endsOn, closedAt: null, createdAt: now.toISOString(),
+        };
+        state.seasons.push(season);
+        if (input.copyTasksFromSeasonId != null) this.copyOpenTasks(state, input.copyTasksFromSeasonId, season.id, now);
+        return withCounts(state, season);
+      }),
+    update: (id: number, input: Partial<SeasonUpdate>): Promise<Season> =>
+      this.mutate((state) => {
+        const season = findOrFail(state.seasons, id, "Estação");
+        validateSeason({ ...season, ...input });
+        Object.assign(season, input);
+        if (input.name !== undefined) season.name = input.name.trim();
+        return withCounts(state, season);
+      }),
+    close: (id: number): Promise<Season> =>
+      this.mutate((state, now) => {
+        const season = this.openSeason(state, id);
+        season.closedAt = now.toISOString();
+        return withCounts(state, season);
+      }),
+    reopen: (id: number): Promise<Season> =>
+      this.mutate((state) => {
+        const season = findOrFail(state.seasons, id, "Estação");
+        if (season.closedAt === null) conflict("Essa estação não está encerrada");
+        season.closedAt = null;
+        return withCounts(state, season);
+      }),
+    remove: (id: number): Promise<void> =>
+      this.mutate((state) => {
+        const season = findOrFail(state.seasons, id, "Estação");
+        if (state.completions.some((completion) => completion.seasonId === season.id)) {
+          conflict("Essa estação já tem tarefas concluídas, então não dá para apagá-la");
+        }
+        state.seasons = state.seasons.filter((candidate) => candidate.id !== season.id);
+        state.tasks = state.tasks.filter((task) => task.seasonId !== season.id);
+        state.goals = state.goals.filter((goal) => goal.seasonId !== season.id);
+      }),
+  };
+
   tasks = {
-    list: (): Promise<Task[]> => this.read((state) => state.tasks),
+    list: (seasonId: number | null): Promise<Task[]> =>
+      this.read((state) => (seasonId === null ? state.tasks : state.tasks.filter((task) => task.seasonId === seasonId))),
     create: (input: TaskInput): Promise<Task> =>
       this.mutate((state, now) => {
         validateTask(input);
+        this.openSeason(state, input.seasonId);
         const task: Task = { ...input, title: input.title.trim(), id: this.nextId(state), status: "open", completedAt: null, createdAt: now.toISOString() };
         state.tasks.push(task);
         return task;
@@ -268,9 +344,11 @@ export class LocalApi implements ColmeiaApi {
       this.mutate((state, now) => {
         const task = findOrFail(state.tasks, id, "Tarefa");
         findOrFail(state.members, memberId, "Membro");
+        this.openSeason(state, task.seasonId);
         if (task.status === "done") conflict("Essa tarefa já foi concluída");
         const completion: Completion = {
           id: this.nextId(state),
+          seasonId: task.seasonId,
           taskId: task.id,
           memberId,
           reviewerId: null,
@@ -302,8 +380,11 @@ export class LocalApi implements ColmeiaApi {
   };
 
   completions = {
-    list: (): Promise<Completion[]> =>
-      this.read((state) => [ ...state.completions ].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))),
+    list: (seasonId?: number | null): Promise<Completion[]> =>
+      this.read((state) =>
+        state.completions
+          .filter((completion) => seasonId === undefined || seasonId === null || completion.seasonId === seasonId)
+          .sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))),
     review: (id: number, input: ReviewInput): Promise<Completion> =>
       this.mutate((state, now) => {
         const completion = findOrFail(state.completions, id, "Conclusão");
@@ -354,10 +435,12 @@ export class LocalApi implements ColmeiaApi {
   };
 
   goals = {
-    list: (): Promise<Goal[]> => this.read((state) => state.goals),
+    list: (seasonId: number | null): Promise<Goal[]> =>
+      this.read((state) => (seasonId === null ? state.goals : state.goals.filter((goal) => goal.seasonId === seasonId))),
     create: (input: GoalInput): Promise<Goal> =>
       this.mutate((state) => {
         validateGoal(input);
+        this.openSeason(state, input.seasonId);
         if (input.memberId !== null) findOrFail(state.members, input.memberId, "Membro");
         const goal: Goal = { ...input, title: input.title.trim(), id: this.nextId(state) };
         state.goals.push(goal);

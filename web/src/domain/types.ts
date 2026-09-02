@@ -2,7 +2,6 @@ export type Priority = "low" | "medium" | "high" | "urgent";
 export type Recurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
 export type TaskStatus = "open" | "done";
 export type CompletionStatus = "pending" | "approved";
-export type GoalPeriod = "week" | "month";
 export type MemberColor = "honey" | "pollen" | "leaf" | "berry" | "sky" | "plum";
 
 export interface Household {
@@ -12,6 +11,21 @@ export interface Household {
   inviteCode: string;
 }
 
+/** A championship the colmeia runs: its own tasks, goals, points and ranking. */
+export interface Season {
+  id: number;
+  name: string;
+  /** ISO date. */
+  startsOn: string;
+  /** ISO date, or null for an estação with no end in sight. */
+  endsOn: string | null;
+  /** Set once the ranking is frozen. */
+  closedAt: string | null;
+  createdAt: string;
+  tasksCount: number;
+  completionsCount: number;
+}
+
 export interface Member {
   id: number;
   name: string;
@@ -19,13 +33,14 @@ export interface Member {
   color: MemberColor;
   /** null while the member is still a placeholder nobody has claimed. */
   claimedAt: string | null;
-  /** What they want to be called when they win a period. Blank means they never wear the crown. */
+  /** What they want to be called when they win an estação. Blank means they never wear the crown. */
   crownTitle: string;
   createdAt: string;
 }
 
 export interface Task {
   id: number;
+  seasonId: number;
   title: string;
   description: string | null;
   points: number;
@@ -43,6 +58,7 @@ export interface Task {
 
 export interface Completion {
   id: number;
+  seasonId: number;
   taskId: number | null;
   memberId: number | null;
   reviewerId: number | null;
@@ -68,9 +84,9 @@ export interface ShoppingItem {
 
 export interface Goal {
   id: number;
+  seasonId: number;
   title: string;
   targetPoints: number;
-  period: GoalPeriod;
   /** null means the whole household works towards it. */
   memberId: number | null;
 }
@@ -88,6 +104,7 @@ export interface HouseholdInput {
 export type MemberInput = Pick<Member, "name" | "avatar" | "color" | "crownTitle">;
 
 export interface TaskInput {
+  seasonId: number;
   title: string;
   description: string | null;
   points: number;
@@ -113,7 +130,17 @@ export interface ShoppingItemUpdate {
   purchasedById?: number | null;
 }
 
-export type GoalInput = Pick<Goal, "title" | "targetPoints" | "period" | "memberId">;
+export type GoalInput = Pick<Goal, "seasonId" | "title" | "targetPoints" | "memberId">;
+
+export interface SeasonInput {
+  name: string;
+  startsOn: string;
+  endsOn: string | null;
+  /** Open tasks of this estação come along, so the chores do not have to be retyped. */
+  copyTasksFromSeasonId?: number | null;
+}
+
+export type SeasonUpdate = Pick<SeasonInput, "name" | "startsOn" | "endsOn">;
 
 export interface ReviewInput {
   reviewerId: number;

@@ -3,12 +3,26 @@ import { queryKeys } from "./queryKeys";
 import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
 import { useScopedQuery } from "./useScopedQuery";
+import { useSeason } from "./useSeasonContext";
 
 const EMPTY: Goal[] = [];
 
+/** The goals of the estação the app is showing. */
 export function useGoals() {
   const api = useApi();
-  const query = useScopedQuery(queryKeys.goals, () => api.goals.list());
+  const { currentSeason } = useSeason();
+  const seasonId = currentSeason?.id ?? null;
+  const query = useScopedQuery(queryKeys.goals, () => api.goals.list(seasonId), {
+    scope: [ seasonId ],
+    enabled: seasonId !== null,
+  });
+  return { ...query, goals: query.data ?? EMPTY };
+}
+
+/** Every goal of the colmeia, estações included: what the crown reads. */
+export function useAllGoals() {
+  const api = useApi();
+  const query = useScopedQuery(queryKeys.goals, () => api.goals.list(null), { scope: [ "todas" ] });
   return { ...query, goals: query.data ?? EMPTY };
 }
 

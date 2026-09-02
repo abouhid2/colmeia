@@ -28,6 +28,15 @@ describe("LocalApi households", () => {
     api = buildApi();
   });
 
+  it("opens every new colmeia with a first estação", async () => {
+    const created = await api.households.create({ name: "Casa nova", memberNames: [] });
+    api.setInviteCode(created.inviteCode);
+
+    expect((await api.seasons.list()).map((season) => [ season.name, season.startsOn, season.endsOn ])).toEqual([
+      [ "Primeira estação", "2026-03-11", null ],
+    ]);
+  });
+
   it("creates a colmeia with placeholder members nobody has claimed", async () => {
     const household = await api.households.create({ name: "  Família Silva  ", memberNames: [ "Ana", " Bruno ", "", "   " ] });
 
@@ -81,15 +90,19 @@ describe("LocalApi households", () => {
     await expect(api.members.list()).rejects.toMatchObject({ status: 401 });
 
     api.setInviteCode(first.inviteCode);
+    const [ firstSeason ] = await api.seasons.list();
     await api.tasks.create({
-      title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null,
+      seasonId: firstSeason.id, title: "Louça", description: null, points: 5, priority: "low", recurrence: "none", intervalDays: null,
       dueOn: null, requiresReview: false, assigneeId: null, createdById: null,
     });
     expect((await api.members.list()).map((member) => member.name)).toEqual([ "Ana" ]);
 
     api.setInviteCode(second.inviteCode);
     expect((await api.members.list()).map((member) => member.name)).toEqual([ "Bruno" ]);
-    expect(await api.tasks.list()).toEqual([]);
+    expect(await api.tasks.list(null)).toEqual([]);
+    // Each colmeia keeps its own estações, and its own count of them.
+    expect((await api.seasons.list()).map((season) => season.tasksCount)).toEqual([ 0 ]);
+    expect(firstSeason.tasksCount).toBe(0);
   });
 
   it("lists the colmeias this browser holds, the demo included", async () => {

@@ -1,27 +1,32 @@
 import { Trash2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { LIMITS } from "../../domain/limits";
-import type { Goal, GoalPeriod } from "../../domain/types";
+import type { Goal } from "../../domain/types";
 import { useGoalMutations } from "../../hooks/useGoals";
+import { useSeason } from "../../hooks/useSeasonContext";
 import { useSession } from "../../hooks/useSession";
 import { useToast } from "../../hooks/useToast";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
 import { Field } from "../ui/Field";
 import { Input, Select } from "../ui/Input";
-import { Segmented } from "../ui/Segmented";
 import type { GoalDialogState } from "./useGoalDialog";
-
-const PERIOD_OPTIONS: { value: GoalPeriod; label: string }[] = [
-  { value: "week", label: "Por semana" },
-  { value: "month", label: "Por mês" },
-];
 
 export function GoalDialog({ dialog }: { dialog: GoalDialogState }) {
   const { isOpen, goal, defaultMemberId, close } = dialog;
+  const { currentSeason } = useSeason();
+  if (currentSeason === null) return null;
+
   return (
     <Dialog open={isOpen} onClose={close} title={goal ? "Ajustar a meta" : "Nova meta"} description="Uma recompensa para a casa inteira ou só para uma pessoa.">
-      <GoalForm key={`${goal?.id ?? "new"}-${defaultMemberId ?? "all"}`} goal={goal} defaultMemberId={defaultMemberId} onDone={close} />
+      <GoalForm
+        key={`${goal?.id ?? "new"}-${defaultMemberId ?? "all"}`}
+        goal={goal}
+        defaultMemberId={defaultMemberId}
+        seasonId={goal?.seasonId ?? currentSeason.id}
+        seasonName={currentSeason.name}
+        onDone={close}
+      />
     </Dialog>
   );
 }
@@ -29,14 +34,15 @@ export function GoalDialog({ dialog }: { dialog: GoalDialogState }) {
 interface GoalFormProps {
   goal: Goal | null;
   defaultMemberId: number | null;
+  seasonId: number;
+  seasonName: string;
   onDone(): void;
 }
 
-function GoalForm({ goal, defaultMemberId, onDone }: GoalFormProps) {
+function GoalForm({ goal, defaultMemberId, seasonId, seasonName, onDone }: GoalFormProps) {
   const { members } = useSession();
   const [title, setTitle] = useState(goal?.title ?? "");
   const [target, setTarget] = useState(goal?.targetPoints ?? 300);
-  const [period, setPeriod] = useState<GoalPeriod>(goal?.period ?? "week");
   const [owner, setOwner] = useState(goal ? String(goal.memberId ?? "") : String(defaultMemberId ?? ""));
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const { create, update, remove } = useGoalMutations();
@@ -44,7 +50,7 @@ function GoalForm({ goal, defaultMemberId, onDone }: GoalFormProps) {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    const input = { title, targetPoints: target, period, memberId: owner === "" ? null : Number(owner) };
+    const input = { title, targetPoints: target, seasonId, memberId: owner === "" ? null : Number(owner) };
     const onSuccess = () => { notify({ tone: "success", message: "Meta salva" }); onDone(); };
     if (goal) update.mutate({ id: goal.id, input }, { onSuccess });
     else create.mutate(input, { onSuccess });
@@ -68,11 +74,8 @@ function GoalForm({ goal, defaultMemberId, onDone }: GoalFormProps) {
       <Field label="Recompensa" htmlFor="goal-title" hint="Ex.: pizza e filme no sábado, escolher o passeio.">
         <Input id="goal-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="O que se ganha" maxLength={LIMITS.goalTitle} required autoFocus />
       </Field>
-      <Field label="Pontos para bater a meta" htmlFor="goal-target">
+      <Field label="Pontos para bater a meta" htmlFor="goal-target" hint={`Contam os pontos ganhos na estação ${seasonName}.`}>
         <Input id="goal-target" type="number" min={1} max={LIMITS.goalTarget} step={1} value={target} onChange={(event) => setTarget(Number(event.target.value))} required />
-      </Field>
-      <Field label="Período">
-        <Segmented label="Período" options={PERIOD_OPTIONS} value={period} onChange={setPeriod} />
       </Field>
       <div className="flex items-center justify-between gap-2 pt-2">
         {goal ? (

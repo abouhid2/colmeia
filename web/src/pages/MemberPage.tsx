@@ -1,5 +1,6 @@
 import { ArrowLeft, ListChecks, Pencil, Plus, Sparkles, Target, UserX } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router";
+import { isClosed } from "../domain/seasons";
 import { useCrown } from "../hooks/useCrown";
 import { useDisclosure } from "../hooks/useDisclosure";
 import { useMemberLookup } from "../hooks/useMembers";
@@ -13,6 +14,7 @@ import { MemberDialog } from "../components/members/MemberDialog";
 import { MemberHero } from "../components/members/MemberHero";
 import { MemberHistory } from "../components/members/MemberHistory";
 import { MemberStatTiles } from "../components/members/MemberStatTiles";
+import { SeasonClosedNotice } from "../components/season/SeasonClosedNotice";
 import { TaskDialogs } from "../components/tasks/TaskDialogs";
 import { TaskList } from "../components/tasks/TaskList";
 import { useTaskDialogs } from "../components/tasks/useTaskDialogs";
@@ -57,6 +59,7 @@ export function MemberPage() {
   if (member === null) return profile.isLoading ? null : <UnknownMember search={search} />;
 
   const crowned = crown?.member.id === member.id;
+  const closed = profile.season !== null && isClosed(profile.season);
 
   return (
     <div className="space-y-8 animate-rise">
@@ -67,11 +70,12 @@ export function MemberPage() {
         <Button variant="secondary" size="sm" icon={<Pencil className="size-4" />} onClick={memberDialog.open}>Editar</Button>
       </div>
 
+      {closed && profile.season !== null && <SeasonClosedNotice name={profile.season.name} />}
+
       <MemberHero
         member={member}
         crowned={crowned}
-        period={profile.period}
-        periodPoints={profile.periodPoints}
+        seasonPoints={profile.seasonPoints}
         allTimePoints={profile.allTimePoints}
         rank={profile.rank}
         houseSize={profile.houseSize}
@@ -87,30 +91,31 @@ export function MemberPage() {
       <section>
         <SectionHeading
           title={`Metas de ${member.name}`}
-          action={<Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(member.id)}>Nova meta</Button>}
+          hint={profile.season === null ? undefined : `Nesta estação: ${profile.season.name}.`}
+          action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(member.id)}>Nova meta</Button>}
         />
         {profile.goals.length === 0 ? (
           <EmptyState icon={<Target className="size-6" />} title={`${member.name} ainda não tem meta`} hint="Uma recompensa só para essa pessoa, contando só os pontos dela." />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {profile.goals.map((item) => (
-              <GoalSummaryCard key={item.goal.id} item={item} onEdit={() => goalDialog.openEdit(item.goal)} />
+              <GoalSummaryCard key={item.goal.id} item={item} readOnly={closed} onEdit={() => goalDialog.openEdit(item.goal)} />
             ))}
           </ul>
         )}
       </section>
 
       <section>
-        <SectionHeading title="Tarefas abertas" hint={`Atribuídas a ${member.name}, as mais urgentes primeiro.`} />
+        <SectionHeading title="Tarefas abertas" hint={`Atribuídas a ${member.name} nesta estação, as mais urgentes primeiro.`} />
         {profile.openTasks.length === 0 ? (
           <EmptyState icon={<ListChecks className="size-6" />} title="Nada na fila" hint="Ninguém atribuiu tarefa nenhuma para essa pessoa." />
         ) : (
-          <TaskList tasks={profile.openTasks} today={now} lookup={lookup} onComplete={dialogs.openComplete} onEdit={dialogs.openEdit} />
+          <TaskList tasks={profile.openTasks} today={now} lookup={lookup} onComplete={dialogs.openComplete} onEdit={dialogs.openEdit} readOnly={closed} />
         )}
       </section>
 
       <section>
-        <SectionHeading title="Histórico" hint="Tudo que já foi feito, do mais recente para o mais antigo." />
+        <SectionHeading title="Histórico" hint="Tudo que já foi feito, em todas as estações, do mais recente para o mais antigo." />
         {profile.history.length === 0 ? (
           <EmptyState icon={<Sparkles className="size-6" />} title="Nada concluído ainda" hint="A primeira tarefa feita aparece aqui." />
         ) : (
