@@ -6,6 +6,8 @@ pt-BR:
       season_already_closed: "Essa estação já estava encerrada"
       season_already_open: "Essa estação não está encerrada"
       season_has_completions: "Essa estação já tem tarefas concluídas, então não dá para apagá-la"
+      season_voting_closed: "A votação abre quando a estação encerrar"
+      auto_title_kept: "Esse é o título da coroa, e a coroa fica na lista"
       too_many_demos: "Tem muita gente experimentando o exemplo agora. Tente de novo daqui a pouco."
       not_a_demo: "Só dá para recomeçar uma colmeia de exemplo."
   activerecord:
@@ -17,6 +19,8 @@ pt-BR:
       goal: Meta
       household: Colmeia
       season: Estação
+      season_title: Título
+      season_title_vote: Voto
       achievement_award: Conquista
     attributes:
       task:
@@ -58,6 +62,19 @@ pt-BR:
         closed_at: Encerrada em
       household:
         name: Nome da colmeia
+      season_title:
+        name: Nome
+        description: Descrição
+        emoji: Emoji
+        kind: Tipo
+        position: Posição
+        active: Em uso
+      season_title_vote:
+        season: Estação
+        season_title: Título
+        voter: Quem votou
+        voter_id: Quem votou
+        votee: Quem recebeu o voto
       achievement_award:
         key: Conquista
         completion_id: Conclusão
@@ -68,6 +85,12 @@ pt-BR:
           attributes:
             ends_on:
               on_or_after_start: "não pode ser antes do começo"
+        season_title_vote:
+          attributes:
+            voter_id:
+              already_voted: "já escolheu alguém para esse título"
+            season_title:
+              not_voted_on: "é a coroa da estação, e a coroa ninguém vota"
         member:
           attributes:
             favorite_achievements:

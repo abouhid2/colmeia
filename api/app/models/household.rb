@@ -3,6 +3,8 @@ class Household < ApplicationRecord
 
   has_many :members, dependent: :destroy
   has_many :seasons, dependent: :destroy
+  has_many :season_titles, dependent: :destroy
+  has_many :season_title_votes, dependent: :destroy
   has_many :tasks, dependent: :destroy
   has_many :completions, dependent: :destroy
   has_many :shopping_items, dependent: :destroy

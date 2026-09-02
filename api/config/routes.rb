@@ -34,7 +34,12 @@ Rails.application.routes.draw do
           post :close
           post :reopen
         end
+        # Voting opens when the estação closes: who was the Pernilongo of it.
+        resource :votes, only: %i[ show update destroy ], controller: "season_title_votes"
       end
+      resources :season_titles, only: %i[ index create update destroy ]
+      # Every vote of the colmeia, for the titles listed on a profile.
+      resources :season_title_votes, only: %i[ index ]
       resources :achievement_awards, only: %i[ index create ]
     end
   end
