@@ -33,6 +33,10 @@ RSpec.describe NavPreferences do
     expect(described_class.normalize({ "order" => "home" })).to eq(empty)
   end
 
+  it "knows every screen the app can put in the navigation" do
+    expect(described_class::KEYS).to eq(%w[ home tasks goals shopping family achievements seasons ])
+  end
+
   it "reads the params the app sends as well as a stored hash" do
     params = ActionController::Parameters.new(order: %w[ tasks home ], hidden: %w[ family ]).permit!
 

@@ -2,6 +2,7 @@ import { useNavPreferences } from "../hooks/useNavPreferences";
 import { NavPreferenceRow } from "../components/settings/NavPreferenceRow";
 import { SectionHeading } from "../components/ui/SectionHeading";
 
+/** One section per thing a person sets for themselves, nobody else. */
 export function SettingsPage() {
   const { items, move, setVisible, isSaving } = useNavPreferences();
 
@@ -22,8 +23,8 @@ export function SettingsPage() {
               isFirst={index === 0}
               isLast={index === items.length - 1}
               saving={isSaving}
-              onMove={(step) => move(item.key, step)}
-              onVisible={(visible) => setVisible(item.key, visible)}
+              onMove={(step) => move(item, step)}
+              onVisible={(visible) => setVisible(item, visible)}
             />
           ))}
         </ul>

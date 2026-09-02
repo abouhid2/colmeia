@@ -9,7 +9,7 @@ export interface ResolvedNavItem extends NavItem {
 }
 
 export interface NavItemsValue {
-  /** Every screen in this person's order, the ones they turned off included. */
+  /** Every screen this release has, in this person's order, turned off ones included. */
   items: ResolvedNavItem[];
   /** What the sidebar and the bar at the bottom of a phone show. */
   visible: ResolvedNavItem[];
@@ -24,7 +24,10 @@ export function useNavItems(): NavItemsValue {
 
   return useMemo(() => {
     const preferences = normalizeNavPreferences(stored);
-    const items = navOrder(preferences).map((key) => ({ ...NAV_ITEMS[key], visible: isNavKeyVisible(preferences, key) }));
+    const items = navOrder(preferences).flatMap((key) => {
+      const item = NAV_ITEMS[key];
+      return item === undefined ? [] : [ { ...item, visible: isNavKeyVisible(preferences, key) } ];
+    });
     return { items, visible: items.filter((item) => item.visible), preferences };
   }, [stored]);
 }
