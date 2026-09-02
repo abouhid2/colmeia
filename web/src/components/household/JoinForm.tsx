@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { DEFAULT_CROWN_TITLE } from "../../domain/crownTitles";
+import { LIMITS } from "../../domain/limits";
 import { MEMBER_KIND_OPTIONS, MEMBER_KINDS } from "../../domain/memberKinds";
 import type { MemberColor, MemberInput, MemberKind } from "../../domain/types";
 import { AvatarPicker } from "../members/AvatarPicker";
@@ -27,7 +28,7 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    onSubmit({ name, avatar, color, kind, crownTitle: DEFAULT_CROWN_TITLE });
+    onSubmit({ name: name.trim(), avatar, color, kind, crownTitle: DEFAULT_CROWN_TITLE });
   };
 
   return (
@@ -36,7 +37,7 @@ export function JoinForm({ submitting, onSubmit, onCancel }: JoinFormProps) {
         <div className="flex items-center gap-4">
           <Avatar member={{ name: name || "Prévia", avatar, color }} size="lg" />
           <Field label="Seu nome" htmlFor="join-name">
-            <Input id="join-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Como te chamam" required autoFocus />
+            <Input id="join-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Como te chamam" maxLength={LIMITS.memberName} required autoFocus />
           </Field>
         </div>
         <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />

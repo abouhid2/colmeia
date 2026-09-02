@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
+import { LIMITS } from "../domain/limits";
 import { DEMO_INVITE_CODE, LocalApi, type KeyValueStore } from "./localApi";
 import { HOUSEHOLD_INDEX_KEY, HOUSEHOLD_KEY_PREFIX } from "./localStore";
 import { buildDemoState } from "./seed";
@@ -41,6 +43,36 @@ describe("LocalApi households", () => {
     await expect(api.households.create({ name: "   ", memberNames: [] })).rejects.toMatchObject({ status: 422 });
   });
 
+  it("holds names to the same lengths the API does", async () => {
+    await expect(api.households.create({ name: "x".repeat(LIMITS.householdName + 1), memberNames: [] }))
+      .rejects.toMatchObject({ status: 422 });
+    await expect(api.households.create({ name: "Casa", memberNames: [ "x".repeat(LIMITS.memberName + 1) ] }))
+      .rejects.toMatchObject({ status: 422 });
+    await expect(api.households.join(DEMO_INVITE_CODE, { name: "x".repeat(LIMITS.memberName + 1), avatar: "🐝", color: "honey", crownTitle: DEFAULT_CROWN_TITLE }))
+      .rejects.toMatchObject({ status: 422 });
+  });
+
+  it("refuses a list longer than a colmeia starts with", async () => {
+    const names = Array.from({ length: LIMITS.initialMembers + 1 }, (_, index) => `Pessoa ${index}`);
+
+    await expect(api.households.create({ name: "Multidão", memberNames: names })).rejects.toMatchObject({ status: 422 });
+    expect((await api.listStoredHouseholds()).map((item) => item.name)).not.toContain("Multidão");
+  });
+
+  it("stops taking people once the colmeia is full", async () => {
+    const names = Array.from({ length: LIMITS.initialMembers }, (_, index) => `Pessoa ${index}`);
+    const created = await api.households.create({ name: "Casa cheia", memberNames: names });
+    api.setInviteCode(created.inviteCode);
+    for (let seat = LIMITS.initialMembers; seat < LIMITS.householdMembers; seat += 1) {
+      await api.members.create({ name: `Pessoa ${seat}`, avatar: "🐝", color: "honey", crownTitle: DEFAULT_CROWN_TITLE });
+    }
+
+    await expect(api.members.create({ name: "Mais uma", avatar: "🐝", color: "honey", crownTitle: DEFAULT_CROWN_TITLE })).rejects.toMatchObject({ status: 422 });
+    await expect(api.households.join(created.inviteCode, { name: "Mais uma", avatar: "🐝", color: "honey", crownTitle: DEFAULT_CROWN_TITLE }))
+      .rejects.toMatchObject({ status: 422 });
+    expect((await api.members.list())).toHaveLength(LIMITS.householdMembers);
+  });
+
   it("looks a colmeia up by its invite code and 404s on anything else", async () => {
     const created = await api.households.create({ name: "Casa", memberNames: [ "Ana" ] });
 
@@ -49,6 +81,27 @@ describe("LocalApi households", () => {
     expect(found.members.map((member) => member.name)).toEqual([ "Ana" ]);
 
     await expect(api.households.lookup("naoexiste")).rejects.toMatchObject({ status: 404 });
+  });
+
+  it("answers to a code however it was typed", async () => {
+    const created = await api.households.create({ name: "Casa", memberNames: [ "Ana" ] });
+
+    expect((await api.households.lookup(created.inviteCode.toUpperCase())).name).toBe("Casa");
+  });
+
+  it("still finds a colmeia this browser filed under a mixed-case code", async () => {
+    const store = new MemoryStore();
+    const legacy = buildApi(store);
+    const created = await legacy.households.create({ name: "Casa antiga", memberNames: [] });
+    const state = store.getItem(`${HOUSEHOLD_KEY_PREFIX}${created.inviteCode}`) ?? "";
+    const index = JSON.parse(store.getItem(HOUSEHOLD_INDEX_KEY) ?? "{}") as Record<string, unknown>;
+    // Codes used to be drawn with capitals in them, and that is all this
+    // browser has: the lowercase key is gone.
+    store.removeItem(`${HOUSEHOLD_KEY_PREFIX}${created.inviteCode}`);
+    store.setItem(`${HOUSEHOLD_KEY_PREFIX}CodiGO0001`, state);
+    store.setItem(HOUSEHOLD_INDEX_KEY, JSON.stringify({ CodiGO0001: index[created.inviteCode] }));
+
+    expect((await legacy.households.lookup("codigo0001")).name).toBe("Casa antiga");
   });
 
   it("claims a placeholder once and refuses the second time", async () => {
@@ -115,10 +168,29 @@ describe("LocalApi households", () => {
     const household = await migrated.households.lookup(DEMO_INVITE_CODE);
 
     expect(household).toMatchObject({ name: "Casa antiga", inviteCode: DEMO_INVITE_CODE });
-    // People already using the app are in it, so nobody has to claim a place.
-    expect(household.members.every((member) => member.claimedAt !== null)).toBe(true);
+    // v2 never knew who this browser was, so the list still has to be claimed.
+    expect(household.members.every((member) => member.claimedAt === null)).toBe(true);
     expect(store.getItem("colmeia.db.v2")).toBeNull();
     expect(store.getItem(HOUSEHOLD_INDEX_KEY)).not.toBeNull();
+  });
+
+  it("rebuilds an index a browser left half written", async () => {
+    const store = new MemoryStore();
+    store.setItem(HOUSEHOLD_INDEX_KEY, "{\"demo\": ");
+
+    const recovered = buildApi(store);
+
+    expect((await recovered.households.lookup(DEMO_INVITE_CODE)).name).toBe("Família Colmeia");
+    expect(JSON.parse(store.getItem(HOUSEHOLD_INDEX_KEY) ?? "null")).toHaveProperty(DEMO_INVITE_CODE);
+  });
+
+  it("treats an unreadable colmeia as one this browser does not have", async () => {
+    const store = new MemoryStore();
+    const broken = buildApi(store);
+    const created = await broken.households.create({ name: "Casa", memberNames: [] });
+    store.setItem(`${HOUSEHOLD_KEY_PREFIX}${created.inviteCode}`, "}{");
+
+    await expect(broken.households.lookup(created.inviteCode)).rejects.toMatchObject({ status: 404 });
   });
 
   it("fills in the lagartinha fields for a store written before they existed", async () => {

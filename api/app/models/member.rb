@@ -2,6 +2,7 @@ class Member < ApplicationRecord
   COLORS = %w[ honey pollen leaf berry sky plum ].freeze
   AVATARS = %w[ 🐝 🦊 🐻 🐼 🦉 🐸 🐙 🦁 🐨 🦄 🐧 🐢 ].freeze
   KINDS = %w[ bee lagartinha ].freeze
+  MAX_PER_HOUSEHOLD = 30
   MIN_MULTIPLIER = 0.5
   MAX_MULTIPLIER = 3.0
   # What a lagartinha earns until the family says otherwise.
@@ -32,6 +33,7 @@ class Member < ApplicationRecord
   validates :points_multiplier,
     numericality: { greater_than_or_equal_to: MIN_MULTIPLIER, less_than_or_equal_to: MAX_MULTIPLIER }
   validates :crown_title, length: { maximum: CROWN_TITLE_LIMIT }, allow_blank: true
+  validate :household_has_room, on: :create
 
   before_save :apply_lagartinha_multiplier
 
@@ -60,6 +62,14 @@ class Member < ApplicationRecord
   end
 
   private
+
+  # A house holds a family, not a mailing list: the invite link is public, so
+  # something has to say when the list is full.
+  def household_has_room
+    return if household.nil? || household.members.count < MAX_PER_HOUSEHOLD
+
+    errors.add(:base, "Esta colmeia já tem #{MAX_PER_HOUSEHOLD} pessoas")
+  end
 
   # Becoming a lagartinha suggests the default handicap, once. Going back to
   # bee leaves whatever the family set: an adult may want one too.

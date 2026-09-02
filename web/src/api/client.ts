@@ -57,7 +57,9 @@ export interface ColmeiaApi {
     reopen(id: number): Promise<Task>;
   };
   completions: {
-    list(): Promise<Completion[]>;
+    /** Newest first. Without a limit, the whole history: the ranking and the
+     *  achievements are counted from all of it. */
+    list(limit?: number): Promise<Completion[]>;
     review(id: number, input: ReviewInput): Promise<Completion>;
   };
   shopping: {

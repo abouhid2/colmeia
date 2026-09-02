@@ -13,7 +13,9 @@ import { Link2Off } from "lucide-react";
 export function InvitePage() {
   const { code = "" } = useParams();
   const navigate = useNavigate();
-  const { household, isLoading, isMissing, knownMemberId, resume, claim, join } = useInvite(code);
+  // Codes get typed by hand, so the link answers in any case and the browser
+  // files this colmeia under one name only.
+  const { household, isLoading, isMissing, knownMemberId, resume, claim, join } = useInvite(code.toLowerCase());
   const joining = useDisclosure();
 
   if (isLoading) {
