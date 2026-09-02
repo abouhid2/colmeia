@@ -1,5 +1,8 @@
 class Member < ApplicationRecord
   COLORS = %w[ honey pollen leaf berry sky plum ].freeze
+  # How somebody's share of the honeycomb is drawn, so a colour-blind eye and
+  # a printed page can still tell who filled which cell.
+  PATTERNS = %w[ solid dots stripes crosses checks waves rings ].freeze
   AVATARS = %w[ 🐝 🦊 🐻 🐼 🦉 🐸 🐙 🦁 🐨 🦄 🐧 🐢 ].freeze
   KINDS = %w[ bee lagartinha ].freeze
   MAX_PER_HOUSEHOLD = 30
@@ -43,6 +46,7 @@ class Member < ApplicationRecord
   validates :name, presence: true, length: { maximum: 40 }
   validates :avatar, presence: true, length: { maximum: 8 }
   validates :color, inclusion: { in: COLORS }
+  validates :pattern, inclusion: { in: PATTERNS }
   validates :kind, inclusion: { in: KINDS }
   validates :points_multiplier,
     numericality: { greater_than_or_equal_to: MIN_MULTIPLIER, less_than_or_equal_to: MAX_MULTIPLIER }

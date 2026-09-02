@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { emptyNavPreferences } from "./navigation";
 import {
-  byStatus, byWindowStart, finishedGoal, goalAudience, goalsOf, goalsSeenBy, goalsWithPeople,
-  goalsWithProgress, householdGoals, isOver, participantsOf, runningGoal, upcomingGoal,
+  byStatus, byWindowStart, finishedGoal, goalAudience, goalContributions, goalsOf, goalsSeenBy,
+  goalsWithPeople, goalsWithProgress, householdGoals, isOver, participantsOf, runningGoal, upcomingGoal,
 } from "./goalBoard";
+import { goalWindow } from "./progress";
 import type { Completion, Goal, Member, Season } from "./types";
 
 const now = new Date(2026, 8, 16, 12);
@@ -14,7 +15,7 @@ const season: Season = {
 };
 
 const member = (id: number, name: string): Member => ({
-  id, name, avatar: "🐝", color: "honey", crownTitle: "Abelha Rainha", kind: "bee", pointsMultiplier: 1,
+  id, name, avatar: "🐝", color: "honey", pattern: "solid", crownTitle: "Abelha Rainha", kind: "bee", pointsMultiplier: 1,
   favoriteAchievements: [], navPreferences: emptyNavPreferences(), claimedAt: null, createdAt: "2026-09-01T00:00:00.000Z",
 });
 
@@ -41,6 +42,70 @@ describe("participantsOf", () => {
   it("keeps the people the goal names, and nobody else", () => {
     expect(participantsOf(goal({ id: 1, memberIds: [ 3, 1 ] }), members).map((person) => person.name)).toEqual([ "Ana", "Duda" ]);
     expect(participantsOf(goal({ id: 2 }), members)).toEqual([]);
+  });
+});
+
+
+describe("goalContributions", () => {
+  const shares = (target: Goal, completions: Completion[]) =>
+    goalContributions(target, completions, members, goalWindow(target, season, now))
+      .map(({ member: who, points }) => [ who.name, points ]);
+
+  it("adds up what each person put in, the biggest share first", () => {
+    const completions = [
+      completion({ id: 1, memberId: 2, pointsAwarded: 30 }),
+      completion({ id: 2, memberId: 1, pointsAwarded: 25 }),
+      completion({ id: 3, memberId: 1, pointsAwarded: 20 }),
+    ];
+
+    expect(shares(goal({ id: 1 }), completions)).toEqual([ [ "Ana", 45 ], [ "Bruno", 30 ] ]);
+  });
+
+  it("breaks a tie on the name, so the comb does not shuffle on its own", () => {
+    const completions = [
+      completion({ id: 1, memberId: 2, pointsAwarded: 10 }),
+      completion({ id: 2, memberId: 1, pointsAwarded: 10 }),
+    ];
+
+    expect(shares(goal({ id: 1 }), completions)).toEqual([ [ "Ana", 10 ], [ "Bruno", 10 ] ]);
+  });
+
+  it("counts only the people the goal names", () => {
+    const completions = [
+      completion({ id: 1, memberId: 1, pointsAwarded: 10 }),
+      completion({ id: 2, memberId: 2, pointsAwarded: 40 }),
+    ];
+
+    expect(shares(goal({ id: 1, memberIds: [ 1 ] }), completions)).toEqual([ [ "Ana", 10 ] ]);
+  });
+
+  it("counts only the days the goal runs", () => {
+    const completions = [
+      completion({ id: 1, memberId: 1, pointsAwarded: 10, completedAt: "2026-09-02T10:00:00.000Z" }),
+      completion({ id: 2, memberId: 1, pointsAwarded: 40, completedAt: "2026-09-12T10:00:00.000Z" }),
+    ];
+    const windowed = goal({ id: 1, startsOn: "2026-09-10", endsOn: "2026-09-20" });
+
+    expect(shares(windowed, completions)).toEqual([ [ "Ana", 40 ] ]);
+  });
+
+  it("leaves out points nobody is credited with any more", () => {
+    const completions = [
+      completion({ id: 1, memberId: null, pointsAwarded: 30 }),
+      completion({ id: 2, memberId: 1, pointsAwarded: 10 }),
+    ];
+
+    expect(shares(goal({ id: 1 }), completions)).toEqual([ [ "Ana", 10 ] ]);
+  });
+
+  it("adds up to exactly what the goal earned, minus what nobody owns", () => {
+    const completions = [
+      completion({ id: 1, memberId: 1, pointsAwarded: 25 }),
+      completion({ id: 2, memberId: 3, pointsAwarded: 15 }),
+    ];
+    const [ item ] = goalsWithProgress([ goal({ id: 1 }) ], completions, members, season, now);
+
+    expect(item.contributions.reduce((sum, one) => sum + one.points, 0)).toBe(item.progress.earned);
   });
 });
 

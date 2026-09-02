@@ -6,7 +6,7 @@ import type { Member, Season, SeasonTitle } from "../../domain/types";
 import { crownTitleLine, crownVerdict, joinNames, titleResultLine, voteCount } from "./titleCopy";
 
 const member = (id: number, name: string, crownTitle = "Abelha Rainha"): Member => ({
-  id, name, avatar: "🐝", color: "honey", crownTitle, kind: "bee", pointsMultiplier: 1,
+  id, name, avatar: "🐝", color: "honey", pattern: "solid", crownTitle, kind: "bee", pointsMultiplier: 1,
   favoriteAchievements: [], navPreferences: emptyNavPreferences(), claimedAt: null,
   createdAt: "2026-01-01T00:00:00.000Z",
 });

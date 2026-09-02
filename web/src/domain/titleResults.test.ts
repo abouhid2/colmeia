@@ -4,7 +4,7 @@ import { leadersOf, titleResults } from "./titleResults";
 import type { Member, SeasonTitle, SeasonTitleVote } from "./types";
 
 const member = (id: number, name: string): Member => ({
-  id, name, avatar: "🐝", color: "honey", crownTitle: "Abelha Rainha", kind: "bee", pointsMultiplier: 1,
+  id, name, avatar: "🐝", color: "honey", pattern: "solid", crownTitle: "Abelha Rainha", kind: "bee", pointsMultiplier: 1,
   favoriteAchievements: [], navPreferences: emptyNavPreferences(), claimedAt: null,
   createdAt: "2026-01-01T00:00:00.000Z",
 });

@@ -3,6 +3,7 @@ import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { generateInviteCode } from "../domain/inviteCode";
 import { emptyNavPreferences, normalizeNavPreferences } from "../domain/navigation";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
+import { DEFAULT_MEMBER_PATTERN, isMemberPattern } from "../domain/memberPatterns";
 import { completedAtError } from "../domain/completionMoment";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
 import { seasonCoversDay, seasonsNewestFirst } from "../domain/seasons";
@@ -99,6 +100,7 @@ function validateFavorites(favorites: AchievementId[] | undefined): void {
 
 function validateMember(input: Partial<MemberInput>): void {
   validateName(input.name, LIMITS.memberName, "Dê um nome à pessoa");
+  if (input.pattern !== undefined && !isMemberPattern(input.pattern)) invalid("Essa textura não existe");
   validateFavorites(input.favoriteAchievements);
   // A blank crown title is allowed on purpose: it is how someone says they want no crown.
   if (input.crownTitle !== undefined && input.crownTitle.trim().length > LIMITS.crownTitle) {
@@ -175,6 +177,7 @@ function newMember(input: MemberInput): Omit<Member, "claimedAt" | "createdAt" |
     name: input.name.trim(),
     avatar: input.avatar,
     color: input.color,
+    pattern: input.pattern ?? DEFAULT_MEMBER_PATTERN,
     kind,
     pointsMultiplier: multiplierForKind(kind, input.pointsMultiplier ?? 1),
     crownTitle: input.crownTitle.trim(),
@@ -309,6 +312,7 @@ export class LocalApi implements ColmeiaApi {
       name,
       avatar: AVATAR_OPTIONS[position % AVATAR_OPTIONS.length],
       color: MEMBER_COLOR_OPTIONS[position % MEMBER_COLOR_OPTIONS.length],
+      pattern: DEFAULT_MEMBER_PATTERN,
       kind: "bee",
       pointsMultiplier: 1,
       crownTitle: DEFAULT_CROWN_TITLE,

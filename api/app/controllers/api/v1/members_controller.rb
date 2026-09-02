@@ -29,7 +29,7 @@ module Api
 
       def member_params
         params.require(:member).permit(
-          :name, :avatar, :color, :kind, :points_multiplier, :crown_title,
+          :name, :avatar, :color, :pattern, :kind, :points_multiplier, :crown_title,
           favorite_achievements: [], nav_preferences: { order: [], hidden: [] }
         )
       end

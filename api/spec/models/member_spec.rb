@@ -10,6 +10,16 @@ RSpec.describe Member do
     expect(described_class.unclaimed).to include(member)
   end
 
+  it "fills the honeycomb solid until somebody picks a texture" do
+    member = household.members.create!(name: "Ana")
+
+    expect(member.pattern).to eq("solid")
+    expect(member.update(pattern: "waves")).to be(true)
+
+    member.pattern = "glitter"
+    expect(member).not_to be_valid
+  end
+
   it "stops taking new people once the house is full" do
     Member::MAX_PER_HOUSEHOLD.times { |index| household.members.create!(name: "Pessoa #{index}") }
 

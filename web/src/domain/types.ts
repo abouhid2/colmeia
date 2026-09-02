@@ -6,6 +6,8 @@ export type Recurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
 export type TaskStatus = "open" | "done";
 export type CompletionStatus = "pending" | "approved";
 export type MemberColor = "honey" | "pollen" | "leaf" | "berry" | "sky" | "plum";
+/** How somebody's share of the honeycomb is drawn, so colour is not the only clue. */
+export type MemberPattern = "solid" | "dots" | "stripes" | "crosses" | "checks" | "waves" | "rings";
 /** A lagartinha is a child: the same colmeia, smaller reach, points scaled up. */
 export type MemberKind = "bee" | "lagartinha";
 
@@ -46,6 +48,8 @@ export interface Member {
   name: string;
   avatar: string;
   color: MemberColor;
+  /** The texture their cells of the honeycomb are filled with. */
+  pattern: MemberPattern;
   kind: MemberKind;
   /** What this person earns per point a task is worth. 1 for most adults. */
   pointsMultiplier: number;
@@ -183,6 +187,7 @@ export interface HouseholdInput {
 }
 
 export interface MemberInput extends Pick<Member, "name" | "avatar" | "color" | "crownTitle"> {
+  pattern?: MemberPattern;
   kind?: MemberKind;
   pointsMultiplier?: number;
   favoriteAchievements?: AchievementId[];

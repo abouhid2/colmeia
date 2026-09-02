@@ -78,7 +78,7 @@ describe("season copy", () => {
 });
 
 const member = (id: number, name: string): Member => ({
-  id, name, avatar: "🐝", color: "honey", crownTitle: "Abelha Rainha", kind: "bee", pointsMultiplier: 1,
+  id, name, avatar: "🐝", color: "honey", pattern: "solid", crownTitle: "Abelha Rainha", kind: "bee", pointsMultiplier: 1,
   favoriteAchievements: [], navPreferences: emptyNavPreferences(), claimedAt: null, createdAt: "2026-03-09T00:00:00.000Z",
 });
 

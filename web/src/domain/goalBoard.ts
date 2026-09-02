@@ -1,5 +1,8 @@
 import { rankMembers, type Standing } from "./leaderboard";
-import { goalProgress, type GoalProgress, type GoalStatus } from "./progress";
+import {
+  approvedCompletions, countsFor, goalProgress, isWithin,
+  type GoalProgress, type GoalStatus, type SeasonBounds,
+} from "./progress";
 import { completionsInSeason } from "./seasons";
 import type { Completion, Goal, Member, Season } from "./types";
 
@@ -15,6 +18,34 @@ export interface GoalWithProgress {
   members: Member[];
   /** Who contributed inside this goal's own estação. */
   standings: Standing[];
+  /** What each person put into this goal, the biggest share first. */
+  contributions: GoalContribution[];
+}
+
+/** One person's share of a goal, for the honeycomb and the chips under it. */
+export interface GoalContribution {
+  member: Member;
+  points: number;
+}
+
+/** Who filled a goal: its own people, over its own window, counted exactly the
+ *  way goalProgress counts, so the comb and the number under it agree. Points
+ *  scored by somebody who has left the colmeia belong to nobody and are left
+ *  out; the comb draws them as plain honey. */
+export function goalContributions(goal: Goal, completions: Completion[], members: Member[], window: SeasonBounds): GoalContribution[] {
+  const counted = approvedCompletions(completionsInSeason(completions, goal.seasonId)).filter(
+    (completion) => countsFor(goal, completion.memberId) && isWithin(completion.completedAt, window),
+  );
+  const points = new Map<number, number>();
+  counted.forEach((completion) => {
+    if (completion.memberId === null) return;
+    points.set(completion.memberId, (points.get(completion.memberId) ?? 0) + completion.pointsAwarded);
+  });
+
+  return members
+    .map((member) => ({ member, points: points.get(member.id) ?? 0 }))
+    .filter((entry) => entry.points > 0)
+    .sort((left, right) => right.points - left.points || left.member.name.localeCompare(right.member.name));
 }
 
 export function goalAudience(goal: Goal): GoalAudience {
@@ -33,13 +64,17 @@ export function goalsWithProgress(
   const standings = rankMembers(members, completionsInSeason(completions, season.id));
   return goals
     .filter((goal) => goal.seasonId === season.id)
-    .map((goal) => ({
-      goal,
-      progress: goalProgress(goal, completions, season, now),
-      season,
-      members: participantsOf(goal, members),
-      standings,
-    }));
+    .map((goal) => {
+      const progress = goalProgress(goal, completions, season, now);
+      return {
+        goal,
+        progress,
+        season,
+        members: participantsOf(goal, members),
+        standings,
+        contributions: goalContributions(goal, completions, members, progress.window),
+      };
+    });
 }
 
 /** Earliest window first, so a roteiro and a list read the same way. */

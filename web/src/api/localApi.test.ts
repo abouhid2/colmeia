@@ -331,6 +331,31 @@ describe("LocalApi", () => {
     );
   });
 
+  it("reads members stored before textures existed as a solid fill", async () => {
+    const store = new MemoryStore();
+    const stored = buildDemoState(now);
+    const bare = stored.members.map(({ pattern: _pattern, ...member }) => member);
+    store.setItem("colmeia.db.v2", JSON.stringify({ ...stored, members: bare }));
+
+    const upgraded = new LocalApi(store, { seed: () => buildDemoState(now), clock: () => now });
+    upgraded.setInviteCode(DEMO_INVITE_CODE);
+
+    expect((await upgraded.members.list()).every((member) => member.pattern === "solid")).toBe(true);
+  });
+
+  it("keeps the texture a member picked and refuses one nobody drew", async () => {
+    const changed = await api.members.update(2, { pattern: "waves" });
+    expect(changed.pattern).toBe("waves");
+
+    await expect(api.members.update(2, { pattern: "glitter" as never })).rejects.toMatchObject({ message: "Essa textura não existe" });
+  });
+
+  it("gives a new person a solid fill until they pick a texture", async () => {
+    const created = await api.members.create({ name: "Tino", avatar: "🐢", color: "leaf", crownTitle: "" });
+
+    expect(created.pattern).toBe("solid");
+  });
+
   it("keeps the crown title a member chose, trimmed", async () => {
     expect((await api.members.list()).find((member) => member.id === 2)?.crownTitle).toBe("Abelhão");
 

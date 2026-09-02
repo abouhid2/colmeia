@@ -5,7 +5,7 @@ import type { Member } from "./types";
 
 function member(name: string, kind: Member["kind"]): Member {
   return {
-    id: name.length, name, avatar: "🐝", color: "honey", kind,
+    id: name.length, name, avatar: "🐝", color: "honey", pattern: "solid", kind,
     pointsMultiplier: kind === "lagartinha" ? 1.5 : 1,
     claimedAt: null, crownTitle: "", favoriteAchievements: [], navPreferences: emptyNavPreferences(),
     createdAt: "2026-03-11T12:00:00.000Z",

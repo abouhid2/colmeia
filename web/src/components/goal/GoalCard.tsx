@@ -1,6 +1,7 @@
 import { Gift, PartyPopper, Pencil } from "lucide-react";
 import type { GoalWithProgress } from "../../domain/goalBoard";
 import { formatPoints } from "../../domain/points";
+import { MemberMark } from "../members/MemberMark";
 import { Avatar } from "../ui/Avatar";
 import { AvatarStack } from "../ui/AvatarStack";
 import { Button } from "../ui/Button";
@@ -17,8 +18,10 @@ interface GoalCardProps {
 
 /** The goal in the spotlight: how many points to reach, then what reaching it pays. */
 export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
-  const { goal, progress, season, members, standings } = item;
-  const contributors = standings.filter((standing) => standing.points > 0 && (members.length === 0 || members.some((member) => member.id === standing.member.id)));
+  const { goal, progress, season, members, contributions } = item;
+  // The chips are the legend for the comb, so both read the same list: this
+  // goal's own people, over this goal's own window.
+  const painters = contributions.map(({ member }) => member);
   const summary = `${progress.earned} de ${progress.target} pontos`;
 
   return (
@@ -53,7 +56,13 @@ export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
       </div>
 
       <div className="my-6">
-        <Honeycomb earned={progress.earned} target={progress.target} label={`Favo da meta: ${summary}`} />
+        <Honeycomb
+          earned={progress.earned}
+          target={progress.target}
+          label={`Favo da meta: ${summary}`}
+          contributions={contributions.map(({ member, points }) => ({ memberId: member.id, points }))}
+          members={painters}
+        />
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
@@ -71,10 +80,11 @@ export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
         )}
       </div>
 
-      {contributors.length > 0 && (
+      {contributions.length > 0 && (
         <ul className="mt-5 flex flex-wrap gap-2" aria-label="Quem já ajudou">
-          {contributors.map(({ member, points }) => (
+          {contributions.map(({ member, points }) => (
             <li key={member.id} className="flex items-center gap-1.5 rounded-full border border-line py-1 pl-1 pr-3 text-sm">
+              <MemberMark member={member} className="size-4" />
               <Avatar member={member} size="xs" />
               <span className="font-medium">{member.name}</span>
               <span className="tabular-nums text-ink-soft">{points}</span>

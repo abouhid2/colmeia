@@ -15,6 +15,8 @@ import { Input } from "../ui/Input";
 import { Segmented } from "../ui/Segmented";
 import { AvatarPicker } from "./AvatarPicker";
 import { CrownTitleField } from "./CrownTitleField";
+import { MemberMark } from "./MemberMark";
+import { PatternPicker } from "./PatternPicker";
 import { useMemberForm } from "./useMemberForm";
 
 const KIND_SEGMENTS = MEMBER_KIND_OPTIONS.map((kind) => ({ value: kind, label: MEMBER_KINDS[kind].label }));
@@ -35,7 +37,7 @@ export function MemberDialog({ open, member, onClose }: MemberDialogProps) {
 
 function MemberForm({ member, onDone }: { member: Member | null; onDone(): void }) {
   const form = useMemberForm(member);
-  const { name, avatar, color, kind, multiplier, crownTitle } = form.values;
+  const { name, avatar, color, pattern, kind, multiplier, crownTitle } = form.values;
   const [ confirmingDelete, setConfirmingDelete ] = useState(false);
   const advanced = useDisclosure();
   const lagartinhasEnabled = useLagartinhasEnabled();
@@ -60,12 +62,16 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
   return (
     <form onSubmit={submit} className="space-y-4">
       <div className="flex items-center gap-4">
-        <Avatar member={{ name: name || "Prévia", avatar, color }} size="lg" />
+        <span className="relative shrink-0">
+          <Avatar member={{ name: name || "Prévia", avatar, color }} size="lg" />
+          <MemberMark member={{ color, pattern }} className="absolute -bottom-1 -right-1 size-6" />
+        </span>
         <Field label="Nome" htmlFor="member-name">
           <Input id="member-name" value={name} onChange={(event) => form.setName(event.target.value)} placeholder="Como chamam essa pessoa" maxLength={LIMITS.memberName} required autoFocus className="w-56" />
         </Field>
       </div>
       <AvatarPicker avatar={avatar} color={color} onAvatar={form.setAvatar} onColor={form.setColor} />
+      <PatternPicker color={color} pattern={pattern} onPattern={form.setPattern} />
       {lagartinhasEnabled && (
         <Field label="É abelha ou lagartinha?" hint={MEMBER_KINDS[kind].hint}>
           <Segmented label="Tipo de pessoa" options={KIND_SEGMENTS} value={kind} onChange={form.setKind} />

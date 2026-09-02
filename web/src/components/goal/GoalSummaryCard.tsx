@@ -2,6 +2,8 @@ import { Gift, PartyPopper, Pencil, Trophy } from "lucide-react";
 import type { GoalWithProgress } from "../../domain/goalBoard";
 import { formatPoints } from "../../domain/points";
 import { cn } from "../../lib/cn";
+import { MemberMark } from "../members/MemberMark";
+import { MemberPatternBar } from "../members/MemberPatternBar";
 import { AvatarStack } from "../ui/AvatarStack";
 import { IconButton } from "../ui/IconButton";
 import { GOAL_STATUS_LABEL, goalWindowPhrase, hasOwnWindow, participantsLabel } from "./goalCopy";
@@ -17,6 +19,9 @@ interface GoalSummaryCardProps {
 export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryCardProps) {
   const { goal, progress, season, members } = item;
   const who = participantsLabel(members);
+  // A goal one person carries alone fills its bar with their texture. One
+  // already batida stays green: that is what the colour is there to say.
+  const soloist = members.length === 1 && !progress.reached ? members[0] : null;
 
   return (
     <li className="flex items-start gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
@@ -26,7 +31,10 @@ export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryC
         <AvatarStack members={members} className="mt-0.5" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">{who} · {season.name}</p>
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-honey-700">
+          {members.length === 1 && <MemberMark member={members[0]} className="size-3.5" />}
+          <span>{who} · {season.name}</span>
+        </p>
         <p className="font-semibold">Meta: <span className="tabular-nums">{formatPoints(goal.targetPoints)}</span></p>
         <p className="flex items-start gap-1.5 text-sm text-ink-soft">
           <Gift className="mt-0.5 size-3.5 shrink-0 text-honey-700" aria-hidden />
@@ -34,7 +42,11 @@ export function GoalSummaryCard({ item, onEdit, readOnly = false }: GoalSummaryC
         </p>
         {hasOwnWindow(goal) && <p className="text-sm text-ink-soft">{goalWindowPhrase(goal, season)}</p>}
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-honey-100" role="progressbar" aria-valuemin={0} aria-valuemax={progress.target} aria-valuenow={progress.earned} aria-label={`Meta de ${who}: ${progress.earned} de ${progress.target} pontos`}>
-          <div className={cn("h-full rounded-full transition-[width] duration-500", progress.reached ? "bg-leaf-500" : "bg-honey-500")} style={{ width: `${progress.ratio * 100}%` }} />
+          {soloist === null ? (
+            <div className={cn("h-full rounded-full transition-[width] duration-500", progress.reached ? "bg-leaf-500" : "bg-honey-500")} style={{ width: `${progress.ratio * 100}%` }} />
+          ) : (
+            <MemberPatternBar member={soloist} ratio={progress.ratio} />
+          )}
         </div>
         <p className="mt-1 text-sm text-ink-soft">
           <span className="font-semibold text-ink tabular-nums">{progress.earned}</span> de {progress.target} pontos
