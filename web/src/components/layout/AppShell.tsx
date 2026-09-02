@@ -1,8 +1,9 @@
-import { Link2Off } from "lucide-react";
-import { Outlet } from "react-router";
+import { Link2Off, Settings2 } from "lucide-react";
+import { Link, Outlet, useLocation } from "react-router";
 import { useAchievementSync } from "../../hooks/useAchievementAwards";
 import { useApi } from "../../hooks/useApi";
 import { useHousehold } from "../../hooks/useHousehold";
+import { useNavItems } from "../../hooks/useNavItems";
 import { useSession } from "../../hooks/useSession";
 import { useSessionContext } from "../../hooks/useSessionContext";
 import { LandingPage } from "../../pages/LandingPage";
@@ -10,9 +11,11 @@ import { InviteButton } from "../household/InviteButton";
 import { SeasonSwitcher } from "../season/SeasonSwitcher";
 import { Button } from "../ui/Button";
 import { EmptyState } from "../ui/EmptyState";
+import { BottomBar } from "./BottomBar";
 import { BrandMark } from "./BrandMark";
 import { ExampleBanner } from "./ExampleBanner";
 import { MemberSwitcher } from "./MemberSwitcher";
+import { SETTINGS_LABEL, SETTINGS_PATH } from "./navItems";
 import { NavLinks } from "./NavLinks";
 import { PlainPage } from "./PlainPage";
 
@@ -21,6 +24,8 @@ export function AppShell() {
   const { currentMember, isLoading } = useSession();
   const household = useHousehold();
   const { mode } = useApi();
+  const { visible: navItems } = useNavItems();
+  const { search } = useLocation();
   // Wherever this person is in the app, the badges they earn get written down.
   useAchievementSync(currentMember?.id ?? null);
 
@@ -38,10 +43,16 @@ export function AppShell() {
             <p className="mt-1 truncate pl-9 text-sm text-ink-soft">{household.data?.name}</p>
             <div className="mt-4"><SeasonSwitcher /></div>
           </div>
-          <nav aria-label="Principal"><NavLinks layout="rail" /></nav>
+          <nav aria-label="Principal"><NavLinks items={navItems} layout="rail" /></nav>
           <div className="mt-auto space-y-3">
             <InviteButton />
             <MemberSwitcher />
+            <Link
+              to={{ pathname: SETTINGS_PATH, search }}
+              className="flex w-fit items-center gap-1.5 text-sm font-semibold text-ink-soft transition-colors hover:text-ink"
+            >
+              <Settings2 className="size-4" aria-hidden /> {SETTINGS_LABEL}
+            </Link>
             {mode === "local" && <p className="text-xs text-ink-faint">Demonstração: os dados ficam só neste navegador.</p>}
           </div>
         </aside>
@@ -60,9 +71,7 @@ export function AppShell() {
           <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-5 md:px-10 md:pb-16 md:pt-10">
             <Outlet />
           </main>
-          <nav aria-label="Principal" className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
-            <NavLinks layout="tabs" />
-          </nav>
+          <BottomBar />
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { addDays, addHours, startOfWeek, subHours, subWeeks } from "date-fns";
 import type { AchievementId } from "../domain/achievements";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
+import { emptyNavPreferences } from "../domain/navigation";
 import { toIsoDate } from "../lib/dates";
 import type { Completion, Member, ShoppingItem, Task } from "../domain/types";
 import {
@@ -45,6 +46,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
     crownTitle = DEFAULT_CROWN_TITLE, kind: Member["kind"] = "bee", favoriteAchievements: AchievementId[] = [],
   ): Member => ({
     id, name, avatar, color, crownTitle, kind, favoriteAchievements,
+    navPreferences: emptyNavPreferences(),
     pointsMultiplier: kind === "lagartinha" ? 1.5 : 1, claimedAt: null, createdAt: iso(240),
   });
   // Duda is the child of the house: everything she does is worth 1,5x. Ana and

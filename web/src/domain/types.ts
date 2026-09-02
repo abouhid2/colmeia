@@ -1,4 +1,5 @@
 import type { AchievementId } from "./achievements";
+import type { NavPreferences } from "./navigation";
 
 export type Priority = "low" | "medium" | "high" | "urgent";
 export type Recurrence = "none" | "daily" | "weekly" | "monthly" | "custom";
@@ -54,6 +55,8 @@ export interface Member {
   crownTitle: string;
   /** Up to three badges this person pinned on their own profile. */
   favoriteAchievements: AchievementId[];
+  /** Which screens this person keeps in their navigation, and in what order. */
+  navPreferences: NavPreferences;
   createdAt: string;
 }
 
@@ -140,6 +143,7 @@ export interface MemberInput extends Pick<Member, "name" | "avatar" | "color" | 
   kind?: MemberKind;
   pointsMultiplier?: number;
   favoriteAchievements?: AchievementId[];
+  navPreferences?: NavPreferences;
 }
 
 export interface TaskInput {
