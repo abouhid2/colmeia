@@ -1,6 +1,7 @@
 class Member < ApplicationRecord
   COLORS = %w[ honey pollen leaf berry sky plum ].freeze
   AVATARS = %w[ 🐝 🦊 🐻 🐼 🦉 🐸 🐙 🦁 🐨 🦄 🐧 🐢 ].freeze
+  MAX_PER_HOUSEHOLD = 30
 
   belongs_to :household
   has_many :assigned_tasks, class_name: "Task", foreign_key: :assignee_id,
@@ -18,6 +19,7 @@ class Member < ApplicationRecord
   validates :name, presence: true, length: { maximum: 40 }
   validates :avatar, presence: true, length: { maximum: 8 }
   validates :color, inclusion: { in: COLORS }
+  validate :household_has_room, on: :create
 
   scope :unclaimed, -> { where(claimed_at: nil) }
 
@@ -30,5 +32,15 @@ class Member < ApplicationRecord
 
   def claim!(now = Time.current)
     update!(claimed_at: now)
+  end
+
+  private
+
+  # A house holds a family, not a mailing list: the invite link is public, so
+  # something has to say when the list is full.
+  def household_has_room
+    return if household.nil? || household.members.count < MAX_PER_HOUSEHOLD
+
+    errors.add(:base, "Esta colmeia já tem #{MAX_PER_HOUSEHOLD} pessoas")
   end
 end

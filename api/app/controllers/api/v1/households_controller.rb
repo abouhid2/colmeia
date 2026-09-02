@@ -30,16 +30,21 @@ module Api
       private
 
       def invited_household
-        @invited_household ||= Household.find_by!(invite_code: params[:invite_code])
+        @invited_household ||= Household.find_by!(invite_code: params[:invite_code].to_s.downcase)
       end
 
+      # Names arrive from a phone keyboard, trailing space and all.
       def create_params
         permitted = params.require(:household).permit(:name, member_names: [])
-        { name: permitted[:name], member_names: permitted[:member_names] || [] }
+        {
+          name: permitted[:name].to_s.strip,
+          member_names: Array(permitted[:member_names]).map { |value| value.to_s.strip }
+        }
       end
 
       def member_params
-        params.require(:member).permit(:name, :avatar, :color)
+        permitted = params.require(:member).permit(:name, :avatar, :color)
+        permitted.merge(name: permitted[:name].to_s.strip)
       end
     end
   end

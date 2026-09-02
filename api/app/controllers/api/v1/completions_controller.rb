@@ -1,10 +1,13 @@
 module Api
   module V1
     class CompletionsController < BaseController
+      DEFAULT_LIMIT = 200
+      MAX_LIMIT = 1000
+
       def index
         scope = completions.recent_first
         scope = scope.where(status: params[:status]) if params[:status].present?
-        render json: scope.map { |completion| CompletionSerializer.call(completion) }
+        render json: scope.limit(page_limit).map { |completion| CompletionSerializer.call(completion) }
       end
 
       def review
@@ -20,6 +23,13 @@ module Api
       end
 
       private
+
+      # The newest slice of the history. A colmeia that has been running for
+      # years should not send every completion it ever had.
+      def page_limit
+        requested = Integer(params[:limit], exception: false) || DEFAULT_LIMIT
+        requested.clamp(1, MAX_LIMIT)
+      end
 
       def completions
         current_household.completions
