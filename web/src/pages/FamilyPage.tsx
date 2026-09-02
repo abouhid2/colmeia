@@ -1,6 +1,7 @@
 import { CalendarRange, Plus, Settings2, Target } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "react-router";
+import { goalsSeenBy } from "../domain/goalBoard";
 import { CROWN_EXPLANATION } from "../domain/crownTitles";
 import { isClosed } from "../domain/seasons";
 import type { Member } from "../domain/types";
@@ -51,9 +52,7 @@ export function FamilyPage() {
   const findStanding = (list: typeof standings, member: Member) => list.find((standing) => standing.member.id === member.id);
   const shownMembers = memberId === null ? members : members.filter((member) => member.id === memberId);
   // Filtering by a person keeps the metas da colmeia: those are hers too.
-  const shownGoals = memberId === null
-    ? all
-    : all.filter((item) => item.goal.memberIds.length === 0 || item.goal.memberIds.includes(memberId));
+  const shownGoals = goalsSeenBy(all, memberId);
 
   return (
     <div className="space-y-8 animate-rise">

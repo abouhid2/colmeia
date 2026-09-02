@@ -11,18 +11,20 @@ describe("BottomBar", () => {
 
     await waitFor(() => expect(screen.getByRole("button", { name: "Mais" })).not.toBeNull());
     expect(screen.queryAllByRole("link").map((link) => link.textContent)).toEqual([
-      "Início", "Tarefas", "Compras", "Família",
+      "Início", "Tarefas", "Metas", "Compras",
     ]);
   });
 
   it("gives the fifth slot to the last screen once five are all there is", async () => {
     const colmeia = await exampleColmeia(true);
-    await colmeia.api.members.update(colmeia.member.id, { navPreferences: { order: [], hidden: [ "shopping" ] } });
+    await colmeia.api.members.update(colmeia.member.id, {
+      navPreferences: { order: [], hidden: [ "shopping", "achievements" ] },
+    });
 
     const screen = renderInColmeia(colmeia, <BottomBar />);
 
     await waitFor(() => expect(screen.queryAllByRole("link").map((link) => link.textContent)).toEqual([
-      "Início", "Tarefas", "Família", "Conquistas", "Estações",
+      "Início", "Tarefas", "Metas", "Família", "Estações",
     ]));
     expect(screen.queryByRole("button", { name: "Mais" })).toBeNull();
   });
@@ -36,7 +38,7 @@ describe("BottomBar", () => {
     const screen = renderInColmeia(colmeia, <BottomBar />);
 
     await waitFor(() => expect(screen.queryAllByRole("link").map((link) => link.textContent)).toEqual([
-      "Estações", "Início", "Tarefas", "Compras",
+      "Estações", "Início", "Tarefas", "Metas",
     ]));
     expect(screen.getByRole("button", { name: "Mais" })).not.toBeNull();
   });
