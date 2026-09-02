@@ -34,7 +34,13 @@ module Api
       end
 
       def render_missing_reference
-        render json: { error: "invalid", details: [ I18n.t("api.errors.missing_reference") ] }, status: :unprocessable_content
+        render_unprocessable(I18n.t("api.errors.missing_reference"))
+      end
+
+      # A rule the request broke that no model validation covers, said in the
+      # same shape as a validation error so the front end reads them alike.
+      def render_unprocessable(message)
+        render json: { error: "invalid", details: [ message ] }, status: :unprocessable_content
       end
 
       def render_bad_request(exception)
