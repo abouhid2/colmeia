@@ -59,7 +59,7 @@ function lastCompletionFor(completions: Completion[], taskId: number): Completio
 
 function validateShoppingItem(input: { name?: string; quantity?: string | null }): void {
   validateName(input.name, LIMITS.shoppingItemName, "Escreva o que está faltando");
-  if (input.quantity && input.quantity.length > LIMITS.shoppingQuantity) invalid(`A quantidade cabe em ${LIMITS.shoppingQuantity} caracteres`);
+  if (input.quantity && input.quantity.length > LIMITS.shoppingQuantity) invalid(`A quantidade cabe em ${LIMITS.shoppingQuantity} letras`);
 }
 
 function validateMember(input: Partial<MemberInput>): void {

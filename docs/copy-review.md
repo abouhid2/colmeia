@@ -210,6 +210,7 @@ Antes vários erros só diziam que deu errado. Agora dizem o que fazer.
 | "Meta não encontrado" | "Essa meta não está mais aqui. Atualize a página." |
 | "Use no máximo 120 caracteres" | "Use no máximo 120 letras" |
 | "O título cabe em 30 caracteres" | "O título cabe em 30 letras" |
+| "A quantidade cabe em 30 caracteres" | "A quantidade cabe em 30 letras" |
 | "A meta precisa ser maior que zero" | "A meta precisa de pelo menos 1 ponto" |
 | "Os pontos precisam ser um número maior que zero" | "A tarefa vale pelo menos 1 ponto" |
 | "Informe a cada quantos dias a tarefa se repete" | "Diga a cada quantos dias a tarefa se repete" |
