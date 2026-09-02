@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { errorMessage } from "../../api/errors";
 import { LIMITS } from "../../domain/limits";
 import type { Goal, Season } from "../../domain/types";
 import { useGoalMutations } from "../../hooks/useGoals";
@@ -51,9 +52,13 @@ function GoalForm({ goal, defaultMemberIds, season, onDone }: GoalFormProps) {
   const { notify } = useToast();
 
   const { title, target, memberIds, ownWindow, startsOn, endsOn } = form.values;
+  // A rule the save broke belongs next to the fields that broke it: the toast
+  // that also carries it lands behind the dialog.
+  const saveError = create.error ?? update.error ?? remove.error;
   const picked = members.filter((member) => memberIds.includes(member.id));
   const preview = goalPreviewSentence({
     ownerName: picked.length === 0 ? null : participantsLabel(picked),
+    plural: picked.length > 1,
     targetPoints: target,
     seasonName: season.name,
     reward: title,
@@ -89,6 +94,11 @@ function GoalForm({ goal, defaultMemberIds, season, onDone }: GoalFormProps) {
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">Como fica</p>
         <p className="mt-1 text-sm">{preview}</p>
       </div>
+      {saveError && (
+        <p role="alert" className="rounded-card bg-berry-100 px-3 py-2 text-sm font-semibold text-berry-700">
+          {errorMessage(saveError)}
+        </p>
+      )}
       <div className="flex items-center justify-between gap-2 pt-2">
         {goal ? (
           <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? destroy() : setConfirmingDelete(true))} loading={remove.isPending}>

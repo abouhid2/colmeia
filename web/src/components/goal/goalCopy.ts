@@ -31,6 +31,8 @@ export function seasonStatus(season: Season): string {
 export interface GoalPreview {
   /** null while the whole colmeia works towards it. */
   ownerName: string | null;
+  /** More than one person is named, so the verbs go plural. */
+  plural?: boolean;
   targetPoints: number;
   seasonName: string;
   /** What they get for reaching it: the goal's title. */
@@ -38,10 +40,13 @@ export interface GoalPreview {
 }
 
 /** One sentence tying the two halves together: the points to reach, then what they pay. */
-export function goalPreviewSentence({ ownerName, targetPoints, seasonName, reward }: GoalPreview): string {
+export function goalPreviewSentence({ ownerName, plural = false, targetPoints, seasonName, reward }: GoalPreview): string {
   const who = ownerName?.trim() || HOUSEHOLD_OWNER;
-  const target = targetPoints > 0 ? `juntar ${formatPoints(targetPoints)}` : "bater a meta";
-  const prize = reward.trim() === "" ? "ganha a recompensa combinada" : `ganha: ${reward.trim()}`;
+  const target = targetPoints > 0
+    ? `${plural ? "juntarem" : "juntar"} ${formatPoints(targetPoints)}`
+    : `${plural ? "baterem" : "bater"} a meta`;
+  const wins = plural ? "ganham" : "ganha";
+  const prize = reward.trim() === "" ? `${wins} a recompensa combinada` : `${wins}: ${reward.trim()}`;
   return `Quando ${who} ${target} na estação ${seasonName.trim()}, ${prize}.`;
 }
 

@@ -35,15 +35,17 @@ export function SeasonRoadmap({ goals, now, onSelect }: SeasonRoadmapProps) {
   return (
     <div className="overflow-x-auto pb-1">
       <div className="min-w-lg">
-        <div className="relative mb-2 h-5 text-xs font-semibold text-ink-soft">
-          <span className="absolute left-0 top-0">{dayPhrase(span.start)}</span>
-          {marker !== null && (
+        <div className="mb-1 flex justify-between text-xs font-semibold text-ink-soft">
+          <span>{dayPhrase(span.start)}</span>
+          <span>{span.openEnded ? "sem data de fim" : dayPhrase(span.end)}</span>
+        </div>
+        {marker !== null && (
+          <div className="relative mb-1 h-5 text-xs font-semibold">
             <span className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-honey-200 px-2 text-honey-900" style={{ left: `${marker}%` }}>
               hoje
             </span>
-          )}
-          <span className="absolute right-0 top-0">{span.openEnded ? "sem data de fim" : dayPhrase(span.end)}</span>
-        </div>
+          </div>
+        )}
         <div className="relative">
           <ol>
             {goals.map((item) => (
@@ -76,7 +78,7 @@ function RoadmapLane({ item, span, onSelect }: RoadmapLaneProps) {
     <>
       <span className="flex items-center gap-2">
         {members.length > 0 && <AvatarStack members={members} max={2} />}
-        <span className="min-w-0 flex-1 truncate font-semibold">{goal.title}</span>
+        <span className="min-w-0 truncate font-semibold">{goal.title}</span>
         <span className="shrink-0 text-sm tabular-nums text-ink-soft">{points}</span>
       </span>
       <span className="mt-1.5 block h-2.5 rounded-full bg-dune-100">

@@ -46,6 +46,15 @@ describe("goalPreviewSentence", () => {
     expect(goalPreviewSentence({ ...preview, targetPoints: 1 })).toContain("juntar 1 ponto ");
   });
 
+  it("agrees with a group, not just one person", () => {
+    expect(goalPreviewSentence({ ...preview, ownerName: "Ana e Bruno", plural: true, targetPoints: 80, reward: "Cinema" })).toBe(
+      "Quando Ana e Bruno juntarem 80 pontos na estação Estação atual, ganham: Cinema.",
+    );
+    expect(goalPreviewSentence({ ...preview, ownerName: "Ana e Bruno", plural: true, targetPoints: 0, reward: "" })).toContain(
+      "baterem a meta na estação Estação atual, ganham a recompensa combinada",
+    );
+  });
+
   it("falls back to the colmeia when the owner name is blank", () => {
     expect(goalPreviewSentence({ ...preview, ownerName: "  " })).toContain("Quando a colmeia");
   });
