@@ -4,7 +4,7 @@ import { generateInviteCode } from "../domain/inviteCode";
 import { AVATAR_OPTIONS, MEMBER_COLOR_OPTIONS } from "../domain/memberColors";
 import { completedAtError } from "../domain/completionMoment";
 import { isRecurring, nextDueOn } from "../domain/recurrence";
-import { seasonsNewestFirst } from "../domain/seasons";
+import { seasonCoversDay, seasonsNewestFirst } from "../domain/seasons";
 import { LIMITS } from "../domain/limits";
 import { formatMultiplier, MAX_MULTIPLIER, MIN_MULTIPLIER, multiplierForKind } from "../domain/memberKinds";
 import { awardedPoints, MAX_RATING } from "../domain/points";
@@ -108,10 +108,33 @@ function validateMember(input: Partial<MemberInput>): void {
   }
 }
 
-function validateGoal(input: Partial<GoalInput>): void {
+/** The same list the Rails model keeps: no repeats, in a stable order. */
+function participantIds(memberIds: number[]): number[] {
+  return [ ...new Set(memberIds) ].sort((left, right) => left - right);
+}
+
+function validateParticipants(memberIds: number[] | undefined, state: LocalState): void {
+  if (memberIds === undefined) return;
+  const known = new Set(state.members.map((member) => member.id));
+  if (memberIds.some((id) => !known.has(id))) invalid("Escolha só quem mora nesta colmeia");
+}
+
+/** The same two rules Rails applies to a goal's own days: in order, and inside the estação. */
+function validateWindow(input: Partial<GoalInput>, season: StoredSeason): void {
+  const startsOn = input.startsOn ?? null;
+  const endsOn = input.endsOn ?? null;
+  if (startsOn !== null && endsOn !== null && endsOn < startsOn) invalid("O fim vem antes do começo");
+  if ([ startsOn, endsOn ].some((day) => day !== null && !seasonCoversDay(season, day))) {
+    invalid("A meta precisa caber dentro da estação");
+  }
+}
+
+function validateGoal(input: Partial<GoalInput>, state: LocalState, season: StoredSeason): void {
   validateName(input.title, LIMITS.goalTitle, "Diga qual é a recompensa");
   if (input.targetPoints !== undefined && (!Number.isInteger(input.targetPoints) || input.targetPoints <= 0)) invalid("A meta precisa de pelo menos 1 ponto");
   if (input.targetPoints !== undefined && input.targetPoints > LIMITS.goalTarget) invalid(`A meta vai até ${LIMITS.goalTarget} pontos`);
+  validateParticipants(input.memberIds, state);
+  validateWindow(input, season);
 }
 
 function validateSeason(input: Partial<SeasonInput>): void {
@@ -368,7 +391,13 @@ export class LocalApi implements ColmeiaApi {
         state.tasks.forEach((task) => { task.assigneeId = nullify(task.assigneeId); task.createdById = nullify(task.createdById); });
         state.completions.forEach((completion) => { completion.memberId = nullify(completion.memberId); completion.reviewerId = nullify(completion.reviewerId); });
         state.shoppingItems.forEach((item) => { item.addedById = nullify(item.addedById); item.purchasedById = nullify(item.purchasedById); });
-        state.goals = state.goals.filter((goal) => goal.memberId !== id);
+        // A goal only this person was in leaves with them; one they shared stays
+        // for whoever is left, and never turns into a goal for the whole colmeia.
+        state.goals = state.goals.flatMap((goal) => {
+          if (!goal.memberIds.includes(id)) return [ goal ];
+          const memberIds = goal.memberIds.filter((candidate) => candidate !== id);
+          return memberIds.length === 0 ? [] : [ { ...goal, memberIds } ];
+        });
         // Whoever leaves the colmeia takes their badges with them.
         state.awards = state.awards.filter((award) => award.memberId !== id);
       }),
@@ -571,18 +600,22 @@ export class LocalApi implements ColmeiaApi {
       this.read((state) => (seasonId === null ? state.goals : state.goals.filter((goal) => goal.seasonId === seasonId))),
     create: (input: GoalInput): Promise<Goal> =>
       this.mutate((state) => {
-        validateGoal(input);
+        validateGoal(input, state, findOrFail(state.seasons, input.seasonId, "Essa estação"));
         this.openSeason(state, input.seasonId);
-        if (input.memberId !== null) findOrFail(state.members, input.memberId, "Essa pessoa");
-        const goal: Goal = { ...input, title: input.title.trim(), id: this.nextId(state) };
+        const goal: Goal = {
+          ...input, title: input.title.trim(), memberIds: participantIds(input.memberIds), id: this.nextId(state),
+        };
         state.goals.push(goal);
         return goal;
       }),
     update: (id: number, input: Partial<GoalInput>): Promise<Goal> =>
       this.mutate((state) => {
         const goal = findOrFail(state.goals, id, "Essa meta");
-        validateGoal(input);
+        const seasonId = input.seasonId ?? goal.seasonId;
+        validateGoal({ ...goal, ...input }, state, findOrFail(state.seasons, seasonId, "Essa estação"));
         Object.assign(goal, input);
+        if (input.title !== undefined) goal.title = input.title.trim();
+        if (input.memberIds !== undefined) goal.memberIds = participantIds(input.memberIds);
         return goal;
       }),
     remove: (id: number): Promise<void> =>

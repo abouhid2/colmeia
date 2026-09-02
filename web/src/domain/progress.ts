@@ -5,9 +5,16 @@ import type { Completion, Goal, Season } from "./types";
 
 export interface SeasonBounds {
   start: Date;
-  /** Inclusive: the last moment that still counts for the estação. */
+  /** Inclusive: the last moment that still counts. */
   end: Date;
 }
+
+/**
+ * Where a goal stands in time: waiting to start, running, already reached, or
+ * over without the points. Reaching it wins over everything else, so a goal
+ * whose last day has passed with the target met still reads as batida.
+ */
+export type GoalStatus = "upcoming" | "active" | "reached" | "missed";
 
 export interface GoalProgress {
   earned: number;
@@ -15,13 +22,24 @@ export interface GoalProgress {
   ratio: number;
   remaining: number;
   reached: boolean;
-  bounds: SeasonBounds;
+  status: GoalStatus;
+  /** The days this goal counts, which may be a slice of its estação. */
+  window: SeasonBounds;
 }
 
 /** An estação runs from its first day to its last, or to right now while it has no end. */
 export function seasonBounds(season: Season, now: Date): SeasonBounds {
   const start = startOfDay(fromIsoDate(season.startsOn));
   return { start, end: season.endsOn === null ? now : endOfDay(fromIsoDate(season.endsOn)) };
+}
+
+/** A goal runs for its own stretch of days, or for the whole estação when it has none. */
+export function goalWindow(goal: Goal, season: Season, now: Date): SeasonBounds {
+  const bounds = seasonBounds(season, now);
+  return {
+    start: goal.startsOn === null ? bounds.start : startOfDay(fromIsoDate(goal.startsOn)),
+    end: goal.endsOn === null ? bounds.end : endOfDay(fromIsoDate(goal.endsOn)),
+  };
 }
 
 export function isWithin(iso: string, bounds: SeasonBounds): boolean {
@@ -33,19 +51,33 @@ export function approvedCompletions(completions: Completion[]): Completion[] {
   return completions.filter((completion) => completion.status === "approved");
 }
 
-/** Household goals count everyone; personal goals count only their member. */
+export function goalStatus(reached: boolean, window: SeasonBounds, now: Date): GoalStatus {
+  if (reached) return "reached";
+  if (now < window.start) return "upcoming";
+  return now > window.end ? "missed" : "active";
+}
+
+/** Whether someone's points count towards a goal: everyone's do when nobody is named. */
+export function countsFor(goal: Goal, memberId: number | null): boolean {
+  if (goal.memberIds.length === 0) return true;
+  return memberId !== null && goal.memberIds.includes(memberId);
+}
+
+/** Approved points scored inside the goal's window by the people it is for. */
 export function goalProgress(goal: Goal, completions: Completion[], season: Season, now: Date): GoalProgress {
+  const window = goalWindow(goal, season, now);
   const counted = approvedCompletions(completionsInSeason(completions, goal.seasonId)).filter(
-    (completion) => goal.memberId === null || completion.memberId === goal.memberId,
+    (completion) => countsFor(goal, completion.memberId) && isWithin(completion.completedAt, window),
   );
   const earned = counted.reduce((sum, completion) => sum + completion.pointsAwarded, 0);
-  const ratio = Math.min(earned / goal.targetPoints, 1);
+  const reached = earned >= goal.targetPoints;
   return {
     earned,
     target: goal.targetPoints,
-    ratio,
+    ratio: Math.min(earned / goal.targetPoints, 1),
     remaining: Math.max(goal.targetPoints - earned, 0),
-    reached: earned >= goal.targetPoints,
-    bounds: seasonBounds(season, now),
+    reached,
+    status: goalStatus(reached, window, now),
+    window,
   };
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { memberAchievements } from "../domain/achievements";
 import { crownHolder } from "../domain/crown";
 import { awardedPoints } from "../domain/points";
+import { goalsWithProgress, runningGoal } from "../domain/goalBoard";
 import { goalProgress } from "../domain/progress";
 import { defaultSeason, lastClosedSeason } from "../domain/seasons";
 import { EXAMPLE_HOUSEHOLD_NAME, withCounts } from "./localState";
@@ -34,7 +35,7 @@ describe("buildDemoState", () => {
     const state = buildDemoState(now);
     const seasons = state.seasons.map((season) => withCounts(state, season));
 
-    const crown = crownHolder({ members: state.members, completions: state.completions, seasons, goals: state.goals });
+    const crown = crownHolder({ members: state.members, completions: state.completions, seasons, goals: state.goals, now });
 
     expect(crown?.member.name).toBe("Bruno");
     expect(crown?.member.crownTitle).toBe("Abelhão");
@@ -71,9 +72,34 @@ describe("buildDemoState", () => {
   it("still leaves the running estação's goal to play for", () => {
     const state = buildDemoState(now);
     const season = currentSeason(state);
-    const household = state.goals.find((goal) => goal.memberId === null && goal.seasonId === season.id);
+    const household = state.goals.find((goal) => goal.memberIds.length === 0 && goal.seasonId === season.id);
     if (!household) throw new Error("the demo needs a household goal");
 
     expect(goalProgress(household, state.completions, season, now).reached).toBe(false);
+  });
+
+  it("spreads three metas da colmeia across the three months of the running estação", () => {
+    const state = buildDemoState(now);
+    const season = currentSeason(state);
+    const windows = state.goals
+      .filter((goal) => goal.seasonId === season.id && goal.memberIds.length === 0)
+      .map((goal) => [ goal.startsOn, goal.endsOn ]);
+
+    expect(windows).toHaveLength(3);
+    windows.flat().forEach((day) => {
+      expect(day).not.toBeNull();
+      expect(day! >= season.startsOn && season.endsOn !== null && day! <= season.endsOn).toBe(true);
+    });
+    expect(runningGoal(goalsWithProgress(state.goals, state.completions, state.members, season, now), now)?.goal.title)
+      .toBe("Pizza e filme no sábado");
+  });
+
+  it("gives Ana and Duda a reward only the two of them work towards", () => {
+    const state = buildDemoState(now);
+    const shared = state.goals.find((goal) => goal.title === "Sorvete duplo");
+    const names = state.members.filter((member) => shared?.memberIds.includes(member.id)).map((member) => member.name);
+
+    expect(names).toEqual([ "Ana", "Duda" ]);
+    expect(shared?.targetPoints).toBe(40);
   });
 });

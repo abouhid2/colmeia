@@ -5,10 +5,14 @@ export function isClosed(season: Season): boolean {
   return season.closedAt !== null;
 }
 
+/** Whether an ISO day falls inside the estação, an open end included. */
+export function seasonCoversDay(season: Pick<Season, "startsOn" | "endsOn">, day: string): boolean {
+  return season.startsOn <= day && (season.endsOn === null || day <= season.endsOn);
+}
+
 /** Whether a day falls inside the estação, an open end included. */
 export function seasonContains(season: Season, date: Date): boolean {
-  const day = toIsoDate(date);
-  return season.startsOn <= day && (season.endsOn === null || day <= season.endsOn);
+  return seasonCoversDay(season, toIsoDate(date));
 }
 
 /** What was scored inside one estação. Completions carry theirs, so this never drifts. */

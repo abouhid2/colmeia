@@ -114,8 +114,12 @@ export interface Goal {
   seasonId: number;
   title: string;
   targetPoints: number;
-  /** null means the whole household works towards it. */
-  memberId: number | null;
+  /** Who the goal is for. Empty means the whole colmeia works towards it. */
+  memberIds: number[];
+  /** ISO date the goal starts counting, or null for the day the estação opens. */
+  startsOn: string | null;
+  /** ISO date the goal stops counting, or null for the day the estação closes. */
+  endsOn: string | null;
 }
 
 export interface HouseholdWithMembers extends Household {
@@ -162,7 +166,7 @@ export interface ShoppingItemUpdate {
   purchasedById?: number | null;
 }
 
-export type GoalInput = Pick<Goal, "seasonId" | "title" | "targetPoints" | "memberId">;
+export type GoalInput = Pick<Goal, "seasonId" | "title" | "targetPoints" | "memberIds" | "startsOn" | "endsOn">;
 
 export interface SeasonInput {
   name: string;

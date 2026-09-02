@@ -1,11 +1,12 @@
 import { Gift, PartyPopper, Pencil } from "lucide-react";
+import type { GoalWithProgress } from "../../domain/goalBoard";
 import { formatPoints } from "../../domain/points";
-import type { GoalWithProgress } from "../../hooks/useGoalOverview";
 import { Avatar } from "../ui/Avatar";
+import { AvatarStack } from "../ui/AvatarStack";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { Honeycomb } from "./Honeycomb";
-import { seasonEnding } from "./goalCopy";
+import { goalStretchPhrase, participantsLabel } from "./goalCopy";
 
 interface GoalCardProps {
   item: GoalWithProgress;
@@ -14,23 +15,29 @@ interface GoalCardProps {
   readOnly?: boolean;
 }
 
-/** The colmeia's goal: how many points to reach, then what reaching it pays. */
+/** The goal in the spotlight: how many points to reach, then what reaching it pays. */
 export function GoalCard({ item, onEdit, readOnly = false }: GoalCardProps) {
-  const { goal, progress, season, standings } = item;
-  const contributors = standings.filter((standing) => standing.points > 0);
+  const { goal, progress, season, members, standings } = item;
+  const contributors = standings.filter((standing) => standing.points > 0 && (members.length === 0 || members.some((member) => member.id === standing.member.id)));
   const summary = `${progress.earned} de ${progress.target} pontos`;
 
   return (
     <Card className="p-5 md:p-7">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-            Meta da estação · {season.name} · {seasonEnding(season)}
+            Meta da estação · {season.name}
           </p>
           <h2 className="mt-1 text-4xl font-bold leading-tight tracking-tight tabular-nums md:text-5xl">
             {formatPoints(progress.target)}
           </h2>
-          <p className="text-ink-soft">para juntar nesta estação</p>
+          <p className="text-ink-soft">para juntar {goalStretchPhrase(goal, season)}</p>
+          {members.length > 0 && (
+            <p className="mt-2 flex items-center gap-2 text-sm font-semibold">
+              <AvatarStack members={members} />
+              <span className="min-w-0">{participantsLabel(members)}</span>
+            </p>
+          )}
         </div>
         {!readOnly && <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar meta</Button>}
       </div>

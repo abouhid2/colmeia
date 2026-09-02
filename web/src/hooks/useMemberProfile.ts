@@ -4,6 +4,7 @@ import { memberStats, type MemberStats } from "../domain/memberStats";
 import { sortOpenTasks } from "../domain/taskSort";
 import type { Completion, Member, Season, Task } from "../domain/types";
 import { useCompletions } from "./useCompletions";
+import { goalsOf } from "../domain/goalBoard";
 import { useGoalOverview, type GoalWithProgress } from "./useGoalOverview";
 import { useMemberAchievements, type MemberAchievements } from "./useMemberAchievements";
 import { useMembers } from "./useMembers";
@@ -35,7 +36,7 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
   const { members, isLoading: loadingMembers } = useMembers();
   const { completions, isLoading: loadingCompletions } = useCompletions();
   const { tasks, isLoading: loadingTasks } = useTasks();
-  const { personal, season, standings, allTimeStandings, isLoading: loadingGoals } = useGoalOverview();
+  const { withPeople, season, standings, allTimeStandings, isLoading: loadingGoals } = useGoalOverview();
 
   const isLoading = loadingMembers || loadingCompletions || loadingTasks || loadingGoals;
   const member = memberId === null ? null : (members.find((candidate) => candidate.id === memberId) ?? null);
@@ -64,7 +65,8 @@ export function useMemberProfile(memberId: number | null): MemberProfile {
       // The history spans every estação: what this person did is theirs for good.
       history: completionsForMember(completions, member.id),
       openTasks: sortOpenTasks(tasks.filter((task) => task.status === "open" && task.assigneeId === member.id), now),
-      goals: personal.filter((item) => item.goal.memberId === member.id),
+      // Every goal this person is in, alone or with somebody else.
+      goals: goalsOf(withPeople, member.id),
     };
-  }, [member, members, completions, tasks, personal, season, standings, allTimeStandings, now, isLoading, badges]);
+  }, [member, members, completions, tasks, withPeople, season, standings, allTimeStandings, now, isLoading, badges]);
 }

@@ -1,4 +1,5 @@
 import { Check, LockOpen, Pencil, Square, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { isClosed } from "../../domain/seasons";
 import type { Season } from "../../domain/types";
 import { seasonRange } from "../goal/goalCopy";
@@ -16,9 +17,11 @@ interface SeasonCardProps {
   onClose(): void;
   onReopen(): void;
   onDelete(): void;
+  /** The roteiro of this estação, when it has metas worth drawing. */
+  roadmap?: ReactNode;
 }
 
-export function SeasonCard({ season, points, isCurrent, confirmingDelete, onSelect, onEdit, onClose, onReopen, onDelete }: SeasonCardProps) {
+export function SeasonCard({ season, points, isCurrent, confirmingDelete, onSelect, onEdit, onClose, onReopen, onDelete, roadmap }: SeasonCardProps) {
   const closed = isClosed(season);
   const canDelete = season.completionsCount === 0;
 
@@ -46,6 +49,8 @@ export function SeasonCard({ season, points, isCurrent, confirmingDelete, onSele
         </div>
         {!isCurrent && <Button variant="secondary" size="sm" onClick={onSelect}>Ver esta estação</Button>}
       </div>
+
+      {roadmap && <div className="mt-4 border-t border-line pt-3">{roadmap}</div>}
 
       <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
         <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar</Button>

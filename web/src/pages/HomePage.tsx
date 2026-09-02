@@ -1,5 +1,6 @@
 import { ArrowRight, Plus, Sun, Target } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import { finishedGoal, goalsOf, runningGoal, upcomingGoal } from "../domain/goalBoard";
 import { isClosed } from "../domain/seasons";
 import { sortOpenTasks } from "../domain/taskSort";
 import { useCompletions } from "../hooks/useCompletions";
@@ -15,7 +16,9 @@ import { GoalCard } from "../components/goal/GoalCard";
 import { GoalDialog } from "../components/goal/GoalDialog";
 import { GoalEmptyCard } from "../components/goal/GoalEmptyCard";
 import { GoalSummaryCard } from "../components/goal/GoalSummaryCard";
-import { IN_SEASON_HINT } from "../components/goal/goalCopy";
+import { GoalUpcomingCard } from "../components/goal/GoalUpcomingCard";
+import { SeasonRoadmap } from "../components/goal/SeasonRoadmap";
+import { hasOwnWindow, IN_SEASON_HINT } from "../components/goal/goalCopy";
 import { useGoalDialog } from "../components/goal/useGoalDialog";
 import { ActivityFeed } from "../components/home/ActivityFeed";
 import { Greeting } from "../components/home/Greeting";
@@ -41,7 +44,7 @@ export function HomePage() {
   const { currentMember } = useSession();
   const { currentSeason, isLoading: loadingSeasons } = useSeason();
   const { memberId, member: filtered } = useMemberFilter();
-  const { household, personal, standings } = useGoalOverview();
+  const { all, household, withPeople, standings } = useGoalOverview();
   const { tasks } = useTasks();
   const { completions } = useCompletions();
   const lookup = useMemberLookup();
@@ -52,7 +55,13 @@ export function HomePage() {
   if (currentSeason === null) return loadingSeasons ? null : <NoSeasonState />;
 
   const closed = isClosed(currentSeason);
-  const personalShown = memberId === null ? personal : personal.filter((item) => item.goal.memberId === memberId);
+  // The meta da colmeia on today's stretch leads the page. Nothing running means
+  // the next one gets a line of its own, and a finished estação shows its last.
+  const running = runningGoal(household, now);
+  const upcoming = upcomingGoal(household, now);
+  const hero = running ?? (upcoming === null ? finishedGoal(household, now) : null);
+  const showRoadmap = all.length > 1 || all.some((item) => hasOwnWindow(item.goal));
+  const peopleGoals = goalsOf(withPeople, memberId);
   const openTasks = tasks.filter((task) => task.status === "open" && (memberId === null || task.assigneeId === memberId));
   const spotlight = sortOpenTasks(openTasks, now).slice(0, SPOTLIGHT_SIZE);
   const recent = completions
@@ -65,24 +74,32 @@ export function HomePage() {
       {closed && <SeasonClosedNotice name={currentSeason.name} />}
       <MemberFilter />
 
-      {household.length === 0 ? (
-        !closed && <GoalEmptyCard onCreate={() => goalDialog.openCreate(null)} />
-      ) : (
-        household.map((item) => (
-          <GoalCard key={item.goal.id} item={item} readOnly={closed} onEdit={() => goalDialog.openEdit(item.goal)} />
-        ))
+      {household.length === 0 && !closed && <GoalEmptyCard onCreate={() => goalDialog.openCreate(null)} />}
+      {hero && <GoalCard item={hero} readOnly={closed} onEdit={() => goalDialog.openEdit(hero.goal)} />}
+      {hero === null && upcoming && (
+        <GoalUpcomingCard item={upcoming} now={now} readOnly={closed} onEdit={() => goalDialog.openEdit(upcoming.goal)} />
+      )}
+
+      {showRoadmap && (
+        <section>
+          <SectionHeading
+            title="Roteiro da estação"
+            action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(null, currentSeason.id)}>Nova meta</Button>}
+          />
+          <SeasonRoadmap goals={all} now={now} onSelect={closed ? undefined : goalDialog.openEdit} />
+        </section>
       )}
 
       <section>
         <SectionHeading
-          title="Metas individuais"
+          title="Metas de pessoas e grupos"
           action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(memberId ?? currentMember?.id ?? null)}>Nova meta</Button>}
         />
-        {personalShown.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title={filtered ? `${filtered.name} ainda não tem meta` : "Ninguém tem meta individual ainda"} />
+        {peopleGoals.length === 0 ? (
+          <EmptyState icon={<Target className="size-6" />} title={filtered ? `${filtered.name} não está em nenhuma meta` : "Ninguém está em uma meta ainda"} />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
-            {personalShown.map((item) => (
+            {peopleGoals.map((item) => (
               <GoalSummaryCard key={item.goal.id} item={item} readOnly={closed} onEdit={() => goalDialog.openEdit(item.goal)} />
             ))}
           </ul>
