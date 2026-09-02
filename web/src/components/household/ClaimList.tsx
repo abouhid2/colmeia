@@ -53,7 +53,7 @@ function ClaimAction({ member, isKnown, isPending, onClaim, onResume }: {
     return <Button size="sm" loading={isPending} onClick={() => onResume(member.id)}>Continuar</Button>;
   }
   if (member.claimedAt !== null) {
-    return <span className="text-sm font-medium text-ink-faint">já entrou</span>;
+    return <span className="text-sm font-medium text-ink-faint">Já entrou</span>;
   }
   return <Button variant="secondary" size="sm" loading={isPending} onClick={() => onClaim(member.id)}>Sou essa pessoa</Button>;
 }

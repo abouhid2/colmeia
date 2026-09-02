@@ -56,11 +56,11 @@ interface Tally {
 
 const DEFINITIONS: Definition[] = [
   { id: "firstTask", name: "Primeira tarefa", hint: "A primeira sempre é a mais difícil.", target: 1, unit: "tarefa", measure: (tally) => tally.tasks },
-  { id: "tenTasks", name: "Dez tarefas", hint: "Dez tarefas concluídas.", target: 10, unit: "tarefas", measure: (tally) => tally.tasks },
-  { id: "fiftyTasks", name: "Cinquenta tarefas", hint: "Cinquenta tarefas concluídas.", target: 50, unit: "tarefas", measure: (tally) => tally.tasks },
-  { id: "hundredPoints", name: "Cem pontos", hint: "Cem pontos ganhos desde sempre.", target: 100, unit: "pontos", measure: (tally) => tally.points },
-  { id: "fiveHundredPoints", name: "Quinhentos pontos", hint: "Quinhentos pontos ganhos desde sempre.", target: 500, unit: "pontos", measure: (tally) => tally.points },
-  { id: "flawless", name: "Impecável", hint: "Recebeu uma nota 5 de alguém da casa.", target: 1, unit: "nota 5", measure: (tally) => tally.topRatings },
+  { id: "tenTasks", name: "Dez tarefas", hint: "Dez tarefas feitas. A casa sente a diferença.", target: 10, unit: "tarefas", measure: (tally) => tally.tasks },
+  { id: "fiftyTasks", name: "Cinquenta tarefas", hint: "Cinquenta tarefas feitas. Isso já virou hábito.", target: 50, unit: "tarefas", measure: (tally) => tally.tasks },
+  { id: "hundredPoints", name: "Cem pontos", hint: "Cem pontos somados desde o começo.", target: 100, unit: "pontos", measure: (tally) => tally.points },
+  { id: "fiveHundredPoints", name: "Quinhentos pontos", hint: "Quinhentos pontos somados desde o começo.", target: 500, unit: "pontos", measure: (tally) => tally.points },
+  { id: "flawless", name: "Impecável", hint: "Ganhou uma nota 5 de alguém da colmeia.", target: 1, unit: "nota 5", measure: (tally) => tally.topRatings },
   { id: "fiveReviews", name: "Olho clínico", hint: "Avaliou o trabalho dos outros cinco vezes.", target: 5, unit: "avaliações", measure: (tally) => tally.reviews },
   { id: "urgentTask", name: "Apagou o incêndio", hint: "Deu conta de uma tarefa urgente.", target: 1, unit: "tarefa urgente", measure: (tally) => tally.urgent },
   { id: "bigTask", name: "Missão pesada", hint: `Fez uma tarefa de ${BIG_TASK_POINTS} pontos ou mais.`, target: 1, unit: "tarefa pesada", measure: (tally) => tally.big },

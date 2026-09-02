@@ -64,7 +64,7 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
         </Field>
       </div>
       <AvatarPicker avatar={avatar} color={color} onAvatar={form.setAvatar} onColor={form.setColor} />
-      <Field label="Tipo" hint={MEMBER_KINDS[kind].hint}>
+      <Field label="É abelha ou lagartinha?" hint={MEMBER_KINDS[kind].hint}>
         <Segmented label="Tipo de pessoa" options={KIND_SEGMENTS} value={kind} onChange={form.setKind} />
       </Field>
       {showMultiplier ? (
@@ -72,18 +72,18 @@ function MemberForm({ member, onDone }: { member: Member | null; onDone(): void 
           <Input id="member-multiplier" type="number" inputMode="decimal" min={MIN_MULTIPLIER} max={MAX_MULTIPLIER} step={0.1} value={multiplier} onChange={(event) => form.setMultiplier(event.target.value)} className="w-28" />
         </Field>
       ) : (
-        <Button variant="ghost" size="sm" onClick={advanced.open}>Ajustes avançados</Button>
+        <Button variant="ghost" size="sm" onClick={advanced.open}>Mexer no multiplicador</Button>
       )}
       <CrownTitleField id="member-crown-title" value={crownTitle} onChange={form.setCrownTitle} />
       <div className="flex items-center justify-between gap-2 pt-2">
         {member ? (
           <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? destroy() : setConfirmingDelete(true))} loading={remove.isPending}>
-            {confirmingDelete ? "Confirmar saída" : "Remover"}
+            {confirmingDelete ? "Tirar mesmo" : "Tirar da colmeia"}
           </Button>
         ) : <span />}
         <div className="flex gap-2">
           <Button variant="secondary" onClick={onDone}>Cancelar</Button>
-          <Button type="submit" disabled={!form.isValid} loading={create.isPending || update.isPending}>{member ? "Salvar" : "Adicionar"}</Button>
+          <Button type="submit" disabled={!form.isValid} loading={create.isPending || update.isPending}>{member ? "Salvar pessoa" : "Adicionar à colmeia"}</Button>
         </div>
       </div>
     </form>

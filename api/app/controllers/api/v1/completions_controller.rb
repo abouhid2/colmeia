@@ -20,7 +20,7 @@ module Api
       rescue Completions::Review::AlreadyReviewed, Completions::Review::SelfReview => e
         render_conflict(e.message)
       rescue ArgumentError
-        render json: { error: "bad_request", details: [ "rating must be an integer" ] }, status: :bad_request
+        render json: { error: "bad_request", details: [ "A nota precisa ser um número de 1 a 5" ] }, status: :bad_request
       end
 
       private

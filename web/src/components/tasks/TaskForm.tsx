@@ -50,7 +50,7 @@ export function TaskForm({ task, members, currentMemberId, submitting, onSubmit,
         checked={form.values.requiresReview}
         onChange={(checked) => form.set("requiresReview", checked)}
         label="Precisa de avaliação"
-        hint="Outra pessoa dá uma nota de 1 a 5 e os pontos saem proporcionais."
+        hint="Outra pessoa dá uma nota de 1 a 5, e os pontos saem conforme a nota."
       />
       <Toggle
         checked={form.values.kidFriendly}
@@ -59,17 +59,17 @@ export function TaskForm({ task, members, currentMemberId, submitting, onSubmit,
         hint="Uma criança dá conta desta tarefa sozinha."
       />
       <Field label="Detalhes" htmlFor="task-description">
-        <Textarea id="task-description" value={form.values.description} onChange={(event) => form.set("description", event.target.value)} placeholder="Opcional: onde está o material, o que observar…" />
+        <Textarea id="task-description" value={form.values.description} onChange={(event) => form.set("description", event.target.value)} placeholder="Onde está o material, o que observar…" />
       </Field>
       <div className="flex items-center justify-between gap-2 pt-2">
         {onDelete ? (
           <Button variant={confirmingDelete ? "danger" : "ghost"} size="sm" icon={<Trash2 className="size-4" />} onClick={() => (confirmingDelete ? onDelete() : setConfirmingDelete(true))}>
-            {confirmingDelete ? "Confirmar exclusão" : "Excluir"}
+            {confirmingDelete ? "Excluir mesmo" : "Excluir tarefa"}
           </Button>
         ) : <span />}
         <div className="flex gap-2">
           <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
-          <Button type="submit" loading={submitting}>{task ? "Salvar" : "Criar tarefa"}</Button>
+          <Button type="submit" loading={submitting}>{task ? "Salvar tarefa" : "Criar tarefa"}</Button>
         </div>
       </div>
     </form>

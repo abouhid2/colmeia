@@ -14,8 +14,7 @@ interface GoalSummaryCardProps {
 /** Compact goal: who it belongs to, how many points it takes, what it pays. */
 export function GoalSummaryCard({ item, onEdit }: GoalSummaryCardProps) {
   const { goal, progress, member } = item;
-  const owner = member ? member.name : "Toda a casa";
-  const progressLabel = member ? `Meta de ${member.name}` : "Meta da casa";
+  const progressLabel = member ? `Meta de ${member.name}` : "Meta da colmeia";
   return (
     <li className="flex items-start gap-3 rounded-card border border-line bg-surface p-4 shadow-card">
       {member ? (
@@ -25,7 +24,7 @@ export function GoalSummaryCard({ item, onEdit }: GoalSummaryCardProps) {
       )}
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-          {owner} · {periodScopeLabel(goal.period)}
+          {member ? member.name : "A colmeia inteira"} · {periodScopeLabel(goal.period)}
         </p>
         <p className="font-semibold">Meta: <span className="tabular-nums">{formatPoints(goal.targetPoints)}</span></p>
         <p className="flex items-start gap-1.5 text-sm text-ink-soft">

@@ -4,8 +4,8 @@ import { formatPoints } from "../../domain/points";
 import type { PeriodBounds } from "../../domain/progress";
 import type { GoalPeriod } from "../../domain/types";
 
-/** How a household goal names its owner inside a sentence. */
-export const HOUSEHOLD_OWNER = "a casa";
+/** How a collective goal names its owner inside a sentence. */
+export const HOUSEHOLD_OWNER = "a colmeia";
 
 export function periodScopeLabel(period: GoalPeriod): string {
   return period === "week" ? "Esta semana" : "Este mês";
@@ -22,7 +22,7 @@ export function periodEnding(bounds: PeriodBounds): string {
 }
 
 export interface GoalPreview {
-  /** null while the whole household works towards it. */
+  /** null while the whole colmeia works towards it. */
   ownerName: string | null;
   targetPoints: number;
   period: GoalPeriod;

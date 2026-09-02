@@ -16,7 +16,7 @@ interface GoalCardProps {
   onEdit(): void;
 }
 
-/** The household goal: how many points to reach, then what reaching it pays. */
+/** The colmeia's goal: how many points to reach, then what reaching it pays. */
 export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
   const contributors = standings.filter((standing) => standing.points > 0);
   const summary = `${progress.earned} de ${progress.target} pontos`;
@@ -26,14 +26,14 @@ export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-honey-700">
-            Meta da casa · {periodEnding(progress.bounds)}
+            Meta da colmeia · {periodEnding(progress.bounds)}
           </p>
           <h2 className="mt-1 text-4xl font-bold leading-tight tracking-tight tabular-nums md:text-5xl">
             {formatPoints(progress.target)}
           </h2>
           <p className="text-ink-soft">para juntar {periodWhen(goal.period)}</p>
         </div>
-        <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar</Button>
+        <Button variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={onEdit}>Ajustar meta</Button>
       </div>
 
       <div className="mt-4 flex items-start gap-3 rounded-card border border-line bg-paper p-3">
@@ -47,7 +47,7 @@ export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
       </div>
 
       <div className="my-6">
-        <Honeycomb earned={progress.earned} target={progress.target} label={`Progresso da meta: ${summary}`} />
+        <Honeycomb earned={progress.earned} target={progress.target} label={`Favo da meta: ${summary}`} />
       </div>
 
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
@@ -66,7 +66,7 @@ export function GoalCard({ goal, progress, standings, onEdit }: GoalCardProps) {
       </div>
 
       {contributors.length > 0 && (
-        <ul className="mt-5 flex flex-wrap gap-2" aria-label="Quem já contribuiu">
+        <ul className="mt-5 flex flex-wrap gap-2" aria-label="Quem já ajudou">
           {contributors.map(({ member, points }) => (
             <li key={member.id} className="flex items-center gap-1.5 rounded-full border border-line py-1 pl-1 pr-3 text-sm">
               <Avatar member={member} size="xs" />

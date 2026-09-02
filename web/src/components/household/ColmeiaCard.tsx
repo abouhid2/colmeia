@@ -25,7 +25,7 @@ export function ColmeiaCard() {
 
       {others.length > 0 && (
         <div>
-          <SectionHeading title="Outras colmeias neste navegador" />
+          <SectionHeading title="Outras colmeias que você já abriu aqui" />
           <ul className="space-y-2">
             {others.map((item) => (
               <li key={item.inviteCode}>
@@ -51,7 +51,7 @@ export function ColmeiaCard() {
           icon={<LogOut className="size-4" />}
           onClick={() => (confirmingLeave ? leave() : setConfirmingLeave(true))}
         >
-          {confirmingLeave ? "Confirmar saída" : "Sair desta colmeia"}
+          {confirmingLeave ? "Sair mesmo" : "Sair desta colmeia"}
         </Button>
       </div>
     </Card>
