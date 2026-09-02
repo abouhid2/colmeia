@@ -95,7 +95,7 @@ export function MemberPage() {
 
       {profile.badges.history.length > 0 && (
         <section>
-          <SectionHeading title="Histórico de conquistas" hint="As mais recentes, com a data de cada uma." />
+          <SectionHeading title="Histórico de conquistas" />
           <AchievementTimeline moments={profile.badges.history} achievements={profile.badges.records} />
         </section>
       )}
@@ -107,7 +107,7 @@ export function MemberPage() {
           action={closed ? undefined : <Button variant="secondary" size="sm" icon={<Plus className="size-4" />} onClick={() => goalDialog.openCreate(member.id)}>Nova meta</Button>}
         />
         {profile.goals.length === 0 ? (
-          <EmptyState icon={<Target className="size-6" />} title={`${member.name} ainda não tem meta`} hint={`Uma recompensa só de ${member.name}, contando os pontos dela.`} />
+          <EmptyState icon={<Target className="size-6" />} title={`${member.name} ainda não tem meta`} />
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {profile.goals.map((item) => (
@@ -118,18 +118,18 @@ export function MemberPage() {
       </section>
 
       <section>
-        <SectionHeading title="Tarefas abertas" hint={`Na fila de ${member.name} nesta estação, as mais urgentes primeiro.`} />
+        <SectionHeading title="Tarefas abertas" />
         {profile.openTasks.length === 0 ? (
-          <EmptyState icon={<ListChecks className="size-6" />} title="Nada na fila" hint={`Ninguém passou tarefa nenhuma para ${member.name} ainda.`} />
+          <EmptyState icon={<ListChecks className="size-6" />} title="Nada na fila" />
         ) : (
           <TaskList tasks={profile.openTasks} today={now} lookup={lookup} onComplete={dialogs.openComplete} onEdit={dialogs.openEdit} readOnly={closed} />
         )}
       </section>
 
       <section>
-        <SectionHeading title="Histórico" hint={`Tudo que ${member.name} já fez, em todas as estações, da mais recente para a mais antiga.`} />
+        <SectionHeading title="Histórico" hint="De todas as estações." />
         {profile.history.length === 0 ? (
-          <EmptyState icon={<Sparkles className="size-6" />} title="Nada concluído ainda" hint="A primeira tarefa feita aparece aqui." />
+          <EmptyState icon={<Sparkles className="size-6" />} title="Nada concluído ainda" />
         ) : (
           <MemberHistory completions={profile.history} lookup={lookup} />
         )}

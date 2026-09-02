@@ -45,7 +45,6 @@ export function SeasonsPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Estações</h1>
-          <p className="mt-1 text-sm text-ink-soft">Cada estação é um campeonato com as suas tarefas, metas e ranking.</p>
         </div>
         <Button icon={<Plus className="size-4" />} onClick={dialog.openCreate}>Nova estação</Button>
       </div>
@@ -82,9 +81,9 @@ export function SeasonsPage() {
         open={closing !== null}
         onClose={() => setClosing(null)}
         title={closing ? `Encerrar ${closing.name}?` : "Encerrar estação"}
-        description="Encerrar congela o ranking desta estação: ninguém pontua mais nela, e as tarefas dela param de aceitar conclusão."
+        description="Ninguém pontua mais nela, e as tarefas dela param de aceitar conclusão."
       >
-        <p className="text-sm text-ink-soft">Os títulos da estação são decididos no fim, com o ranking que ficar congelado agora.</p>
+        <p className="text-sm text-ink-soft">Os títulos saem do ranking que congelar agora.</p>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="secondary" onClick={() => setClosing(null)}>Cancelar</Button>
           <Button onClick={confirmClose} loading={close.isPending}>Encerrar estação</Button>

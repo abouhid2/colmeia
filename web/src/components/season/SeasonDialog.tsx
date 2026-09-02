@@ -22,7 +22,6 @@ export function SeasonDialog({ dialog }: { dialog: SeasonDialogState }) {
       open={isOpen}
       onClose={close}
       title={season ? "Ajustar a estação" : "Nova estação"}
-      description="Um campeonato com as suas tarefas, as suas metas e o seu ranking."
     >
       <SeasonForm key={season?.id ?? "new"} season={season} onDone={close} />
     </Dialog>
@@ -62,8 +61,8 @@ function SeasonForm({ season, onDone }: { season: Season | null; onDone(): void 
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Field label="Nome" htmlFor="season-name" hint="Ex.: Estação do verão, Setembro, Férias.">
-        <Input id="season-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Como a família chama esse campeonato" maxLength={LIMITS.seasonName} required autoFocus />
+      <Field label="Nome" htmlFor="season-name">
+        <Input id="season-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Verão, Setembro, Férias" maxLength={LIMITS.seasonName} required autoFocus />
       </Field>
       <Field label="Começa em" htmlFor="season-starts">
         <Input id="season-starts" type="date" value={startsOn} onChange={(event) => setStartsOn(event.target.value)} required />

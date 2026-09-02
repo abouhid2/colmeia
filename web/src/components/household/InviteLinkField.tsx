@@ -5,7 +5,7 @@ import { Button } from "../ui/Button";
 import { Field } from "../ui/Field";
 import { Input } from "../ui/Input";
 
-const SHARED_HINT = "Mande para quem mora aí. Quem abrir escolhe quem é na lista.";
+const SHARED_HINT = "Quem abrir escolhe quem é na lista.";
 
 export function InviteLinkField({ inviteCode }: { inviteCode: string }) {
   const { url, isLocal, canCopy, copy, localWarning } = useInviteLink(inviteCode);

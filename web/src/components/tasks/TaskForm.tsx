@@ -58,7 +58,6 @@ export function TaskForm({ task, members, currentMemberId, seasonId, submitting,
         checked={form.values.kidFriendly}
         onChange={(checked) => form.set("kidFriendly", checked)}
         label="Boa para lagartinhas"
-        hint="Uma criança dá conta desta tarefa sozinha."
       />
       <Field label="Detalhes" htmlFor="task-description">
         <Textarea id="task-description" value={form.values.description} onChange={(event) => form.set("description", event.target.value)} placeholder="Onde está o material, o que observar…" />
