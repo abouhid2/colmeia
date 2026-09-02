@@ -34,10 +34,10 @@ export function AppShell() {
   if (household.isError) return <LostColmeia onLeave={leave} />;
 
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-viewport">
       <ExampleBanner />
       <div className="md:grid md:grid-cols-[15.5rem_1fr]">
-        <aside className="sticky top-0 hidden h-dvh flex-col gap-8 border-r border-line bg-surface px-5 py-6 md:flex">
+        <aside className="sticky top-0 hidden h-viewport flex-col gap-8 border-r border-line bg-surface px-5 py-6 md:flex">
           <div>
             <BrandMark />
             <p className="mt-1 truncate pl-9 text-sm text-ink-soft">{household.data?.name}</p>
@@ -89,7 +89,7 @@ export function AppShell() {
 
 function LoadingScreen() {
   return (
-    <div className="grid min-h-dvh place-items-center">
+    <div className="grid min-h-viewport place-items-center">
       <BrandMark className="animate-pulse" />
     </div>
   );

@@ -38,9 +38,9 @@ export function Dialog({ open, onClose, title, description, children }: DialogPr
       onClose={onClose}
       onClick={closeOnBackdrop}
       aria-labelledby={titleId}
-      className="m-auto w-[min(100vw,30rem)] rounded-card bg-surface p-0 text-ink shadow-pop open:animate-rise max-sm:mb-0 max-sm:mt-auto max-sm:rounded-b-none motion-reduce:animate-none"
+      className="m-auto w-dialog rounded-card bg-surface p-0 text-ink shadow-pop open:animate-rise max-sm:mb-0 max-sm:mt-auto max-sm:rounded-b-none motion-reduce:animate-none"
     >
-      <div className="max-h-[min(88dvh,44rem)] overflow-y-auto p-6" onClick={(event) => event.stopPropagation()}>
+      <div className="max-h-dialog-body overflow-y-auto p-6" onClick={(event) => event.stopPropagation()}>
         <header className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 id={titleId} className="text-xl font-bold tracking-tight">{title}</h2>

@@ -11,10 +11,33 @@
   <body>
     <div id="root"></div>
     <script>
-      // Chrome's "Desktop site" toggle keeps the hardware touch screen but reports a
-      // ~980px viewport, so width-only breakpoints hand a phone the desktop shell.
-      // The touch flag survives the toggle; the breakpoints in index.css read it.
-      if (navigator.maxTouchPoints > 0) document.documentElement.dataset.touch = "";
+      // Chrome's "Desktop site" toggle keeps the hardware touch screen but ignores the
+      // viewport meta: it lays the page out at a fixed ~980px and scales that down to
+      // the screen. Two things break. Width-only breakpoints hand a phone the desktop
+      // shell, so mark the touch screen, which the toggle cannot fake away, and let
+      // index.css gate the breakpoints on it. And the mobile layout then gets drawn at
+      // 980px and shrunk to illegible, so redraw it at phone width and let Chrome's own
+      // scaling undo that.
+      (function () {
+        var root = document.documentElement;
+        var PHONE_WIDTH = 400;
+        if (navigator.maxTouchPoints > 0) root.dataset.touch = "";
+        function syncFakeDesktop() {
+          // Chrome's desktop width is a fixed 980, and no phone or tablet reports one
+          // this close to it on its own, so the range is what tells the toggle apart.
+          var width = window.innerWidth;
+          var faking = navigator.maxTouchPoints > 0 && width >= 960 && width <= 1000;
+          if (faking) {
+            root.style.setProperty("--app-zoom", String(width / PHONE_WIDTH));
+            root.dataset.fakeDesktop = "";
+          } else {
+            root.style.removeProperty("--app-zoom");
+            delete root.dataset.fakeDesktop;
+          }
+        }
+        syncFakeDesktop();
+        window.addEventListener("resize", syncFakeDesktop);
+      })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>

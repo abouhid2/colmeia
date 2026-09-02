@@ -98,6 +98,19 @@
   html {
     color-scheme: light;
     -webkit-tap-highlight-color: transparent;
+    --app-zoom: 1;
+    --app-vw: 100vw;
+    --app-vh: 100dvh;
+  }
+  /* Chrome's "Desktop site" toggle ignores the viewport meta, lays the page out at
+     a fixed ~980px and scales the result down to the screen, which leaves the mobile
+     layout unreadable. index.html sets the flag and the factor; redrawing at phone
+     width means that scaling lands back on the size the design was drawn for.
+     zoom does not scale viewport units, so --app-vw and --app-vh undo it by hand. */
+  html[data-fake-desktop] {
+    zoom: var(--app-zoom);
+    --app-vw: calc(100vw / var(--app-zoom));
+    --app-vh: calc(100dvh / var(--app-zoom));
   }
   body {
     @apply bg-paper font-sans text-ink antialiased;
@@ -118,4 +131,19 @@
     transform-box: fill-box;
     transform-origin: center;
   }
+}
+
+/* Viewport-sized boxes go through --app-vw and --app-vh so they stay correct under
+   the fake-desktop zoom above. Never use dvh or vw directly in a component. */
+@utility h-viewport {
+  height: var(--app-vh);
+}
+@utility min-h-viewport {
+  min-height: var(--app-vh);
+}
+@utility w-dialog {
+  width: min(var(--app-vw), 30rem);
+}
+@utility max-h-dialog-body {
+  max-height: min(calc(var(--app-vh) * 0.88), 44rem);
 }
