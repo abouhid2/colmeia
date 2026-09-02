@@ -12,6 +12,8 @@ export interface Household {
   name: string;
   /** The code in the invite link. Everything else is scoped to it. */
   inviteCode: string;
+  /** A sandbox filled with the example family: nothing in it is real. */
+  demo: boolean;
 }
 
 export interface Member {

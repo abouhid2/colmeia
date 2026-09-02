@@ -15,8 +15,12 @@ const now = new Date(2026, 2, 11, 15);
 describe("LocalApi", () => {
   let api: LocalApi;
 
-  beforeEach(() => {
-    api = new LocalApi(new MemoryStore(), { seed: () => buildDemoState(now), clock: () => now });
+  beforeEach(async () => {
+    // The example colmeia is the one somebody asked for, under a known code.
+    api = new LocalApi(new MemoryStore(), {
+      seed: () => buildDemoState(now), clock: () => now, newCode: () => DEMO_INVITE_CODE,
+    });
+    await api.households.createDemo();
     api.setInviteCode(DEMO_INVITE_CODE);
   });
 

@@ -2,7 +2,7 @@ import type {
   Completion, Goal, GoalInput, Household, HouseholdInput, HouseholdWithMembers, Member, MemberInput,
   ReviewInput, ShoppingItem, ShoppingItemInput, ShoppingItemUpdate, Task, TaskInput,
 } from "../domain/types";
-import type { ColmeiaApi, CompleteTaskResult } from "./client";
+import type { ColmeiaApi, CompleteTaskResult, DemoColmeia } from "./client";
 import { ApiError } from "./errors";
 import { toCamelKeys, toSnakeKeys } from "./keys";
 
@@ -77,6 +77,7 @@ export class HttpApi implements ColmeiaApi {
 
   households = {
     create: (input: HouseholdInput): Promise<HouseholdWithMembers> => this.request("POST", "/households", { household: input }),
+    createDemo: (): Promise<DemoColmeia> => this.request("POST", "/households/demo"),
     lookup: (inviteCode: string): Promise<HouseholdWithMembers> => this.request("GET", `/households/${encodeURIComponent(inviteCode)}`),
     claim: (inviteCode: string, memberId: number): Promise<Member> =>
       this.request("POST", `/households/${encodeURIComponent(inviteCode)}/claim`, { memberId }),
@@ -87,6 +88,7 @@ export class HttpApi implements ColmeiaApi {
   household = {
     get: (): Promise<Household> => this.request("GET", "/household"),
     update: (input: Pick<Household, "name">): Promise<Household> => this.request("PATCH", "/household", { household: input }),
+    reseed: (): Promise<Member> => this.request("POST", "/household/reseed"),
   };
 
   members = {

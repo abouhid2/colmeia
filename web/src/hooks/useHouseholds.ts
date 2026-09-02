@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
+import type { DemoColmeia } from "../api";
 import type { HouseholdInput, HouseholdWithMembers } from "../domain/types";
 import { useApi } from "./useApi";
 import { useAppMutation } from "./useAppMutation";
@@ -12,6 +13,24 @@ export function useCreateHousehold() {
   const api = useApi();
   return useAppMutation((input: HouseholdInput): Promise<HouseholdWithMembers> => api.households.create(input), {
     invalidates: NOTHING,
+  });
+}
+
+/**
+ * Trying the app out with nobody to invite and nothing to fill in: a sandbox
+ * colmeia of one's own, entered as somebody who already lives in it.
+ */
+export function useEnterExample() {
+  const api = useApi();
+  const { enter } = useSessionContext();
+  const navigate = useNavigate();
+
+  return useAppMutation((): Promise<DemoColmeia> => api.households.createDemo(), {
+    invalidates: NOTHING,
+    onSuccess: ({ household, member }: DemoColmeia) => {
+      enter({ inviteCode: household.inviteCode, memberId: member.id });
+      void navigate("/", { replace: true });
+    },
   });
 }
 

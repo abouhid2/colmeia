@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { EXAMPLE_HOUSEHOLD_NAME } from "./localState";
 import { DEMO_INVITE_CODE, LocalApi, type KeyValueStore } from "./localApi";
 import { HOUSEHOLD_INDEX_KEY, HOUSEHOLD_KEY_PREFIX } from "./localStore";
 import { buildDemoState } from "./seed";
@@ -92,13 +93,17 @@ describe("LocalApi households", () => {
     expect(await api.tasks.list()).toEqual([]);
   });
 
-  it("lists the colmeias this browser holds, the demo included", async () => {
+  it("lists the colmeias this browser holds, saying which are examples", async () => {
     await api.households.create({ name: "Casa nova", memberNames: [] });
+    await api.households.createDemo();
 
     const stored = await api.listStoredHouseholds();
 
-    expect(stored.map((item) => item.inviteCode).sort()).toEqual([ "codigo0001", DEMO_INVITE_CODE ].sort());
-    expect(stored.find((item) => item.inviteCode === DEMO_INVITE_CODE)?.name).toBe("Família Colmeia");
+    expect(stored.map((item) => [ item.inviteCode, item.demo ])).toEqual([
+      [ "codigo0001", false ],
+      [ "codigo0002", true ],
+    ]);
+    expect(stored.find((item) => item.demo)?.name).toBe(EXAMPLE_HOUSEHOLD_NAME);
   });
 
   it("migrates the old single-colmeia store into the demo colmeia" , async () => {
@@ -114,7 +119,8 @@ describe("LocalApi households", () => {
     const migrated = buildApi(store);
     const household = await migrated.households.lookup(DEMO_INVITE_CODE);
 
-    expect(household).toMatchObject({ name: "Casa antiga", inviteCode: DEMO_INVITE_CODE });
+    // Real data from an older version, not an example: it must never be flagged.
+    expect(household).toMatchObject({ name: "Casa antiga", inviteCode: DEMO_INVITE_CODE, demo: false });
     // People already using the app are in it, so nobody has to claim a place.
     expect(household.members.every((member) => member.claimedAt !== null)).toBe(true);
     expect(store.getItem("colmeia.db.v2")).toBeNull();
@@ -139,13 +145,61 @@ describe("LocalApi households", () => {
       .toEqual(state.members.map(() => [ "bee", 1 ]));
     expect((await older.tasks.list()).every((task) => task.kidFriendly === false)).toBe(true);
     expect((await older.completions.list()).every((completion) => completion.multiplier === 1)).toBe(true);
+    // An index written before sandboxes existed holds real colmeias only.
+    expect((await older.listStoredHouseholds()).map((item) => item.demo)).toEqual([ false ]);
   });
 
-  it("seeds a fresh browser with the demo colmeia, nobody claimed" , async () => {
-    const household = await api.households.lookup(DEMO_INVITE_CODE);
+  it("leaves a brand-new browser with no colmeia at all", async () => {
+    expect(await api.listStoredHouseholds()).toEqual([]);
+    await expect(api.households.lookup(DEMO_INVITE_CODE)).rejects.toMatchObject({ status: 404 });
+  });
 
-    expect(household.name).toBe("Família Colmeia");
-    expect(household.members).toHaveLength(4);
-    expect(household.members.every((member) => member.claimedAt === null)).toBe(true);
+  it("hands out an example colmeia of its own, with Ana already inside it", async () => {
+    const { household, member } = await api.households.createDemo();
+
+    expect(household).toMatchObject({ name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: "codigo0001", demo: true });
+    expect(household.members.map((person) => person.name)).toEqual([ "Ana", "Bruno", "Clara", "Duda" ]);
+    expect(member).toMatchObject({ name: "Ana", claimedAt: now.toISOString() });
+    expect(household.members.filter((person) => person.claimedAt !== null)).toHaveLength(1);
+
+    api.setInviteCode(household.inviteCode);
+    expect((await api.tasks.list()).length).toBeGreaterThan(0);
+    expect((await api.goals.list()).length).toBeGreaterThan(0);
+    expect(await api.household.get()).toMatchObject({ demo: true });
+  });
+
+  it("gives each visitor an example nobody else is mexing with", async () => {
+    const first = await api.households.createDemo();
+    const second = await api.households.createDemo();
+
+    expect(first.household.inviteCode).not.toBe(second.household.inviteCode);
+
+    api.setInviteCode(first.household.inviteCode);
+    await api.tasks.remove(10);
+    expect((await api.tasks.list()).some((task) => task.id === 10)).toBe(false);
+
+    api.setInviteCode(second.household.inviteCode);
+    expect((await api.tasks.list()).some((task) => task.id === 10)).toBe(true);
+  });
+
+  it("puts an example back the way it was handed out", async () => {
+    const { household } = await api.households.createDemo();
+    api.setInviteCode(household.inviteCode);
+    await api.tasks.remove(10);
+    await api.household.update({ name: "Estraguei tudo" });
+
+    const member = await api.household.reseed();
+
+    expect(member).toMatchObject({ name: "Ana", claimedAt: now.toISOString() });
+    expect((await api.tasks.list()).some((task) => task.id === 10)).toBe(true);
+    expect(await api.household.get()).toMatchObject({ name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: household.inviteCode, demo: true });
+  });
+
+  it("refuses to reseed a colmeia somebody actually lives in", async () => {
+    const created = await api.households.create({ name: "Casa", memberNames: [ "Ana" ] });
+    api.setInviteCode(created.inviteCode);
+
+    await expect(api.household.reseed()).rejects.toMatchObject({ status: 409 });
+    expect((await api.members.list()).map((member) => member.name)).toEqual([ "Ana" ]);
   });
 });

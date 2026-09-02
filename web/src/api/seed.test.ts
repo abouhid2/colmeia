@@ -2,11 +2,16 @@ import { describe, expect, it } from "vitest";
 import { crownHolder } from "../domain/crown";
 import { awardedPoints } from "../domain/points";
 import { goalProgress } from "../domain/progress";
+import { EXAMPLE_HOUSEHOLD_NAME } from "./localState";
 import { buildDemoState } from "./seed";
 
 const now = new Date(2026, 8, 1, 21);
 
 describe("buildDemoState", () => {
+  it("is an example colmeia, and says so", () => {
+    expect(buildDemoState(now).household).toMatchObject({ name: EXAMPLE_HOUSEHOLD_NAME, demo: true });
+  });
+
   it("opens the demo with a crown already on someone's head, under a title they picked", () => {
     const state = buildDemoState(now);
     const household = state.goals.find((goal) => goal.memberId === null) ?? null;

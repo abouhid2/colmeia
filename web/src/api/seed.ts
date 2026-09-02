@@ -2,13 +2,13 @@ import { addDays, addHours, startOfWeek, subHours, subWeeks } from "date-fns";
 import { DEFAULT_CROWN_TITLE } from "../domain/crownTitles";
 import { toIsoDate } from "../lib/dates";
 import type { Completion, Member, ShoppingItem, Task } from "../domain/types";
-import { DEMO_INVITE_CODE, type LocalState } from "./localState";
+import { DEMO_INVITE_CODE, EXAMPLE_ENTRY_MEMBER, EXAMPLE_HOUSEHOLD_NAME, type LocalState } from "./localState";
 
 type TaskSeed = Partial<Task> & Pick<Task, "id" | "title" | "points">;
 type CompletionSeed = Partial<Completion> & Pick<Completion, "id" | "taskId" | "memberId" | "taskTitle" | "taskPoints">;
 type ItemSeed = Partial<ShoppingItem> & Pick<ShoppingItem, "id" | "name" | "addedById">;
 
-/** A believable family so the demo opens mid-week, with something to review and a reward in sight. */
+/** A believable family so the example opens mid-week, with something to review and a reward in sight. */
 export function buildDemoState(now: Date = new Date()): LocalState {
   const today = toIsoDate(now);
   const iso = (hoursAgo: number) => subHours(now, hoursAgo).toISOString();
@@ -27,7 +27,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   });
   // Duda is the child of the house: everything she does is worth 1,5x.
   const members = [
-    member(1, "Ana", "🦊", "pollen"),
+    member(1, EXAMPLE_ENTRY_MEMBER, "🦊", "pollen"),
     member(2, "Bruno", "🐻", "sky", "Abelhão"),
     member(3, "Clara", "🐼", "plum", "Rainha da Louça"),
     member(4, "Duda", "🦉", "leaf", DEFAULT_CROWN_TITLE, "lagartinha"),
@@ -90,7 +90,7 @@ export function buildDemoState(now: Date = new Date()): LocalState {
   ];
 
   return {
-    household: { id: 1, name: "Família Colmeia", inviteCode: DEMO_INVITE_CODE },
+    household: { id: 1, name: EXAMPLE_HOUSEHOLD_NAME, inviteCode: DEMO_INVITE_CODE, demo: true },
     members,
     tasks,
     completions,
